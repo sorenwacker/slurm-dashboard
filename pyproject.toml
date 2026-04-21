@@ -28,7 +28,7 @@ keywords = ["slurm", "hpc", "cluster", "dashboard", "monitoring", "analytics"]
 
 # Core dependencies (minimal - only what's needed for all use cases)
 dependencies = [
-  "python-dotenv>=1.0.0",
+  "python-dotenv>=1.2.2",
   "pyyaml>=6.0.0",
 ]
 
