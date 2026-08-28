@@ -28,6 +28,19 @@ logging.basicConfig(
 logger = logging.getLogger('slurm-usage-history-exporter')
 
 
+SLURM_MISSING_VALUES = {"", "none", "unknown", "nan", "nat"}
+
+
+def normalize_timestamp(value) -> Optional[str]:
+    """Return a timestamp string, or None for sacct placeholders such as ``None`` and ``Unknown``."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    text = str(value).strip()
+    if text.lower() in SLURM_MISSING_VALUES:
+        return None
+    return text
+
+
 class SlurmDataExtractor:
     """Extracts job data from SLURM using sacct command"""
 
@@ -292,8 +305,8 @@ class SlurmDataExtractor:
                 'State': normalize_state(row['State']),
                 'QOS': normalize_field(row['QOS'], None),
                 'Submit': str(row['Submit']),
-                'Start': str(row['Start']) if pd.notna(row['Start']) else None,
-                'End': str(row['End']) if pd.notna(row['End']) else None,
+                'Start': normalize_timestamp(row['Start']),
+                'End': normalize_timestamp(row['End']),
                 'CPUHours': float(row['CPUHours']),
                 'GPUHours': float(row['GPUHours']),
                 'AllocCPUS': int(row['AllocCPUS']),
