@@ -10,12 +10,16 @@ import { COLORS } from '../chartHelpers';
 interface ProcessedNodeData {
   cpu: ChartData | null;
   gpu: ChartData | null;
+  memory: ChartData | null;
 }
 
 interface ClusterUtilization {
   cpu: number | null;
   gpu: number | null;
+  memory: number | null;
 }
+
+const MEMORY_COLOR = '#2E8B57';
 
 interface UsageSectionProps {
   data: AggregatedChartsResponse;
@@ -178,10 +182,108 @@ const UsageSection: React.FC<UsageSectionProps> = ({
             )}
           </div>
         </div>
+
+        {/* Memory Usage Section */}
+        {data.memory_usage_over_time && data.memory_usage_over_time.x.length > 0 && (
+          <div className="subsection">
+            <h2 className="subsection-header">Memory Usage</h2>
+            <div className="chart-row-2col">
+              <div className="card">
+                <h3>Memory Usage</h3>
+                <StackedAreaChart
+                  data={data.memory_usage_over_time}
+                  xTitle="Period"
+                  yTitle="GB-Hours"
+                  defaultColor={MEMORY_COLOR}
+                  colorMap={colorMap}
+                  defaultName="Memory GB-Hours"
+                  chartType="area"
+                  periodType={periodType}
+                  chartColors={chartColors}
+                />
+              </div>
+              {data.memory_hours_by_account && (
+                (data.memory_hours_by_account.type === 'pie' && (data.memory_hours_by_account.labels?.length ?? 0) > 0) ||
+                (data.memory_hours_by_account.x && data.memory_hours_by_account.x.length > 0)
+              ) && (
+                <div className="card">
+                  <h3>
+                    {data.memory_hours_by_account.type === 'pie'
+                      ? `Memory Usage by ${colorBy}`
+                      : 'Memory Usage Distribution'}
+                    <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>
+                      {' '}({Math.round(data.summary.total_memory_gb_hours).toLocaleString()} GB-hours)
+                    </span>
+                  </h3>
+                  {data.memory_hours_by_account.type === 'pie' ? (
+                    <PieChart
+                      data={{
+                        labels: data.memory_hours_by_account.labels || [],
+                        values: data.memory_hours_by_account.values || [],
+                      }}
+                      valueLabel="GB-Hours"
+                      colors={colorMap ? (data.memory_hours_by_account.labels || []).map((label, idx) =>
+                        colorMap.get(label) || COLORS[idx % COLORS.length]
+                      ) : undefined}
+                      chartColors={chartColors}
+                    />
+                  ) : (
+                    <HistogramChart
+                      data={data.memory_hours_by_account}
+                      xTitle="GB-Hours per Period"
+                      yTitle="Number of Periods"
+                      defaultColor={MEMORY_COLOR}
+                      colorMap={null}
+                      isHistogram={true}
+                      showMedianMean={true}
+                      unit="GBh"
+                      decimalPlaces={0}
+                      chartColors={chartColors}
+                    />
+                  )}
+                </div>
+              )}
+              {data.memory_efficiency_over_time && data.memory_efficiency_over_time.x.length > 0 && (
+                <div className="card">
+                  <h3>
+                    Memory Efficiency
+                    <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>
+                      {' '}(peak used / requested)
+                    </span>
+                  </h3>
+                  <StackedAreaChart
+                    data={data.memory_efficiency_over_time}
+                    xTitle="Period"
+                    yTitle="Used (%)"
+                    defaultColor={MEMORY_COLOR}
+                    colorMap={null}
+                    defaultName="Memory used (%)"
+                    chartType="area"
+                    periodType={periodType}
+                    chartColors={chartColors}
+                  />
+                </div>
+              )}
+              {data.memory_per_job && data.memory_per_job.x.length > 0 && (
+                <div className="card">
+                  <h3>Memory per Job</h3>
+                  <HistogramChart
+                    data={data.memory_per_job}
+                    xTitle="Requested Memory (GB)"
+                    yTitle="Number of Jobs"
+                    defaultColor={MEMORY_COLOR}
+                    colorMap={null}
+                    chartColors={chartColors}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Node Usage Section */}
-      {(processedNodeData.cpu?.x.length || processedNodeData.gpu?.x.length) && (
+      {(processedNodeData.cpu?.x.length || processedNodeData.gpu?.x.length || processedNodeData.memory?.x.length) && (
         <div className="node-usage-section">
           <div className="node-usage-header">
             <h3 className="section-title">Usage by Node</h3>
@@ -214,7 +316,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
           </div>
 
           {/* Utilization gauges */}
-          {(clusterUtilization.cpu !== null || clusterUtilization.gpu !== null) && (
+          {(clusterUtilization.cpu !== null || clusterUtilization.gpu !== null || clusterUtilization.memory !== null) && (
             <div className="gauge-grid" style={{ marginBottom: 'var(--space-lg)' }}>
               {clusterUtilization.cpu !== null && (
                 <div className="card gauge-card">
@@ -230,6 +332,15 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                   <GaugeChart
                     value={Math.round(clusterUtilization.gpu * 10) / 10}
                     title="Average GPU Utilization"
+                    chartColors={chartColors}
+                  />
+                </div>
+              )}
+              {clusterUtilization.memory !== null && (
+                <div className="card gauge-card">
+                  <GaugeChart
+                    value={Math.round(clusterUtilization.memory * 10) / 10}
+                    title="Average Memory Allocation"
                     chartColors={chartColors}
                   />
                 </div>
@@ -256,6 +367,33 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                     xTitle="Node"
                     yTitle={processedNodeData.cpu.normalized ? "Utilization (%)" : "CPU Hours"}
                     defaultColor="#04A5D5"
+                    colorMap={colorMap}
+                    chartType="bar"
+                    barMode="stack"
+                    chartColors={chartColors}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Memory Node Usage */}
+            {processedNodeData.memory && processedNodeData.memory.x.length > 0 && (
+              <div className="subsection">
+                <h2 className="subsection-header">Memory Usage by Node</h2>
+                <div className="card">
+                  <h3>
+                    Memory Allocated by Node{' '}
+                    {processedNodeData.memory.normalized && (
+                      <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>
+                        (% of node memory)
+                      </span>
+                    )}
+                  </h3>
+                  <StackedAreaChart
+                    data={processedNodeData.memory}
+                    xTitle="Node"
+                    yTitle={processedNodeData.memory.normalized ? "Allocation (%)" : "GB-Hours"}
+                    defaultColor={MEMORY_COLOR}
                     colorMap={colorMap}
                     chartType="bar"
                     barMode="stack"

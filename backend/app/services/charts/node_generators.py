@@ -51,14 +51,15 @@ def generate_node_usage(
     if normalize and cluster_name and total_hours and total_hours > 0:
         cluster_config = get_cluster_config()
 
+    empty = {"x": [], "y": [], "series": []}
     if "NodeList" not in df.columns:
-        return {
-            "cpu_usage": {"x": [], "y": [], "series": []},
-            "gpu_usage": {"x": [], "y": [], "series": []},
-        }
+        return {"cpu_usage": empty, "gpu_usage": empty, "memory_usage": empty}
 
     # Explode NodeList to get one row per node
     cols = ["NodeList", "CPUHours", "GPUHours"]
+    has_memory = "MemGBHours" in df.columns
+    if has_memory:
+        cols.append("MemGBHours")
     if color_by and color_by in df.columns:
         cols.append(color_by)
 
@@ -99,10 +100,9 @@ def generate_node_usage(
     # DO NOT normalize node names - keep them as they appear in SLURM data
 
     if node_df.empty:
-        return {
-            "cpu_usage": {"x": [], "y": [], "series": []},
-            "gpu_usage": {"x": [], "y": [], "series": []},
-        }
+        return {"cpu_usage": empty, "gpu_usage": empty, "memory_usage": empty}
+
+    memory_usage = _memory_by_node(node_df, color_by, hide_unused) if has_memory else dict(empty)
 
     # Group by node (and optionally color_by dimension)
     if color_by and color_by in node_df.columns:
@@ -208,6 +208,7 @@ def generate_node_usage(
                 "normalized": cluster_config is not None,
                 "hardware_config": {node: hardware_config.get(node, {}) for node in gpu_sorted_nodes},
             },
+            "memory_usage": _with_hardware(memory_usage, config, cluster_name),
         }
     else:
         # Single series
@@ -238,4 +239,36 @@ def generate_node_usage(
                 "normalized": cluster_config is not None,
                 "hardware_config": {node: hardware_config.get(node, {}) for node in gpu_sorted_nodes},
             },
+            "memory_usage": _with_hardware(memory_usage, config, cluster_name),
         }
+
+
+def _memory_by_node(node_df: pd.DataFrame, color_by: str | None, hide_unused: bool) -> dict[str, Any]:
+    """Allocated memory-hours per node (alphabetical), optionally split by color_by."""
+    known = node_df[node_df["MemGBHours"].notna()]
+    if hide_unused:
+        known = known[known["MemGBHours"] > 0]
+    if known.empty:
+        return {"x": [], "y": [], "series": []}
+    nodes = sorted(known["NodeList"].unique())
+    if color_by and color_by in known.columns:
+        grouped = known.groupby([color_by, "NodeList"])["MemGBHours"].sum()
+        groups = known.groupby(color_by)["MemGBHours"].sum().sort_values(ascending=False).index.tolist()
+        series = [
+            {"name": str(group), "data": [float(grouped.get((group, node), 0.0)) for node in nodes]}
+            for group in groups
+        ]
+        return {"x": nodes, "series": series, "normalized": False}
+    totals = known.groupby("NodeList")["MemGBHours"].sum()
+    return {"x": nodes, "y": [float(totals[node]) for node in nodes], "normalized": False}
+
+
+def _with_hardware(usage: dict[str, Any], config, cluster_name: str | None) -> dict[str, Any]:
+    """Attach per-node hardware so the client can normalize memory-hours against ram.total_gb."""
+    if not usage.get("x"):
+        return usage
+    hardware = {
+        node: (config.get_node_hardware(cluster_name, node) if cluster_name else {"cpu_cores": 64, "gpu_count": 0, "memory_gb": 0})
+        for node in usage["x"]
+    }
+    return {**usage, "hardware_config": hardware}

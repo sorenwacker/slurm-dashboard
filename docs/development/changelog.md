@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `slurm-dashboard sync-config` and `run --sync-config`: agent reads node CPU, memory, GPU, and partition data from `scontrol` and the dashboard merges it into `clusters.yaml`
+- Memory usage charts: agent collects requested memory and peak RSS per job; dashboard shows memory-hours over time, memory efficiency, memory per job, and per-node memory utilization
 
 ## [0.5.0] - 2025-11-20
 

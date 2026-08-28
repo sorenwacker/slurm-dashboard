@@ -41,6 +41,10 @@ from ..services.charts import (
     generate_gpu_hours_by_account,
     generate_by_dimension,
     generate_node_usage,
+    generate_memory_usage_over_time,
+    generate_memory_efficiency_over_time,
+    generate_memory_per_job,
+    total_memory_gb_hours,
     generate_user_activity_frequency,
 )
 
@@ -242,9 +246,15 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
             # Resource distribution charts - use color_by for dynamic grouping (with period_type for histogram mode)
             "cpu_hours_by_account": generate_by_dimension(df, color_by, metric="CPUHours", period_type=period_type),
             "gpu_hours_by_account": generate_by_dimension(df, color_by, metric="GPUHours", period_type=period_type),
+            # Memory charts (jobs without memory data are excluded, never counted as zero)
+            "memory_usage_over_time": generate_memory_usage_over_time(df, period_type, color_by),
+            "memory_hours_by_account": generate_by_dimension(df, color_by, metric="MemGBHours", period_type=period_type),
+            "memory_efficiency_over_time": generate_memory_efficiency_over_time(df, period_type),
+            "memory_per_job": generate_memory_per_job(df),
             # Node usage charts (include total_hours for client-side normalization)
             "node_cpu_usage": {**node_usage["cpu_usage"], "total_hours": total_hours},
             "node_gpu_usage": {**node_usage["gpu_usage"], "total_hours": total_hours},
+            "node_memory_usage": {**node_usage["memory_usage"], "total_hours": total_hours},
             # User activity frequency distribution
             "user_activity_frequency": generate_user_activity_frequency(df, period_type, color_by),
         }
@@ -266,7 +276,7 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
 def _empty_charts_response() -> dict[str, Any]:
     """Return empty chart data structure."""
     return {
-        "summary": {"total_jobs": 0, "total_cpu_hours": 0, "total_gpu_hours": 0, "total_users": 0},
+        "summary": {"total_jobs": 0, "total_cpu_hours": 0, "total_gpu_hours": 0, "total_memory_gb_hours": 0, "total_users": 0},
         "cpu_usage_over_time": {"x": [], "y": []},
         "gpu_usage_over_time": {"x": [], "y": []},
         "active_users_over_time": {"x": [], "y": []},
@@ -285,6 +295,11 @@ def _empty_charts_response() -> dict[str, Any]:
         "gpu_hours_by_account": {"x": [], "y": []},
         "node_cpu_usage": {"x": [], "y": []},
         "node_gpu_usage": {"x": [], "y": []},
+        "memory_usage_over_time": {"x": [], "y": []},
+        "memory_hours_by_account": {"x": [], "y": []},
+        "memory_efficiency_over_time": {"x": [], "y": []},
+        "memory_per_job": {"x": [], "y": []},
+        "node_memory_usage": {"x": [], "y": []},
     }
 
 
@@ -294,6 +309,7 @@ def _generate_summary(df: pd.DataFrame) -> dict[str, Any]:
         "total_jobs": int(len(df)),
         "total_cpu_hours": float(df["CPUHours"].sum()) if "CPUHours" in df.columns else 0.0,
         "total_gpu_hours": float(df["GPUHours"].sum()) if "GPUHours" in df.columns else 0.0,
+        "total_memory_gb_hours": total_memory_gb_hours(df),
         "total_users": int(df["User"].nunique()) if "User" in df.columns else 0,
     }
 

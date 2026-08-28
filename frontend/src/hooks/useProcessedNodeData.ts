@@ -1,15 +1,25 @@
 import { useMemo } from 'react';
-import type { AggregatedChartsResponse, ChartData } from '../types';
+import type { AggregatedChartsResponse, ChartData, NodeHardwareConfig } from '../types';
 
 interface ProcessedNodeData {
   cpu: ChartData | null;
   gpu: ChartData | null;
+  memory: ChartData | null;
 }
 
 interface ClusterUtilization {
   cpu: number | null;
   gpu: number | null;
+  memory: number | null;
 }
+
+type ResourceType = 'cpu' | 'gpu' | 'memory';
+
+const capacityOf = (hw: NodeHardwareConfig, resourceType: ResourceType): number => {
+  if (resourceType === 'cpu') return hw.cpu_cores;
+  if (resourceType === 'gpu') return hw.gpu_count;
+  return hw.memory_gb || 0;
+};
 
 export function useProcessedNodeData(
   data: AggregatedChartsResponse | undefined,
@@ -18,18 +28,21 @@ export function useProcessedNodeData(
   normalizeNodeUsage: boolean
 ): ProcessedNodeData {
   return useMemo(() => {
-    if (!data) return { cpu: null, gpu: null };
+    if (!data) return { cpu: null, gpu: null, memory: null };
 
     const normalizeValue = (value: number, maxCapacity: number): number => {
       if (maxCapacity <= 0) return 0;
       return Math.min(100, (value / maxCapacity) * 100);
     };
 
-    const filterAndSortNodeData = (nodeData: ChartData, resourceType: 'cpu' | 'gpu'): ChartData => {
+    const filterAndSortNodeData = (nodeData: ChartData, resourceType: ResourceType): ChartData => {
       let indices = nodeData.x.map((_, i) => i);
 
       const totalHours = nodeData.total_hours || 0;
-      const shouldNormalize = normalizeNodeUsage && nodeData.hardware_config && totalHours > 0;
+      // Memory can only be normalized for nodes with a configured memory size
+      const hasCapacity = resourceType !== 'memory'
+        || Object.values(nodeData.hardware_config || {}).some(hw => (hw.memory_gb || 0) > 0);
+      const shouldNormalize = normalizeNodeUsage && nodeData.hardware_config && totalHours > 0 && hasCapacity;
 
       const getSortValue = (idx: number): number => {
         let rawValue = 0;
@@ -43,7 +56,7 @@ export function useProcessedNodeData(
           const node = String(nodeData.x[idx]);
           const hw = nodeData.hardware_config[node];
           if (hw) {
-            const capacity = resourceType === 'cpu' ? hw.cpu_cores : hw.gpu_count;
+            const capacity = capacityOf(hw, resourceType);
             const maxCapacity = capacity * totalHours;
             return normalizeValue(rawValue, maxCapacity);
           }
@@ -86,7 +99,7 @@ export function useProcessedNodeData(
           const rawValue = nodeData.y![i] as number;
           if (shouldNormalize && filteredHardwareConfig[node]) {
             const hw = filteredHardwareConfig[node];
-            const capacity = resourceType === 'cpu' ? hw.cpu_cores : hw.gpu_count;
+            const capacity = capacityOf(hw, resourceType);
             const maxCapacity = capacity * totalHours;
             return normalizeValue(rawValue, maxCapacity);
           }
@@ -101,7 +114,7 @@ export function useProcessedNodeData(
           const rawValue = s.data[i];
           if (shouldNormalize && filteredHardwareConfig && filteredHardwareConfig[node]) {
             const hw = filteredHardwareConfig[node];
-            const capacity = resourceType === 'cpu' ? hw.cpu_cores : hw.gpu_count;
+            const capacity = capacityOf(hw, resourceType);
             const maxCapacity = capacity * totalHours;
             return normalizeValue(rawValue, maxCapacity);
           }
@@ -121,15 +134,16 @@ export function useProcessedNodeData(
 
     return {
       cpu: data.node_cpu_usage ? filterAndSortNodeData(data.node_cpu_usage, 'cpu') : null,
-      gpu: data.node_gpu_usage ? filterAndSortNodeData(data.node_gpu_usage, 'gpu') : null
+      gpu: data.node_gpu_usage ? filterAndSortNodeData(data.node_gpu_usage, 'gpu') : null,
+      memory: data.node_memory_usage ? filterAndSortNodeData(data.node_memory_usage, 'memory') : null,
     };
   }, [data, hideUnusedNodes, sortByUsage, normalizeNodeUsage]);
 }
 
 export function useClusterUtilization(processedNodeData: ProcessedNodeData): ClusterUtilization {
   return useMemo(() => {
-    if (!processedNodeData.cpu?.normalized && !processedNodeData.gpu?.normalized) {
-      return { cpu: null, gpu: null };
+    if (!processedNodeData.cpu?.normalized && !processedNodeData.gpu?.normalized && !processedNodeData.memory?.normalized) {
+      return { cpu: null, gpu: null, memory: null };
     }
 
     const calculateAverage = (nodeData: ChartData | null): number | null => {
@@ -157,6 +171,7 @@ export function useClusterUtilization(processedNodeData: ProcessedNodeData): Clu
     return {
       cpu: calculateAverage(processedNodeData.cpu),
       gpu: calculateAverage(processedNodeData.gpu),
+      memory: calculateAverage(processedNodeData.memory),
     };
   }, [processedNodeData]);
 }

@@ -78,6 +78,7 @@ export interface SeriesData {
 export interface NodeHardwareConfig {
   cpu_cores: number;
   gpu_count: number;
+  memory_gb?: number;  // 0 or absent when the node's memory is not configured
 }
 
 export interface ChartData {
@@ -125,6 +126,7 @@ export interface AggregatedChartsResponse {
     total_jobs: number;
     total_cpu_hours: number;
     total_gpu_hours: number;
+    total_memory_gb_hours: number;
     total_users: number;
   };
   cpu_usage_over_time: ChartData;
@@ -151,5 +153,10 @@ export interface AggregatedChartsResponse {
   gpu_hours_by_account: ChartData;
   node_cpu_usage: ChartData;
   node_gpu_usage: ChartData;
+  memory_usage_over_time: ChartData;
+  memory_hours_by_account: ChartData;
+  memory_efficiency_over_time: ChartData;
+  memory_per_job: ChartData;
+  node_memory_usage: ChartData;
   user_activity_frequency: ChartData;
 }

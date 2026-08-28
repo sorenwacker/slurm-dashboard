@@ -137,7 +137,7 @@ slurm-dashboard run --config config.json --dry-run --verbose
 You should see:
 - Number of jobs extracted
 - Total CPU-hours and GPU-hours
-- Sample job record
+- Sample job record, including `ReqMemMB` and `MaxRSSMB` (see [Memory Usage](memory-usage.md))
 
 ### 4. Run for Real
 

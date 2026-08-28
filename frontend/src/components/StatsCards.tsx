@@ -38,6 +38,14 @@ const StatsCards: React.FC<StatsCardsProps> = ({ data }) => {
         <div className="stat-value">{formatCompact(summary.total_gpu_hours)}</div>
         <div className="stat-label">{formatNumber(Math.round(summary.total_gpu_hours))} hours</div>
       </div>
+
+      {summary.total_memory_gb_hours > 0 && (
+        <div className="stat-card" style={{ borderLeft: '4px solid #2E8B57' }}>
+          <h4>Total Memory GB-Hours</h4>
+          <div className="stat-value">{formatCompact(summary.total_memory_gb_hours)}</div>
+          <div className="stat-label">{formatNumber(Math.round(summary.total_memory_gb_hours))} GB-hours allocated</div>
+        </div>
+      )}
     </div>
   );
 };

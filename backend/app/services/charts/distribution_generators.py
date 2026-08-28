@@ -309,7 +309,7 @@ def generate_by_dimension(df: pd.DataFrame, group_by: str | None, metric: str = 
     # If no grouping, behavior depends on metric type
     if not group_by or group_by not in column_map:
         # For CPU/GPU hours: create per-period histogram
-        if metric in ["CPUHours", "GPUHours"]:
+        if metric in ["CPUHours", "GPUHours", "MemGBHours"]:
             if metric not in df.columns:
                 return {"x": [], "y": [], "mean": 0, "median": 0, "type": "histogram"}
 

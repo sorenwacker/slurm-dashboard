@@ -227,7 +227,7 @@ class ClusterConfig:
             node_name: Node name (will be normalized)
 
         Returns:
-            Dictionary with 'cpu_cores' and 'gpu_count' keys
+            Dictionary with 'cpu_cores', 'gpu_count' and 'memory_gb' keys; memory_gb is 0 when unknown
         """
         import re
 
@@ -235,12 +235,13 @@ class ClusterConfig:
 
         # Check for node-specific hardware config
         hardware = node_info.get("hardware", {})
+        memory_gb = int(hardware.get("ram", {}).get("total_gb", 0) or 0) if hardware else 0
         if hardware:
             cpu_cores = hardware.get("cpu", {}).get("cores", 0)
             gpus = hardware.get("gpus", [])
-            gpu_count = gpus[0].get("count", 0) if gpus else 0
+            gpu_count = sum(g.get("count", 0) for g in gpus) if gpus else 0
             if cpu_cores > 0:
-                return {"cpu_cores": cpu_cores, "gpu_count": gpu_count}
+                return {"cpu_cores": cpu_cores, "gpu_count": gpu_count, "memory_gb": memory_gb}
 
         # Check node_type_patterns for matching pattern
         patterns = self.config.get("settings", {}).get("node_type_patterns", {})
@@ -250,6 +251,7 @@ class ClusterConfig:
                 return {
                     "cpu_cores": pattern_config.get("cpu_cores", 48),
                     "gpu_count": pattern_config.get("gpu_count", 0),
+                    "memory_gb": memory_gb,
                 }
 
         # Fall back to hardware defaults based on node type
@@ -260,6 +262,7 @@ class ClusterConfig:
         return {
             "cpu_cores": type_defaults.get("cpu_cores", 64),
             "gpu_count": type_defaults.get("gpu_count", 0),
+            "memory_gb": memory_gb,
         }
 
     def get_hardware_defaults(self) -> Dict[str, Dict[str, int]]:
