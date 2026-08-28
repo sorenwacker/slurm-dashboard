@@ -269,7 +269,7 @@ Every cluster has one page, `/admin/clusters/<name>`, reached from the cluster l
 - SLURM: version and cluster name as reported by the agent.
 - Sync status: time of the last `sync-config`, number of nodes with SLURM hardware, number of nodes known only from job data, number of partitions and accounts. If the cluster was never synced, the page shows the command to run.
 - Data status: first and last job date, jobs submitted through the API, time of the last submission.
-- Credentials: the API key (with rotate) and the one-time deploy key with the install command.
+- Credentials: the API key, masked except for its last four characters until revealed, with copy and rotate; and the one-time deploy key with the install command.
 
 **Nodes**
 

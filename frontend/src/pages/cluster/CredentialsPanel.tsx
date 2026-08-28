@@ -14,6 +14,11 @@ interface CredentialsPanelProps {
   onError: (message: string) => void;
 }
 
+/** Keys are hidden by default; only the last four characters identify which key is installed. */
+export function maskKey(key: string): string {
+  return key.length <= 4 ? '****' : `${'*'.repeat(Math.min(key.length - 4, 24))}${key.slice(-4)}`;
+}
+
 function formatDate(value?: string | null): string {
   return value ? new Date(value).toLocaleString() : 'never';
 }
@@ -32,6 +37,7 @@ export function CredentialsPanel({ cluster, onChanged, onError }: CredentialsPan
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
   const [newDeployKey, setNewDeployKey] = useState<string | null>(null);
   const [copied, setCopied] = useState('');
+  const [revealed, setRevealed] = useState(false);
 
   const copy = async (text: string, label: string) => {
     await navigator.clipboard.writeText(text);
@@ -67,6 +73,7 @@ export function CredentialsPanel({ cluster, onChanged, onError }: CredentialsPan
   };
 
   const deploy = deployKeyState(cluster);
+  const apiKey = newApiKey ?? cluster.api_key;
 
   return (
     <section className="cp-card">
@@ -74,8 +81,11 @@ export function CredentialsPanel({ cluster, onChanged, onError }: CredentialsPan
       <dl className="cp-dl">
         <dt>API key</dt>
         <dd>
-          <code className="cp-code">{newApiKey ?? cluster.api_key}</code>
-          <button type="button" className="cp-btn cp-btn-small" onClick={() => copy(newApiKey ?? cluster.api_key, 'api')}>
+          <code className="cp-code">{revealed ? apiKey : maskKey(apiKey)}</code>
+          <button type="button" className="cp-btn cp-btn-small" onClick={() => setRevealed(!revealed)}>
+            {revealed ? 'Hide' : 'Reveal'}
+          </button>
+          <button type="button" className="cp-btn cp-btn-small" onClick={() => copy(apiKey, 'api')}>
             {copied === 'api' ? 'Copied' : 'Copy'}
           </button>
           <button type="button" className="cp-btn cp-btn-small cp-btn-danger" onClick={rotate} disabled={busy}>
