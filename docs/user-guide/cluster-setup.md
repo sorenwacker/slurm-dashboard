@@ -152,19 +152,35 @@ slurm-dashboard run --config config.json
 
 Check the dashboard to verify data appears.
 
-### 5. Sync Node Hardware
+### 5. Sync Cluster Configuration
 
-The dashboard normalizes node utilization against each node's CPU core count, GPU count, and memory. These values are read from `config/clusters.yaml` on the dashboard server. Instead of maintaining them by hand, let the agent read them from SLURM and push them to the dashboard:
+The dashboard needs each node's schedulable CPU count, memory, and GPU count to normalize utilization, and uses partition and account labels in filters and charts. `sync-config` reads all of this from SLURM and pushes it to the dashboard, so nothing has to be typed by hand and nothing is guessed from names:
 
 ```bash
 # Show what would be sent
 slurm-dashboard sync-config --config config.json --dry-run
 
-# Push node hardware to the dashboard
+# Push the cluster configuration to the dashboard
 slurm-dashboard sync-config --config config.json
 ```
 
-The command runs `scontrol show node --oneliner` and reports, per node: CPU cores (`CPUTot`), memory (`RealMemory`), GPUs (parsed from `Gres`, e.g. `gpu:a100:4` becomes model `a100`, count 4), and partitions. The dashboard merges the result into the cluster's `node_labels`: the `hardware` block of each reported node is overwritten, `synonyms` and `description` are kept, and the node `type` is set to `gpu` or `cpu` according to the reported GPU count; other types such as `login` or `storage` are kept. Nodes not yet in the configuration are added. Nodes that are in the configuration but no longer reported by SLURM are left untouched so historical data keeps its hardware reference.
+What is collected:
+
+| Source | Written to `clusters.yaml` |
+|--------|----------------------------|
+| `scontrol show config` | `metadata.slurm_version`, `metadata.slurm_cluster_name` |
+| `scontrol show node` | per node: `hardware.cpu.cores` (`CPUTot`, the CPUs SLURM schedules), `hardware.cpu.sockets`, `cores_per_socket`, `threads_per_core`, `hardware.ram.total_gb` (`RealMemory`), `hardware.gpus[]` (from `Gres`), `partitions`, `features` (`AvailableFeatures`) |
+| `scontrol show partition` | per partition: `slurm.nodes`, `slurm.total_cpus`, `slurm.total_nodes`, `slurm.max_time`, `slurm.default`, `slurm.state` |
+| `sacctmgr show account` | per account: `slurm.description`, `slurm.organization` |
+
+Merge rules on the dashboard:
+
+- Everything under `hardware`, `partitions`, `features`, and `slurm` is overwritten with the reported values on every sync.
+- Node `type` is set to `gpu` or `cpu` from the reported GPU count; `login`, `storage`, and other hand-set types are kept.
+- `synonyms`, `description`, `display_name`, and any other hand-edited field are never touched. The sync does not invent descriptions or display names; a field SLURM has no value for stays absent.
+- Nodes, partitions, or accounts that exist in the configuration but are no longer reported by SLURM are kept, so historical data keeps its labels.
+
+`sacctmgr` requires accounting access; if it is unavailable the accounts section is skipped and reported in the output, and the rest of the sync proceeds.
 
 To keep the configuration current, add `--sync-config` to the `run` command in the cron job. The sync is executed before the job data collection; a failed sync is logged and does not block the collection.
 

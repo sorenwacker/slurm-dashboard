@@ -16,14 +16,14 @@ def agent_config(tmp_path):
 
 def test_sync_config_posts_inventory(agent_config, monkeypatch):
     inventory = {"nodes": {"n1": {"cpu_cores": 8, "memory_gb": 32, "gpus": [], "partitions": []}}}
-    monkeypatch.setattr(cluster_agent, "collect_node_inventory", lambda: inventory)
+    monkeypatch.setattr(cluster_agent, "collect_cluster_inventory", lambda: inventory)
     posted = {}
 
     class Response:
         status_code = 201
 
         def json(self):
-            return {"added": 1, "updated": 0}
+            return {"nodes": {"added": 1, "updated": 0}}
 
     def fake_post(url, **kwargs):
         posted["url"] = url
@@ -34,7 +34,7 @@ def test_sync_config_posts_inventory(agent_config, monkeypatch):
 
     result = cluster_agent.sync_config(agent_config, dry_run=False)
 
-    assert result == {"added": 1, "updated": 0}
+    assert result == {"nodes": {"added": 1, "updated": 0}}
     assert posted["url"] == "https://dash.example/api/agent/upload-config"
     assert posted["kwargs"]["headers"] == {"X-API-Key": "k"}
     assert posted["kwargs"]["timeout"] == 5
@@ -42,7 +42,7 @@ def test_sync_config_posts_inventory(agent_config, monkeypatch):
 
 
 def test_sync_config_dry_run_does_not_post(agent_config, monkeypatch, capsys):
-    monkeypatch.setattr(cluster_agent, "collect_node_inventory", lambda: {"nodes": {"n1": {"cpu_cores": 8}}})
+    monkeypatch.setattr(cluster_agent, "collect_cluster_inventory", lambda: {"nodes": {"n1": {"cpu_cores": 8}}})
     monkeypatch.setattr(cluster_agent.requests, "post", lambda *_a, **_k: pytest.fail("must not post"))
 
     result = cluster_agent.sync_config(agent_config, dry_run=True)
@@ -52,7 +52,7 @@ def test_sync_config_dry_run_does_not_post(agent_config, monkeypatch, capsys):
 
 
 def test_sync_config_raises_on_server_error(agent_config, monkeypatch):
-    monkeypatch.setattr(cluster_agent, "collect_node_inventory", lambda: {"nodes": {}})
+    monkeypatch.setattr(cluster_agent, "collect_cluster_inventory", lambda: {"nodes": {}})
 
     class Response:
         status_code = 500
