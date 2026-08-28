@@ -20,7 +20,7 @@ class FakeDatastore:
     def load_data(self):
         pass
 
-    def get_min_max_dates(self, hostname):
+    def get_min_max_dates(self, _hostname):
         return (None, None)
 
 
