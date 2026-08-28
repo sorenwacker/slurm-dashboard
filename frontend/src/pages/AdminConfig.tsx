@@ -14,6 +14,7 @@ interface ClusterConfig {
     owner?: string;
     contact?: string;
     url?: string;
+    last_hardware_sync?: string;
   };
   node_labels?: {
     [key: string]: NodeLabel;
@@ -486,6 +487,14 @@ export function AdminConfig() {
                         <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
                           <div style={{ fontSize: '0.875rem', fontWeight: 500, color: '#6c757d' }}>Contact</div>
                           <div style={{ marginTop: '0.25rem' }}>{clusterConfig.metadata.contact || 'N/A'}</div>
+                        </div>
+                        <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
+                          <div style={{ fontSize: '0.875rem', fontWeight: 500, color: '#6c757d' }}>Hardware synced</div>
+                          <div style={{ marginTop: '0.25rem' }}>
+                            {clusterConfig.metadata.last_hardware_sync
+                              ? new Date(clusterConfig.metadata.last_hardware_sync).toLocaleString()
+                              : 'Never (run slurm-dashboard sync-config on the cluster)'}
+                          </div>
                         </div>
                         {clusterConfig.metadata.url && (
                           <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>

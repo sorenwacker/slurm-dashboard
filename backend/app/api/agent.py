@@ -8,12 +8,19 @@ from typing import Annotated
 import yaml
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 
+from ..config import get_cluster_config, reload_cluster_config
 from ..core.agent_auth import verify_agent_api_key
 from ..core.config import get_settings
+from ..services.node_discovery import NodeDiscoveryService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/agent", tags=["agent"])
+
+
+def get_cluster_config_path() -> Path:
+    """Path of the clusters.yaml file that hardware syncs are merged into."""
+    return get_cluster_config().config_path
 
 
 @router.post("/exchange-deploy-key")
@@ -228,83 +235,48 @@ async def list_uploaded_files(
 
 @router.post("/upload-config", status_code=status.HTTP_201_CREATED)
 async def upload_cluster_config(
-    file: Annotated[UploadFile, File(description="Cluster configuration YAML file")],
+    file: Annotated[UploadFile, File(description="Node inventory YAML produced by 'slurm-dashboard sync-config'")],
     cluster_name: str = Depends(verify_agent_api_key),
 ) -> dict:
-    """Upload cluster configuration YAML.
+    """Merge agent-reported node hardware into the cluster configuration.
 
-    This endpoint allows agents to upload cluster configuration metadata
-    including node labels, account mappings, and partition information.
-    The cluster is automatically determined from the API key.
+    The uploaded document has the form ``{"nodes": {name: {cpu_cores, memory_gb,
+    gpus, partitions}}}``. Hardware of reported nodes is overwritten, labels
+    are kept, and the configuration is reloaded afterwards.
 
     Args:
-        file: YAML file with cluster configuration
+        file: YAML node inventory
         cluster_name: Cluster name from API key verification (injected automatically)
 
     Returns:
-        Success message with config location
-
-    Example:
-        ```bash
-        curl -X POST "http://localhost:8100/api/agent/upload-config" \\
-          -H "X-API-Key: your-api-key-here" \\
-          -F "file=@cluster-config.yaml"
-        ```
+        Counts of nodes added and updated
     """
-    # Validate file extension
     if not file.filename or not (file.filename.endswith(".yaml") or file.filename.endswith(".yml")):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be a .yaml or .yml file",
         )
 
-    # Read and validate YAML
     try:
-        contents = await file.read()
-        config_data = yaml.safe_load(contents)
-
-        if not isinstance(config_data, dict):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid YAML structure. Must be a dictionary.",
-            )
-
+        inventory = yaml.safe_load(await file.read())
     except yaml.YAMLError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid YAML syntax: {str(e)}",
         ) from e
 
-    # Save configuration to config directory
-    # Use project root /config directory
-    config_dir = Path(__file__).parent.parent.parent / "config"
-    config_dir.mkdir(exist_ok=True)
-
-    # For now, save as cluster-specific config
-    # Later we can merge into clusters.yaml
-    config_file = config_dir / f"{cluster_name}.yaml"
-
+    service = NodeDiscoveryService(get_cluster_config_path())
     try:
-        with open(config_file, "w") as f:
-            yaml.dump(config_data, f, default_flow_style=False, sort_keys=False)
-
-        logger.info(
-            f"Agent uploaded cluster config: cluster={cluster_name}, "
-            f"file={file.filename}, size={len(contents)} bytes"
-        )
-
-        return {
-            "status": "success",
-            "message": f"Cluster configuration uploaded successfully: {file.filename}",
-            "cluster": cluster_name,
-            "file": file.filename,
-            "size": len(contents),
-            "saved_to": str(config_file),
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to save cluster config: {e}")
+        result = service.sync_hardware(cluster_name, inventory)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    except OSError as e:
+        logger.error(f"Failed to write cluster config: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to save configuration: {str(e)}",
         ) from e
+
+    reload_cluster_config()
+    logger.info(f"Agent synced hardware: cluster={cluster_name}, {result}")
+    return {"status": "success", "cluster": cluster_name, **result}

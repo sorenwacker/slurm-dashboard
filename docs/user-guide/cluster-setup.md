@@ -148,7 +148,23 @@ slurm-dashboard run --config config.json
 
 Check the dashboard to verify data appears.
 
-### 5. Automated Collection with Cron
+### 5. Sync Node Hardware
+
+The dashboard normalizes node utilization against each node's CPU core count, GPU count, and memory. These values are read from `config/clusters.yaml` on the dashboard server. Instead of maintaining them by hand, let the agent read them from SLURM and push them to the dashboard:
+
+```bash
+# Show what would be sent
+slurm-dashboard sync-config --config config.json --dry-run
+
+# Push node hardware to the dashboard
+slurm-dashboard sync-config --config config.json
+```
+
+The command runs `scontrol show node --oneliner` and reports, per node: CPU cores (`CPUTot`), memory (`RealMemory`), GPUs (parsed from `Gres`, e.g. `gpu:a100:4` becomes model `a100`, count 4), and partitions. The dashboard merges the result into the cluster's `node_labels`: the `hardware` block of each reported node is overwritten, `synonyms` and `description` are kept, and the node `type` is set to `gpu` or `cpu` according to the reported GPU count; other types such as `login` or `storage` are kept. Nodes not yet in the configuration are added. Nodes that are in the configuration but no longer reported by SLURM are left untouched so historical data keeps its hardware reference.
+
+To keep the configuration current, add `--sync-config` to the `run` command in the cron job. The sync is executed before the job data collection; a failed sync is logged and does not block the collection.
+
+### 6. Automated Collection with Cron
 
 ```bash
 # Edit crontab
@@ -156,15 +172,15 @@ crontab -e
 
 # Add daily collection at 2 AM
 # Adjust paths based on your conda installation
-0 2 * * * source ~/miniforge3/etc/profile.d/conda.sh && conda activate slurm-dash && slurm-dashboard run --config ~/config.json >> ~/agent.log 2>&1
+0 2 * * * source ~/miniforge3/etc/profile.d/conda.sh && conda activate slurm-dash && slurm-dashboard run --config ~/config.json --sync-config >> ~/agent.log 2>&1
 ```
 
 **For venv instead of conda:**
 ```bash
-0 2 * * * source ~/slurm-dash-venv/bin/activate && slurm-dashboard run --config ~/config.json >> ~/agent.log 2>&1
+0 2 * * * source ~/slurm-dash-venv/bin/activate && slurm-dashboard run --config ~/config.json --sync-config >> ~/agent.log 2>&1
 ```
 
-### 6. Verify Cron Job
+### 7. Verify Cron Job
 
 ```bash
 # Check crontab
