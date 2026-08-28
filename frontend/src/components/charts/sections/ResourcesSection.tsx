@@ -1,4 +1,5 @@
 import React from 'react';
+import ChartCaption from '../ChartCaption';
 import type { AggregatedChartsResponse } from '../../../types';
 import type { ChartColors } from '../../../hooks/useDarkMode';
 import HistogramChart from '../HistogramChart';
@@ -42,6 +43,7 @@ const ResourcesSection: React.FC<ResourcesSectionProps> = ({
               isHistogram={true}
               chartColors={chartColors}
             />
+            <ChartCaption text="Number of jobs per allocated CPU count." />
           </div>
         )}
         {data.gpus_per_job && data.gpus_per_job.x.length > 0 && (
@@ -61,6 +63,7 @@ const ResourcesSection: React.FC<ResourcesSectionProps> = ({
               isHistogram={true}
               chartColors={chartColors}
             />
+            <ChartCaption text="Number of jobs per allocated GPU count; jobs without GPUs are not shown." />
           </div>
         )}
         {data.nodes_per_job && data.nodes_per_job.x.length > 0 && (
@@ -80,6 +83,7 @@ const ResourcesSection: React.FC<ResourcesSectionProps> = ({
               isHistogram={true}
               chartColors={chartColors}
             />
+            <ChartCaption text="Number of jobs per number of allocated nodes." />
           </div>
         )}
       </div>

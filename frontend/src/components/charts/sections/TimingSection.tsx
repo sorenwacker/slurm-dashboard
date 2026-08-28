@@ -1,4 +1,5 @@
 import React from 'react';
+import ChartCaption from '../ChartCaption';
 import type { AggregatedChartsResponse } from '../../../types';
 import type { ChartColors } from '../../../hooks/useDarkMode';
 import type { TimingStats } from '../../../hooks/useTimingStats';
@@ -63,6 +64,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
                 statistic="median"
                 chartColors={chartColors}
               />
+              <ChartCaption text="Time from submission to start per period: median, mean and percentiles." />
             </div>
           )}
         </div>
@@ -98,6 +100,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
                 statistic="median"
                 chartColors={chartColors}
               />
+              <ChartCaption text="Elapsed time per job per period: median, mean and percentiles." />
             </div>
           )}
         </div>
@@ -162,6 +165,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
                 chartColors={chartColors}
               />
             )}
+            <ChartCaption text="Waiting time split by the colour dimension; without one, the distribution of waiting times across jobs." />
           </div>
         )}
         {data.job_duration_hist && (
@@ -201,6 +205,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
                 chartColors={chartColors}
               />
             )}
+            <ChartCaption text="Job duration split by the colour dimension; without one, the distribution of durations across jobs." />
           </div>
         )}
       </div>

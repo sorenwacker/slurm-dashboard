@@ -27,7 +27,7 @@ export function useProcessedNodeData(
 
 const NO_UTILIZATION: ClusterUtilization = { cpu: null, gpu: null, memory: null, memory_coverage: 0 };
 
-/** Below this share of jobs with memory data the memory gauge would describe a subset, so it is hidden. */
+/** Below this share of jobs with memory data the memory gauge is shown with a warning. */
 export const MEMORY_COVERAGE_THRESHOLD = 0.9;
 
 /** Capacity-weighted utilization over all configured nodes, computed by the server; shown only when normalizing. */
@@ -37,7 +37,6 @@ export function useClusterUtilization(
 ): ClusterUtilization {
   return useMemo(() => {
     if (!data || !normalizeNodeUsage || !data.cluster_utilization) return NO_UTILIZATION;
-    const utilization = data.cluster_utilization;
-    return utilization.memory_coverage >= MEMORY_COVERAGE_THRESHOLD ? utilization : { ...utilization, memory: null };
+    return data.cluster_utilization;
   }, [data, normalizeNodeUsage]);
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import ChartCaption from '../ChartCaption';
 import type { AggregatedChartsResponse } from '../../../types';
 import type { ChartColors } from '../../../hooks/useDarkMode';
 import StackedAreaChart from '../StackedAreaChart';
@@ -7,7 +8,7 @@ import HistogramChart from '../HistogramChart';
 import GaugeChart from '../GaugeChart';
 import { COLORS } from '../chartHelpers';
 
-import type { ProcessedNodeData } from '../../../hooks/useProcessedNodeData';
+import { MEMORY_COVERAGE_THRESHOLD, type ProcessedNodeData } from '../../../hooks/useProcessedNodeData';
 import type { ClusterUtilization } from '../../../types';
 
 const MEMORY_COLOR = '#2E8B57';
@@ -64,6 +65,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                   periodType={periodType}
                   chartColors={chartColors}
                 />
+                <ChartCaption text="CPU-hours (allocated CPUs times elapsed time) of jobs starting in the period." />
               </div>
             )}
             {data.cpu_hours_by_account && (
@@ -105,6 +107,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                     chartColors={chartColors}
                   />
                 )}
+                <ChartCaption text="CPU-hours split by the colour dimension; without one, the distribution of CPU-hours per period." />
               </div>
             )}
           </div>
@@ -128,6 +131,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                   periodType={periodType}
                   chartColors={chartColors}
                 />
+                <ChartCaption text="GPU-hours (allocated GPUs times elapsed time) of jobs starting in the period." />
               </div>
             )}
             {data.gpu_hours_by_account && (
@@ -169,6 +173,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                     chartColors={chartColors}
                   />
                 )}
+                <ChartCaption text="GPU-hours split by the colour dimension; without one, the distribution of GPU-hours per period." />
               </div>
             )}
           </div>
@@ -192,6 +197,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                   periodType={periodType}
                   chartColors={chartColors}
                 />
+                <ChartCaption text="Memory-hours (requested memory in GB times elapsed time) of jobs starting in the period; jobs without memory data are excluded." />
               </div>
               {data.memory_hours_by_account && (
                 (data.memory_hours_by_account.type === 'pie' && (data.memory_hours_by_account.labels?.length ?? 0) > 0) ||
@@ -232,6 +238,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                       chartColors={chartColors}
                     />
                   )}
+                  <ChartCaption text="Memory-hours split by the colour dimension; without one, the distribution of memory-hours per period." />
                 </div>
               )}
               {data.memory_efficiency_over_time && data.memory_efficiency_over_time.x.length > 0 && (
@@ -253,6 +260,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                     periodType={periodType}
                     chartColors={chartColors}
                   />
+                  <ChartCaption text="Sum of peak memory used divided by sum of requested memory, per period, over jobs reporting both." />
                 </div>
               )}
               {data.memory_per_job && data.memory_per_job.x.length > 0 && (
@@ -266,6 +274,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                     colorMap={null}
                     chartColors={chartColors}
                   />
+                  <ChartCaption text="Number of jobs per requested memory size in GB (20 most common sizes)." />
                 </div>
               )}
             </div>
@@ -333,13 +342,6 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                   />
                 </div>
               )}
-              {clusterUtilization.memory === null && clusterUtilization.memory_coverage > 0 && clusterUtilization.memory_coverage < 0.9 && (
-                <div className="card gauge-card">
-                  <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>
-                    Memory allocation gauge not shown: requested memory is known for {Math.round(clusterUtilization.memory_coverage * 100)}% of jobs in this range.
-                  </p>
-                </div>
-              )}
               {clusterUtilization.memory !== null && (
                 <div className="card gauge-card">
                   <GaugeChart
@@ -348,6 +350,12 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                     color={MEMORY_COLOR}
                     chartColors={chartColors}
                   />
+                  {clusterUtilization.memory_coverage < MEMORY_COVERAGE_THRESHOLD && (
+                    <ChartCaption
+                      text=""
+                      warning={`Requested memory is known for only ${Math.round(clusterUtilization.memory_coverage * 100)}% of jobs in this range; the gauge covers those jobs.`}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -383,6 +391,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                       {processedNodeData.cpu.unknownCapacity.length} nodes without known capacity are not shown: {processedNodeData.cpu.unknownCapacity.join(', ')}
                     </p>
                   )}
+                  <ChartCaption text="CPU-hours per node from jobs overlapping the range, split equally over a job's nodes. Normalized: percentage of the node's known capacity over the range." />
                 </div>
               </div>
             )}
@@ -415,6 +424,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                       {processedNodeData.memory.unknownCapacity.length} nodes without known capacity are not shown: {processedNodeData.memory.unknownCapacity.join(', ')}
                     </p>
                   )}
+                  <ChartCaption text="Requested memory-hours per node from jobs overlapping the range, split equally over a job's nodes. Normalized: percentage of the node's known memory over the range." />
                 </div>
               </div>
             )}
@@ -447,6 +457,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                       {processedNodeData.gpu.unknownCapacity.length} nodes without known capacity are not shown: {processedNodeData.gpu.unknownCapacity.join(', ')}
                     </p>
                   )}
+                  <ChartCaption text="GPU-hours per node from jobs overlapping the range, split equally over a job's nodes. Normalized: percentage of the node's known GPU count over the range." />
                 </div>
               </div>
             )}
