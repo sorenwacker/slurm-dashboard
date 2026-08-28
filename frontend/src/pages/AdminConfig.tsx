@@ -132,8 +132,10 @@ export function AdminConfig() {
       const data = await response.json();
       setConfig(data);
 
-      if (data.clusters && Object.keys(data.clusters).length > 0 && !selectedCluster) {
-        setSelectedCluster(Object.keys(data.clusters)[0]);
+      // Only pick a default when the URL did not name a cluster; a named
+      // cluster that is missing from the YAML must show as missing, not as another cluster.
+      if (data.clusters && Object.keys(data.clusters).length > 0 && !searchParams.get('cluster')) {
+        setSelectedCluster((current) => current || Object.keys(data.clusters)[0]);
       }
 
       setError('');
@@ -141,6 +143,34 @@ export function AdminConfig() {
       setError(err instanceof Error ? err.message : 'Failed to load configuration');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateDefaultConfig = async (clusterName: string) => {
+    setError('');
+    setSuccess('');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/config/${encodeURIComponent(clusterName)}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          display_name: clusterName,
+          description: `${clusterName} Cluster`,
+          metadata: {},
+          node_labels: {},
+          account_labels: {},
+          partition_labels: {},
+        }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to create configuration');
+      }
+      setSuccess(`Default configuration created for cluster ${clusterName}`);
+      await loadConfig();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create configuration');
     }
   };
 
@@ -726,8 +756,23 @@ export function AdminConfig() {
         ) : (
           <div className="admin-empty">
             <div className="admin-empty-icon">📋</div>
-            <div className="admin-empty-message">No Configuration Available</div>
-            <p style={{ marginTop: '0.5rem', color: '#6c757d' }}>Create a configuration file or select a different cluster.</p>
+            <div className="admin-empty-message">
+              {selectedCluster ? `No configuration for cluster "${selectedCluster}"` : 'No Configuration Available'}
+            </div>
+            <p style={{ marginTop: '0.5rem', color: '#6c757d' }}>
+              {selectedCluster
+                ? 'This cluster has no entry in clusters.yaml. Create a default entry, then upload data or run sync-config on the cluster.'
+                : 'Create a configuration file or select a different cluster.'}
+            </p>
+            {selectedCluster && (
+              <button
+                onClick={() => handleCreateDefaultConfig(selectedCluster)}
+                className="admin-btn admin-btn-primary"
+                style={{ marginTop: '1rem' }}
+              >
+                Create default configuration
+              </button>
+            )}
           </div>
         )}
       </div>
