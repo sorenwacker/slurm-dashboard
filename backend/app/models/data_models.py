@@ -22,6 +22,8 @@ class JobRecord(BaseModel):
     AllocGPUS: int = 0
     AllocNodes: int = 0
     NodeList: str | None = None
+    ReqMemMB: float | None = None
+    MaxRSSMB: float | None = None
 
 
 class DataIngestionRequest(BaseModel):

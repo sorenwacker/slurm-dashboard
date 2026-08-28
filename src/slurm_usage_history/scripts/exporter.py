@@ -18,6 +18,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from slurm_usage_history.memory import parse_memory_to_mb, parse_reqmem_to_mb
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -32,7 +34,7 @@ class SlurmDataExtractor:
     SACCT_FORMAT = (
         "JobID,User,QOS,Account,Partition,Submit,Start,End,State,"
         "Elapsed,AveDiskRead,AveDiskWrite,AveCPU,MaxRSS,AllocCPUS,"
-        "TotalCPU,NodeList,AllocTRES,Cluster"
+        "TotalCPU,NodeList,AllocTRES,ReqMem,Cluster"
     )
 
     def __init__(self, cluster_name: Optional[str] = None):
@@ -180,7 +182,7 @@ class SlurmDataExtractor:
         # Parse AllocTRES to extract CPU, GPU, memory info
         def parse_alloc_tres(tres_str):
             """Parse AllocTRES string like 'cpu=4,mem=16G,gres/gpu=2'"""
-            result = {'cpu': 0, 'gpu': 0, 'mem': 0}
+            result = {'cpu': 0, 'gpu': 0, 'mem': None}
             if pd.isna(tres_str) or not tres_str:
                 return result
 
@@ -194,12 +196,7 @@ class SlurmDataExtractor:
                     elif 'gpu' in key:
                         result['gpu'] = int(val)
                     elif 'mem' in key:
-                        # Convert memory to MB
-                        val_str = val.upper()
-                        if 'G' in val_str:
-                            result['mem'] = int(float(val_str.replace('G', '')) * 1024)
-                        elif 'M' in val_str:
-                            result['mem'] = int(float(val_str.replace('M', '')))
+                        result['mem'] = parse_memory_to_mb(val)
 
             return result
 
@@ -232,6 +229,15 @@ class SlurmDataExtractor:
                 logger.warning(f"Could not parse elapsed time '{elapsed_str}': {e}")
                 return 0.0
 
+        # MaxRSS is reported on step rows (e.g. 100.batch, 100.0); fold the
+        # maximum over all steps onto the parent job before the steps are dropped.
+        base_job_id = df['JobID'].astype(str).str.split('.').str[0]
+        if 'MaxRSS' in df.columns:
+            step_max_rss = df['MaxRSS'].map(parse_memory_to_mb).groupby(base_job_id).max()
+        else:
+            step_max_rss = pd.Series(dtype=float)
+        df['MaxRSSMB'] = base_job_id.map(step_max_rss)
+
         # Apply formatting
         df['AllocTRESParsed'] = df['AllocTRES'].apply(parse_alloc_tres)
         df['AllocCPUS'] = df['AllocTRESParsed'].apply(lambda x: x['cpu'] if x['cpu'] > 0 else 0)
@@ -250,6 +256,17 @@ class SlurmDataExtractor:
             return len([n for n in nodelist.split(',') if n.strip()])
 
         df['AllocNodes'] = df['NodeList'].apply(count_nodes)
+
+        # Requested memory: AllocTRES mem= first, sacct ReqMem as fallback
+        def requested_memory(row):
+            tres_mem = row['AllocTRESParsed']['mem']
+            if tres_mem is not None:
+                return tres_mem
+            if 'ReqMem' not in row:
+                return None
+            return parse_reqmem_to_mb(row['ReqMem'], row['AllocCPUS'], row['AllocNodes'])
+
+        df['ReqMemMB'] = df.apply(requested_memory, axis=1)
 
         # Filter out jobs with missing critical fields (malformed data)
         initial_count = len(df)
@@ -283,6 +300,8 @@ class SlurmDataExtractor:
                 'AllocGPUS': int(row['AllocGPUS']),
                 'AllocNodes': int(row['AllocNodes']),
                 'NodeList': str(row['NodeList']) if pd.notna(row['NodeList']) else None,
+                'ReqMemMB': float(row['ReqMemMB']) if pd.notna(row['ReqMemMB']) else None,
+                'MaxRSSMB': float(row['MaxRSSMB']) if pd.notna(row['MaxRSSMB']) else None,
             }
             jobs.append(job)
 
