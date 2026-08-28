@@ -102,3 +102,38 @@ class AdminUser(BaseModel):
     role: AdminRole
     full_name: Optional[str] = None
     is_active: bool = True
+
+
+class ClusterIdentityUpdate(BaseModel):
+    """Hand-maintained identity fields of a cluster entry in clusters.yaml."""
+
+    display_name: Optional[str] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    owner: Optional[str] = None
+    contact: Optional[str] = None
+    url: Optional[str] = None
+
+
+class NodeLabelUpdate(BaseModel):
+    """Hand-maintained fields of a node entry; hardware comes from the agent and is not editable."""
+
+    synonyms: Optional[list[str]] = None
+    description: Optional[str] = None
+    type: Optional[str] = Field(default=None, pattern="^(cpu|gpu|login|storage)$")
+
+
+class PartitionLabelUpdate(BaseModel):
+    """Hand-maintained fields of a partition entry."""
+
+    display_name: Optional[str] = None
+    description: Optional[str] = None
+
+
+class AccountLabelUpdate(BaseModel):
+    """Hand-maintained fields of an account entry."""
+
+    display_name: Optional[str] = None
+    short_name: Optional[str] = None
+    faculty: Optional[str] = None
+    department: Optional[str] = None

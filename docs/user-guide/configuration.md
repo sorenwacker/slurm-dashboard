@@ -255,31 +255,45 @@ settings:
 
 ### Configuring a New Cluster
 
-1. **Create cluster in admin panel:**
-   - Login at https://dashboard.daic.tudelft.nl/admin/login
-   - Click "Add Cluster"
-   - Enter cluster name (e.g., "DAIC"), description, contact email, and location
-   - Save and copy the generated API key
-   - **A default YAML configuration is automatically created** with the provided metadata. The YAML entry is written before the cluster record, so a cluster is never created without its configuration. If `clusters.yaml` is not writable by the service user, creation fails with an error and nothing is created.
+1. **Admin > Clusters > Add Cluster**: enter the cluster name; the API key is generated and a `clusters.yaml` entry is created with the name, description, contact, and location. The YAML entry is written before the cluster record, so a cluster is never created without its configuration; if `clusters.yaml` is not writable by the service user, creation fails and nothing is created.
+2. **Install the agent** on the cluster with the deploy-key command shown on the cluster page and run `slurm-dashboard sync-config`. This fills in nodes, hardware, partitions, accounts, and the SLURM version from SLURM itself (see [Cluster Sync](#cluster-sync)).
+3. **Add labels** on the cluster page: node synonyms and descriptions, partition and account display names. These are the only hand-maintained values.
 
-2. **Customize cluster details in YAML (optional):**
-   ```bash
-   # Edit config/clusters.yaml to add node hardware specs, aliases, etc.
-   nano /opt/slurm-usage-history/config/clusters.yaml
+### Admin Cluster Page
 
-   # Add node_labels, account_labels, partition_labels (see example above)
-   ```
+Every cluster has one page, `/admin/clusters/<name>`, reached from the cluster list. The page has five tabs.
 
-3. **Reload configuration:**
-   - Visit https://dashboard.daic.tudelft.nl/admin/config
-   - Click "Reload" to apply changes
-   - Or use API: `POST /api/admin/config/reload`
+**Overview**
 
-**Note:** With `auto_generate_labels: true` (default), the dashboard will automatically discover nodes from uploaded data and add them to the configuration. Hardware, partitions, and accounts are filled in by the agent's `sync-config` command (see [Cluster Sync](#cluster-sync)); descriptions and synonyms are edited by hand. Auto-discovery and Auto-Generate only know node names from job data; they do not set hardware, and the node type they assign is a default, not a measurement. Run `sync-config` to replace it with the type derived from the reported GPU count.
+- Identity: display name, description, location, owner, contact, URL. Editable in place; the description, contact, and location are also stored on the cluster record.
+- SLURM: version and cluster name as reported by the agent.
+- Sync status: time of the last `sync-config`, number of nodes with SLURM hardware, number of nodes known only from job data, number of partitions and accounts. If the cluster was never synced, the page shows the command to run.
+- Data status: first and last job date, jobs submitted through the API, time of the last submission.
+- Credentials: the API key (with rotate) and the one-time deploy key with the install command.
+
+**Nodes**
+
+One row per node: name, type, CPUs, memory, GPUs, partitions, features, source, synonyms, description. Source is `SLURM` when the node has synced hardware and `job data` when it was only discovered from uploaded jobs; nodes in the configuration that SLURM no longer reports are marked. Search, filter by type and partition, and a toggle to show only nodes not reported by SLURM. Synonyms, description, and type are editable in place; hardware, partitions, and features are read-only because they come from SLURM. Type can be set to `login` or `storage` for nodes that must not count as compute capacity.
+
+**Partitions**
+
+Name (with a marker for the SLURM default partition), nodes, CPUs, maximum wall time, state, display name, description. Display name and description are editable in place.
+
+**Accounts**
+
+Account, SLURM description, organization, display name, short name, faculty, department. The label fields are editable in place.
+
+**YAML**
+
+The raw cluster entry for edits the tabs do not cover, and an export button. Saving validates the YAML and reloads the configuration.
+
+There is no automatic label generation: the page never invents descriptions, display names, or node types. Values come from SLURM through the agent or are typed by an administrator.
+
+Per-entry edits use `PATCH /api/admin/clusters/by-name/<name>/nodes/<node>`, `/partitions/<partition>`, `/accounts/<account>`, and `/identity`; each accepts only the label fields listed above and returns the updated entry. `GET /api/admin/clusters/by-name/<name>/status` returns the sync and data status.
 
 ### Cluster Without Configuration
 
-The configuration page is opened per cluster (`/admin/config?cluster=NAME`). When the named cluster has no entry in `clusters.yaml`, the page reports "No configuration for cluster NAME" and offers to create a default entry; it never shows another cluster's configuration in its place.
+When a cluster record exists without a `clusters.yaml` entry (for example after a failed creation), the cluster page reports it and offers to create a default entry; it never shows another cluster's configuration in its place.
 
 ### Adding Node Aliases
 
@@ -296,12 +310,7 @@ The dashboard will aggregate all data from these aliases under the canonical nam
 
 ### Auto-discovery
 
-With `auto_generate_labels: true`, the dashboard automatically:
-1. Discovers new nodes from uploaded data
-2. Adds them to the cluster configuration with default values
-3. Checks if node exists as canonical name OR synonym before adding
-
-You can then edit the auto-generated entries to add better descriptions.
+With `auto_generate_labels: true`, the dashboard adds every node name found in uploaded job data to the configuration (after checking canonical names and synonyms), with `type` set to `default_node_type` and no hardware. Such nodes show `Source: job data` on the cluster page until a `sync-config` run replaces the default type with the one derived from the reported GPU count.
 
 ### Cluster Sync
 

@@ -380,15 +380,7 @@
   color: #5a6268;
 }
 
-.clusters-action-btn.action-config {
-  color: #6610f2;
-  display: inline-block;
-}
 
-.clusters-action-btn.action-config:hover:not(:disabled) {
-  color: #5209c7;
-  text-decoration: underline;
-}
 
 .clusters-modal-overlay {
   position: fixed;

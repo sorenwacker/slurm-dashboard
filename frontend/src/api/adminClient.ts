@@ -69,6 +69,11 @@ export interface DeployKeyResponse {
 }
 
 class AdminClient {
+  /** Headers for admin API calls made outside this client (Bearer token or SAML cookie). */
+  authHeaders(): HeadersInit {
+    return this.getAuthHeaders();
+  }
+
   private getAuthHeaders(): HeadersInit {
     const token = localStorage.getItem('admin_token');
     const headers: HeadersInit = {
