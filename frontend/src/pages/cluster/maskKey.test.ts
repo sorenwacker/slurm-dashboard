@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { maskKey } from './CredentialsPanel';
+import { maskKey } from './maskKey';
 
 describe('maskKey', () => {
   it('shows only the last four characters', () => {
