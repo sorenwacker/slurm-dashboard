@@ -536,7 +536,12 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
             cluster_config["node_labels"][node] = {
                 "synonyms": [],
                 "type": node_type,
-                "description": f"{node_type.upper()} Node {node}"
+                "description": f"{node_type.upper()} Node {node}",
+                "hardware": {
+                    "cpu": {"cores": 48 if node_type == "gpu" else 32},
+                    "ram": {"total_gb": 384 if node_type == "gpu" else 192},
+                    "gpus": [{"model": "demo", "count": 4}] if node_type == "gpu" else [],
+                },
             }
 
         for account in sorted(df["Account"].dropna().unique()):

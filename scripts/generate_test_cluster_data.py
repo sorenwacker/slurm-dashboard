@@ -402,6 +402,16 @@ class SyntheticClusterDataGenerator:
             ave_disk_read = "0M" if random.random() < 0.4 else f"{random.randint(10, 1000)}M"
             ave_disk_write = "0M" if random.random() < 0.4 else f"{random.randint(5, 500)}M"
 
+        # Requested memory per job (GB) and peak usage as a fraction of it;
+        # OUT_OF_MEMORY jobs reach their limit, most jobs use far less.
+        req_mem_gb = random.choice([4, 8, 16, 32, 64, 128]) * max(1, cpus // 4)
+        if state == "OUT_OF_MEMORY":
+            used_fraction = random.uniform(0.95, 1.0)
+        else:
+            used_fraction = random.betavariate(2, 5)
+        req_mem_mb = float(req_mem_gb * 1024)
+        max_rss_mb = round(req_mem_mb * used_fraction, 1)
+
         return {
             "User": user,
             "QOS": qos,
@@ -432,6 +442,8 @@ class SyntheticClusterDataGenerator:
             "AveDiskRead": ave_disk_read,
             "AveDiskWrite": ave_disk_write,
             "MaxRSS": max_rss,
+            "ReqMemMB": req_mem_mb,
+            "MaxRSSMB": max_rss_mb,
             "Cluster": self.cluster_name
         }
 
