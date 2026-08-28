@@ -275,7 +275,7 @@ settings:
    - Click "Reload" to apply changes
    - Or use API: `POST /api/admin/config/reload`
 
-**Note:** With `auto_generate_labels: true` (default), the dashboard will automatically discover nodes from uploaded data and add them to the configuration. You can then edit these auto-generated entries to add hardware specifications and better descriptions.
+**Note:** With `auto_generate_labels: true` (default), the dashboard will automatically discover nodes from uploaded data and add them to the configuration. Hardware specifications are filled in by the agent's `sync-config` command (see [Hardware Sync](#hardware-sync)); descriptions and synonyms are edited by hand.
 
 ### Adding Node Aliases
 
@@ -297,7 +297,19 @@ With `auto_generate_labels: true`, the dashboard automatically:
 2. Adds them to the cluster configuration with default values
 3. Checks if node exists as canonical name OR synonym before adding
 
-You can then edit the auto-generated entries to add hardware specs and better descriptions.
+You can then edit the auto-generated entries to add better descriptions.
+
+### Hardware Sync
+
+The agent command `slurm-dashboard sync-config` reads node hardware from SLURM (`scontrol show node`) and uploads it to `POST /api/agent/upload-config`. The dashboard merges it into `clusters.yaml` per node:
+
+- `hardware.cpu.cores`, `hardware.ram.total_gb`, and `hardware.gpus[]` (`model`, `count`) are overwritten with the reported values
+- `synonyms` and `description` are kept
+- `type` is set to `gpu` or `cpu` according to the reported GPU count; `login`, `storage`, and other types are kept
+- `partitions` lists the SLURM partitions the node belongs to
+- nodes not yet in the configuration are added; nodes no longer reported by SLURM are kept
+
+The merge records `metadata.last_hardware_sync` (UTC ISO 8601 timestamp) on the cluster, shown on the admin configuration page. The configuration is reloaded after each sync; no manual reload is required. See the [Cluster Setup Guide](cluster-setup.md#5-sync-node-hardware) for the agent side.
 
 ---
 

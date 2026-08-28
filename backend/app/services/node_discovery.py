@@ -1,8 +1,9 @@
 """Automatic node discovery and cluster config synchronization."""
 
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Set
+from typing import Any, Set
 
 import yaml
 
@@ -104,6 +105,71 @@ class NodeDiscoveryService:
         except Exception as e:
             logger.error(f"Failed to write updated cluster config: {e}")
             return 0
+
+    def sync_hardware(self, cluster_name: str, inventory: dict[str, Any]) -> dict[str, int]:
+        """Merge agent-reported node hardware into the cluster configuration.
+
+        For every node in ``inventory["nodes"]`` the ``hardware`` block and
+        ``partitions`` list are overwritten; ``synonyms`` and ``description``
+        are kept. The node ``type`` follows the GPU count unless it is a
+        special type such as ``login`` or ``storage``. Nodes not reported by
+        the agent are left untouched.
+
+        Args:
+            cluster_name: Name of the cluster
+            inventory: Document of the form ``{"nodes": {name: {cpu_cores, memory_gb, gpus, partitions}}}``
+
+        Returns:
+            Counts of nodes ``added`` and ``updated``
+
+        Raises:
+            ValueError: If the inventory does not contain a ``nodes`` mapping
+        """
+        nodes = inventory.get("nodes") if isinstance(inventory, dict) else None
+        if not isinstance(nodes, dict):
+            message = "Inventory must contain a 'nodes' mapping"
+            raise ValueError(message)
+
+        config = self._load_config()
+        cluster_config = config.setdefault("clusters", {}).setdefault(cluster_name, {})
+        node_labels = cluster_config.setdefault("node_labels", {})
+        default_type = config.get("settings", {}).get("default_node_type", "cpu")
+
+        added = updated = 0
+        for node_name, spec in nodes.items():
+            gpus = [{"model": g["model"], "count": int(g["count"])} for g in spec.get("gpus", [])]
+            hardware = {
+                "cpu": {"cores": int(spec.get("cpu_cores", 0))},
+                "ram": {"total_gb": int(spec.get("memory_gb", 0))},
+                "gpus": gpus,
+            }
+            if node_name in node_labels:
+                updated += 1
+            else:
+                added += 1
+                node_labels[node_name] = {"synonyms": [], "type": default_type, "description": f"Node {node_name}"}
+            entry = node_labels[node_name]
+            entry["hardware"] = hardware
+            entry["partitions"] = list(spec.get("partitions", []))
+            if entry.get("type") in (None, "cpu", "gpu"):
+                entry["type"] = "gpu" if gpus else "cpu"
+
+        synced_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        cluster_config.setdefault("metadata", {})["last_hardware_sync"] = synced_at
+        self._write_config(config)
+        logger.info("Hardware sync for %s: %d nodes added, %d updated", cluster_name, added, updated)
+        return {"added": added, "updated": updated}
+
+    def _load_config(self) -> dict[str, Any]:
+        if not self.config_path.exists():
+            return {}
+        with open(self.config_path) as f:
+            return yaml.safe_load(f) or {}
+
+    def _write_config(self, config: dict[str, Any]) -> None:
+        self.config_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.config_path, "w") as f:
+            yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 
     def _get_all_known_nodes(self, cluster_config: dict) -> Set[str]:
         """Get set of all known node names (canonical + synonyms).
