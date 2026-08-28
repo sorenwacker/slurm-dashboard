@@ -260,7 +260,7 @@ settings:
    - Click "Add Cluster"
    - Enter cluster name (e.g., "DAIC"), description, contact email, and location
    - Save and copy the generated API key
-   - **A default YAML configuration is automatically created** with the provided metadata
+   - **A default YAML configuration is automatically created** with the provided metadata. The YAML entry is written before the cluster record, so a cluster is never created without its configuration. If `clusters.yaml` is not writable by the service user, creation fails with an error and nothing is created.
 
 2. **Customize cluster details in YAML (optional):**
    ```bash
@@ -276,6 +276,10 @@ settings:
    - Or use API: `POST /api/admin/config/reload`
 
 **Note:** With `auto_generate_labels: true` (default), the dashboard will automatically discover nodes from uploaded data and add them to the configuration. You can then edit these auto-generated entries to add hardware specifications and better descriptions.
+
+### Cluster Without Configuration
+
+The configuration page is opened per cluster (`/admin/config?cluster=NAME`). When the named cluster has no entry in `clusters.yaml`, the page reports "No configuration for cluster NAME" and offers to create a default entry; it never shows another cluster's configuration in its place.
 
 ### Adding Node Aliases
 
