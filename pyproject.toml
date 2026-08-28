@@ -6,7 +6,7 @@ authors = [
 ]
 description = "Modern web dashboard for SLURM cluster usage analytics with DuckDB-powered data processing"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"  # pyarrow<15 / numpy<2 have no wheels for 3.13+
 license = { text = "GPL-3.0-or-later" }
 classifiers = [
   "Development Status :: 4 - Beta",
