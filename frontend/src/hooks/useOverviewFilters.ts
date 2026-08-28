@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { MetadataResponse, FilterRequest } from '../types';
+import { clampDate, defaultDateRange } from '../utils/dateRange';
 
 export interface OverviewFiltersState {
   selectedHostname: string;
@@ -42,12 +43,6 @@ export interface UseOverviewFiltersResult {
   filterRequest: FilterRequest;
 }
 
-function calculateStartDate(maxDate: string): string {
-  const date = new Date(maxDate);
-  date.setDate(date.getDate() - 42); // 6 weeks = 42 days
-  return date.toISOString().split('T')[0];
-}
-
 function calculatePeriodType(start: string, end: string): string {
   if (!start || !end) return 'month';
 
@@ -72,8 +67,8 @@ export function useOverviewFilters(
 ): UseOverviewFiltersResult {
   const [selectedHostname, setSelectedHostname] = useState<string>('');
   const previousHostname = useRef<string>('');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [startDate, setStartDateState] = useState<string>('');
+  const [endDate, setEndDateState] = useState<string>('');
   const [selectedPartitions, setSelectedPartitions] = useState<string[]>([]);
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -86,6 +81,11 @@ export function useOverviewFilters(
   const [sortByUsage, setSortByUsage] = useState<boolean>(false);
   const [normalizeNodeUsage, setNormalizeNodeUsage] = useState<boolean>(false);
 
+  const dateRange = allClustersMetadata?.date_ranges[selectedHostname] ?? null;
+  // Dates typed or picked by the user are kept inside the cluster's data range
+  const setStartDate = (value: string) => setStartDateState(clampDate(value, dateRange));
+  const setEndDate = (value: string) => setEndDateState(clampDate(value, dateRange));
+
   const actualPeriodType = periodType === 'auto'
     ? calculatePeriodType(startDate, endDate)
     : periodType;
@@ -96,11 +96,10 @@ export function useOverviewFilters(
       const firstHostname = allClustersMetadata.hostnames[0];
       setSelectedHostname(firstHostname);
 
-      const dateRange = allClustersMetadata.date_ranges[firstHostname];
-      if (dateRange && dateRange.max_date) {
-        const calculatedStartDate = calculateStartDate(dateRange.max_date);
-        setStartDate(calculatedStartDate);
-        setEndDate(dateRange.max_date);
+      const initial = defaultDateRange(allClustersMetadata.date_ranges[firstHostname]);
+      if (initial) {
+        setStartDateState(initial.start);
+        setEndDateState(initial.end);
       }
     }
   }, [allClustersMetadata, selectedHostname]);
@@ -108,13 +107,10 @@ export function useOverviewFilters(
   // Update dates when hostname changes
   useEffect(() => {
     if (selectedHostname && selectedHostname !== previousHostname.current) {
-      if (allClustersMetadata && allClustersMetadata.date_ranges[selectedHostname]) {
-        const dateRange = allClustersMetadata.date_ranges[selectedHostname];
-        if (dateRange.max_date) {
-          const calculatedStartDate = calculateStartDate(dateRange.max_date);
-          setStartDate(calculatedStartDate);
-          setEndDate(dateRange.max_date);
-        }
+      const initial = defaultDateRange(allClustersMetadata?.date_ranges[selectedHostname]);
+      if (initial) {
+        setStartDateState(initial.start);
+        setEndDateState(initial.end);
       }
       // Reset filters when changing hostname
       setSelectedPartitions([]);
