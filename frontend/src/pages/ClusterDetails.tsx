@@ -3,6 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { adminClient, type Cluster } from '../api/adminClient';
 import './AdminClusters.css';
 
+const AGENT_PACKAGE = 'slurm-dashboard[agent]';
+const AGENT_REPO = 'https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git';
+const INSTALL_COMMANDS = [
+  { label: 'uv', install: `uv tool install '${AGENT_PACKAGE} @ git+${AGENT_REPO}'` },
+  { label: 'pip', install: `pip install 'git+${AGENT_REPO}#egg=${AGENT_PACKAGE}'` },
+];
+
 export function ClusterDetails() {
   const { clusterId } = useParams<{ clusterId: string }>();
   const [cluster, setCluster] = useState<Cluster | null>(null);
@@ -185,39 +192,42 @@ export function ClusterDetails() {
                 Run this command on your cluster to set up the agent. The deploy key will be automatically exchanged for a permanent API key.
               </p>
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#333' }}>Installation Command:</h4>
-                <div
-                  className="clusters-modal-code"
-                  style={{
-                    backgroundColor: '#1e1e1e',
-                    padding: '1rem',
-                    borderRadius: '4px',
-                    overflow: 'auto'
-                  }}
-                >
-                  <code style={{ color: '#d4d4d4', fontSize: '0.75rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                    {`pip install 'git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git#egg=slurm-dashboard[agent]' && slurm-dashboard setup --api-url ${window.location.origin} --deploy-key ${newDeployKey}`}
-                  </code>
-                </div>
-                <button
-                  onClick={() => copyToClipboard(
-                    `pip install 'git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git#egg=slurm-dashboard[agent]' && slurm-dashboard setup --api-url ${window.location.origin} --deploy-key ${newDeployKey}`
-                  )}
-                  style={{
-                    marginTop: '0.5rem',
-                    padding: '0.5rem 1rem',
-                    fontSize: '0.85rem',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Copy Command
-                </button>
-              </div>
+              {INSTALL_COMMANDS.map(({ label, install }) => {
+                const command = `${install} && slurm-dashboard setup --api-url ${window.location.origin} --deploy-key ${newDeployKey}`;
+                return (
+                  <div key={label} style={{ marginBottom: '1.5rem' }}>
+                    <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#333' }}>Installation Command ({label}):</h4>
+                    <div
+                      className="clusters-modal-code"
+                      style={{
+                        backgroundColor: '#1e1e1e',
+                        padding: '1rem',
+                        borderRadius: '4px',
+                        overflow: 'auto'
+                      }}
+                    >
+                      <code style={{ color: '#d4d4d4', fontSize: '0.75rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                        {command}
+                      </code>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(command)}
+                      style={{
+                        marginTop: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.85rem',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Copy {label} command
+                    </button>
+                  </div>
+                );
+              })}
 
               <div style={{ borderTop: '1px solid #ddd', paddingTop: '1rem', marginTop: '1rem' }}>
                 <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#666' }}>Deploy Key (for manual setup):</h4>
