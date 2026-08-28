@@ -23,6 +23,8 @@ except ImportError as e:
 
 import pandas as pd
 
+from slurm_usage_history.memory import add_memory_columns
+
 logger = logging.getLogger(__name__)
 
 
@@ -581,6 +583,8 @@ class DuckDBDataStore(metaclass=Singleton):
                 df = df.rename(columns={"Elapsed [h]": "ElapsedHours"})
             elif "Start" in df.columns and "End" in df.columns:
                 df["ElapsedHours"] = (pd.to_datetime(df["End"]) - pd.to_datetime(df["Start"])).dt.total_seconds() / 3600.0
+
+        df = add_memory_columns(df)
 
         # Resource allocation columns
         if "Nodes" not in df.columns and "AllocNodes" in df.columns:
