@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { adminClient, type Cluster } from '../../api/adminClient';
+import { maskKey } from './maskKey';
 
 const AGENT_PACKAGE = 'slurm-dashboard[agent]';
 const AGENT_REPO = 'https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git';
@@ -12,11 +13,6 @@ interface CredentialsPanelProps {
   cluster: Cluster;
   onChanged: () => Promise<void>;
   onError: (message: string) => void;
-}
-
-/** Keys are hidden by default; only the last four characters identify which key is installed. */
-export function maskKey(key: string): string {
-  return key.length <= 4 ? '****' : `${'*'.repeat(Math.min(key.length - 4, 24))}${key.slice(-4)}`;
 }
 
 function formatDate(value?: string | null): string {
