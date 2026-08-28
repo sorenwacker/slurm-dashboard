@@ -106,21 +106,21 @@ class NodeDiscoveryService:
             logger.error(f"Failed to write updated cluster config: {e}")
             return 0
 
-    def sync_hardware(self, cluster_name: str, inventory: dict[str, Any]) -> dict[str, int]:
-        """Merge agent-reported node hardware into the cluster configuration.
+    def sync_cluster(self, cluster_name: str, inventory: dict[str, Any]) -> dict[str, dict[str, int]]:
+        """Merge the agent-reported cluster inventory into the cluster configuration.
 
-        For every node in ``inventory["nodes"]`` the ``hardware`` block and
-        ``partitions`` list are overwritten; ``synonyms`` and ``description``
-        are kept. The node ``type`` follows the GPU count unless it is a
-        special type such as ``login`` or ``storage``. Nodes not reported by
-        the agent are left untouched.
+        Only values SLURM reports are written. Reported sections (``hardware``,
+        ``partitions``, ``features``, ``slurm``) are overwritten; hand-edited
+        fields (``synonyms``, ``description``, ``display_name``, ...) are kept,
+        and nothing is generated for fields SLURM has no value for. Entries not
+        reported by the agent are left untouched.
 
         Args:
             cluster_name: Name of the cluster
-            inventory: Document of the form ``{"nodes": {name: {cpu_cores, memory_gb, gpus, partitions}}}``
+            inventory: Document with ``nodes`` and optional ``partitions``, ``accounts``, ``cluster``
 
         Returns:
-            Counts of nodes ``added`` and ``updated``
+            Per section (``nodes``, ``partitions``, ``accounts``): counts of entries ``added`` and ``updated``
 
         Raises:
             ValueError: If the inventory does not contain a ``nodes`` mapping
@@ -132,32 +132,58 @@ class NodeDiscoveryService:
 
         config = self._load_config()
         cluster_config = config.setdefault("clusters", {}).setdefault(cluster_name, {})
-        node_labels = cluster_config.setdefault("node_labels", {})
-        default_type = config.get("settings", {}).get("default_node_type", "cpu")
+        result = {
+            "nodes": self._merge_nodes(cluster_config.setdefault("node_labels", {}), nodes),
+            "partitions": self._merge_slurm_facts(
+                cluster_config.setdefault("partition_labels", {}), inventory.get("partitions") or {}
+            ),
+            "accounts": self._merge_slurm_facts(
+                cluster_config.setdefault("account_labels", {}), inventory.get("accounts") or {}
+            ),
+        }
 
+        metadata = cluster_config.setdefault("metadata", {})
+        for key, value in (inventory.get("cluster") or {}).items():
+            if value:
+                metadata[key] = value
+        metadata["last_hardware_sync"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+        self._write_config(config)
+        logger.info("Cluster sync for %s: %s", cluster_name, result)
+        return result
+
+    @staticmethod
+    def _merge_nodes(node_labels: dict[str, Any], nodes: dict[str, Any]) -> dict[str, int]:
         added = updated = 0
         for node_name, spec in nodes.items():
             gpus = [{"model": g["model"], "count": int(g["count"])} for g in spec.get("gpus", [])]
-            hardware = {
-                "cpu": {"cores": int(spec.get("cpu_cores", 0))},
-                "ram": {"total_gb": int(spec.get("memory_gb", 0))},
-                "gpus": gpus,
-            }
+            cpu = {"cores": int(spec.get("cpu_cores", 0))}
+            for key in ("sockets", "cores_per_socket", "threads_per_core"):
+                if spec.get(key):
+                    cpu[key] = int(spec[key])
             if node_name in node_labels:
                 updated += 1
             else:
                 added += 1
-                node_labels[node_name] = {"synonyms": [], "type": default_type, "description": f"Node {node_name}"}
+                node_labels[node_name] = {"synonyms": []}
             entry = node_labels[node_name]
-            entry["hardware"] = hardware
+            entry["hardware"] = {"cpu": cpu, "ram": {"total_gb": int(spec.get("memory_gb", 0))}, "gpus": gpus}
             entry["partitions"] = list(spec.get("partitions", []))
+            entry["features"] = list(spec.get("features", []))
             if entry.get("type") in (None, "cpu", "gpu"):
                 entry["type"] = "gpu" if gpus else "cpu"
+        return {"added": added, "updated": updated}
 
-        synced_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        cluster_config.setdefault("metadata", {})["last_hardware_sync"] = synced_at
-        self._write_config(config)
-        logger.info("Hardware sync for %s: %d nodes added, %d updated", cluster_name, added, updated)
+    @staticmethod
+    def _merge_slurm_facts(labels: dict[str, Any], reported: dict[str, Any]) -> dict[str, int]:
+        added = updated = 0
+        for name, facts in reported.items():
+            if name in labels:
+                updated += 1
+            else:
+                added += 1
+                labels[name] = {}
+            labels[name]["slurm"] = dict(facts)
         return {"added": added, "updated": updated}
 
     def _load_config(self) -> dict[str, Any]:

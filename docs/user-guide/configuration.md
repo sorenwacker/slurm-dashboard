@@ -275,7 +275,7 @@ settings:
    - Click "Reload" to apply changes
    - Or use API: `POST /api/admin/config/reload`
 
-**Note:** With `auto_generate_labels: true` (default), the dashboard will automatically discover nodes from uploaded data and add them to the configuration. Hardware specifications are filled in by the agent's `sync-config` command (see [Hardware Sync](#hardware-sync)); descriptions and synonyms are edited by hand.
+**Note:** With `auto_generate_labels: true` (default), the dashboard will automatically discover nodes from uploaded data and add them to the configuration. Hardware, partitions, and accounts are filled in by the agent's `sync-config` command (see [Cluster Sync](#cluster-sync)); descriptions and synonyms are edited by hand. Auto-discovery and Auto-Generate only know node names from job data; they do not set hardware, and the node type they assign is a default, not a measurement. Run `sync-config` to replace it with the type derived from the reported GPU count.
 
 ### Cluster Without Configuration
 
@@ -303,17 +303,17 @@ With `auto_generate_labels: true`, the dashboard automatically:
 
 You can then edit the auto-generated entries to add better descriptions.
 
-### Hardware Sync
+### Cluster Sync
 
-The agent command `slurm-dashboard sync-config` reads node hardware from SLURM (`scontrol show node`) and uploads it to `POST /api/agent/upload-config`. The dashboard merges it into `clusters.yaml` per node:
+The agent command `slurm-dashboard sync-config` reads the cluster from SLURM (`scontrol show config`, `scontrol show node`, `scontrol show partition`, `sacctmgr show account`) and uploads it to `POST /api/agent/upload-config`. The dashboard merges it into `clusters.yaml`:
 
-- `hardware.cpu.cores`, `hardware.ram.total_gb`, and `hardware.gpus[]` (`model`, `count`) are overwritten with the reported values
-- `synonyms` and `description` are kept
-- `type` is set to `gpu` or `cpu` according to the reported GPU count; `login`, `storage`, and other types are kept
-- `partitions` lists the SLURM partitions the node belongs to
-- nodes not yet in the configuration are added; nodes no longer reported by SLURM are kept
+- nodes: `hardware.cpu.cores` (schedulable CPUs), `sockets`, `cores_per_socket`, `threads_per_core`, `hardware.ram.total_gb`, `hardware.gpus[]` (`model`, `count`), `partitions`, `features` are overwritten; `type` is set to `gpu` or `cpu` from the GPU count unless it is `login`, `storage`, or another hand-set type; `synonyms` and `description` are kept
+- partitions: `slurm.nodes`, `slurm.total_cpus`, `slurm.total_nodes`, `slurm.max_time`, `slurm.default`, `slurm.state` are overwritten; `display_name` and `description` are kept
+- accounts: `slurm.description` and `slurm.organization` are overwritten; `display_name`, `short_name`, `faculty`, `department` are kept
+- cluster: `metadata.slurm_version`, `metadata.slurm_cluster_name`, and `metadata.last_hardware_sync` (UTC ISO 8601) are set
+- entries no longer reported by SLURM are kept
 
-The merge records `metadata.last_hardware_sync` (UTC ISO 8601 timestamp) on the cluster, shown on the admin configuration page. The configuration is reloaded after each sync; no manual reload is required. See the [Cluster Setup Guide](cluster-setup.md#5-sync-node-hardware) for the agent side.
+The sync never generates descriptions or display names. The configuration is reloaded after each sync. See the [Cluster Setup Guide](cluster-setup.md#5-sync-cluster-configuration) for the agent side.
 
 ---
 

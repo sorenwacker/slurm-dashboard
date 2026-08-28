@@ -8,7 +8,7 @@ from pathlib import Path
 import requests
 import yaml
 
-from slurm_usage_history.scripts.node_inventory import collect_node_inventory
+from slurm_usage_history.scripts.node_inventory import collect_cluster_inventory
 
 
 def setup_command(args):
@@ -113,7 +113,7 @@ def sync_config(config_path, dry_run):
     with open(config_path) as f:
         config = json.load(f)
 
-    inventory = collect_node_inventory()
+    inventory = collect_cluster_inventory()
     document = yaml.dump(inventory, default_flow_style=False, sort_keys=False)
 
     if dry_run:
@@ -140,7 +140,14 @@ def sync_config_command(args):
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
     if result is not None:
-        print(f"Hardware synced: {result.get('added', 0)} nodes added, {result.get('updated', 0)} updated")
+        print(format_sync_result(result))
+
+
+def format_sync_result(result):
+    """One-line summary of the server's sync response."""
+    parts = [f"{section}: {counts.get('added', 0)} added, {counts.get('updated', 0)} updated"
+             for section, counts in result.items() if isinstance(counts, dict)]
+    return "Cluster configuration synced (" + "; ".join(parts) + ")"
 
 
 def run_command(args):
@@ -149,9 +156,9 @@ def run_command(args):
         try:
             result = sync_config(Path(args.config), args.dry_run)
             if result is not None:
-                print(f"Hardware synced: {result.get('added', 0)} nodes added, {result.get('updated', 0)} updated")
+                print(format_sync_result(result))
         except RuntimeError as e:
-            print(f"WARNING: hardware sync failed, continuing with job collection: {e}", file=sys.stderr)
+            print(f"WARNING: configuration sync failed, continuing with job collection: {e}", file=sys.stderr)
 
     # Get the exporter script path
     script_path = Path(__file__).parent / "exporter.py"
@@ -282,14 +289,14 @@ def build_parser():
     run_parser.add_argument(
         "--sync-config",
         action="store_true",
-        help="Upload node hardware from scontrol before collecting jobs",
+        help="Upload the cluster configuration (nodes, partitions, accounts) from SLURM before collecting jobs",
     )
     run_parser.set_defaults(func=run_command)
 
     # sync-config command
     sync_parser = subparsers.add_parser(
         "sync-config",
-        help="Upload node hardware (CPU cores, memory, GPUs, partitions) from scontrol to the dashboard",
+        help="Upload the cluster configuration (nodes, partitions, accounts, versions) from SLURM to the dashboard",
     )
     sync_parser.add_argument(
         "--config",
@@ -299,7 +306,7 @@ def build_parser():
     sync_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the node inventory without uploading",
+        help="Print the cluster inventory without uploading",
     )
     sync_parser.set_defaults(func=sync_config_command)
 

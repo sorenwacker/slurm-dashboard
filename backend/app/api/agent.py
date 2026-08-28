@@ -235,21 +235,21 @@ async def list_uploaded_files(
 
 @router.post("/upload-config", status_code=status.HTTP_201_CREATED)
 async def upload_cluster_config(
-    file: Annotated[UploadFile, File(description="Node inventory YAML produced by 'slurm-dashboard sync-config'")],
+    file: Annotated[UploadFile, File(description="Cluster inventory YAML produced by 'slurm-dashboard sync-config'")],
     cluster_name: str = Depends(verify_agent_api_key),
 ) -> dict:
-    """Merge agent-reported node hardware into the cluster configuration.
+    """Merge the agent-reported cluster inventory into the cluster configuration.
 
-    The uploaded document has the form ``{"nodes": {name: {cpu_cores, memory_gb,
-    gpus, partitions}}}``. Hardware of reported nodes is overwritten, labels
-    are kept, and the configuration is reloaded afterwards.
+    The uploaded document has ``nodes`` and optionally ``partitions``, ``accounts``
+    and ``cluster``. Reported facts are overwritten, hand-edited labels are kept,
+    and the configuration is reloaded afterwards.
 
     Args:
         file: YAML node inventory
         cluster_name: Cluster name from API key verification (injected automatically)
 
     Returns:
-        Counts of nodes added and updated
+        Per-section counts of entries added and updated
     """
     if not file.filename or not (file.filename.endswith(".yaml") or file.filename.endswith(".yml")):
         raise HTTPException(
@@ -267,7 +267,7 @@ async def upload_cluster_config(
 
     service = NodeDiscoveryService(get_cluster_config_path())
     try:
-        result = service.sync_hardware(cluster_name, inventory)
+        result = service.sync_cluster(cluster_name, inventory)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except OSError as e:
@@ -278,5 +278,5 @@ async def upload_cluster_config(
         ) from e
 
     reload_cluster_config()
-    logger.info(f"Agent synced hardware: cluster={cluster_name}, {result}")
+    logger.info(f"Agent synced cluster configuration: cluster={cluster_name}, {result}")
     return {"status": "success", "cluster": cluster_name, **result}

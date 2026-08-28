@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `requires-python` bounded to `<3.13` because the pinned `pyarrow`/`numpy` have no wheels for 3.13; install commands pass `--python 3.12` and the conda instructions are replaced by uv and venv
 
 ### Added
-- `slurm-dashboard sync-config` and `run --sync-config`: agent reads node CPU, memory, GPU, and partition data from `scontrol` and the dashboard merges it into `clusters.yaml`
+- `slurm-dashboard sync-config` and `run --sync-config`: agent reads cluster metadata, node hardware and features, partitions, and accounts from `scontrol` and `sacctmgr`; the dashboard merges them into `clusters.yaml` without generating descriptions or guessing node types from names
 - Agent install command shown with uv (`uv tool install`) as well as pip in the admin panel and docs
 - Memory usage charts: agent collects requested memory and peak RSS per job; dashboard shows memory-hours over time, memory efficiency, memory per job, and per-node memory utilization
 

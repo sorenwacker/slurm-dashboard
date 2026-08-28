@@ -15,6 +15,8 @@ interface ClusterConfig {
     contact?: string;
     url?: string;
     last_hardware_sync?: string;
+    slurm_version?: string;
+    slurm_cluster_name?: string;
   };
   node_labels?: {
     [key: string]: NodeLabel;
@@ -51,16 +53,32 @@ interface NodeLabel {
   };
 }
 
+interface PartitionSlurmFacts {
+  nodes?: string;
+  total_cpus?: number;
+  total_nodes?: number;
+  max_time?: string;
+  default?: boolean;
+  state?: string;
+}
+
+interface AccountSlurmFacts {
+  description?: string;
+  organization?: string;
+}
+
 interface AccountLabel {
   display_name?: string;
   short_name?: string;
   faculty?: string;
   department?: string;
+  slurm?: AccountSlurmFacts;
 }
 
 interface PartitionLabel {
   display_name?: string;
   description?: string;
+  slurm?: PartitionSlurmFacts;
 }
 
 interface ConfigResponse {
@@ -488,8 +506,17 @@ export function AdminConfig() {
                           <div style={{ fontSize: '0.875rem', fontWeight: 500, color: '#6c757d' }}>Contact</div>
                           <div style={{ marginTop: '0.25rem' }}>{clusterConfig.metadata.contact || 'N/A'}</div>
                         </div>
+                        {clusterConfig.metadata.slurm_version && (
+                          <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
+                            <div style={{ fontSize: '0.875rem', fontWeight: 500, color: '#6c757d' }}>SLURM</div>
+                            <div style={{ marginTop: '0.25rem' }}>
+                              {clusterConfig.metadata.slurm_version}
+                              {clusterConfig.metadata.slurm_cluster_name && ` (cluster ${clusterConfig.metadata.slurm_cluster_name})`}
+                            </div>
+                          </div>
+                        )}
                         <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
-                          <div style={{ fontSize: '0.875rem', fontWeight: 500, color: '#6c757d' }}>Hardware synced</div>
+                          <div style={{ fontSize: '0.875rem', fontWeight: 500, color: '#6c757d' }}>Configuration synced</div>
                           <div style={{ marginTop: '0.25rem' }}>
                             {clusterConfig.metadata.last_hardware_sync
                               ? new Date(clusterConfig.metadata.last_hardware_sync).toLocaleString()
@@ -648,20 +675,24 @@ export function AdminConfig() {
                       <th>Short Name</th>
                       <th>Faculty</th>
                       <th>Department</th>
+                      <th>SLURM Description</th>
+                      <th>SLURM Organization</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Object.entries(clusterConfig.account_labels).map(([account, info]) => (
                       <tr key={account}>
                         <td style={{ fontWeight: 600 }}>{account}</td>
-                        <td>{info.display_name || 'N/A'}</td>
+                        <td>{info.display_name || ''}</td>
                         <td>
-                          <span className="admin-badge admin-badge-blue">
-                            {info.short_name || 'N/A'}
-                          </span>
+                          {info.short_name && (
+                            <span className="admin-badge admin-badge-blue">{info.short_name}</span>
+                          )}
                         </td>
-                        <td>{info.faculty || 'N/A'}</td>
-                        <td>{info.department || 'N/A'}</td>
+                        <td>{info.faculty || ''}</td>
+                        <td>{info.department || ''}</td>
+                        <td>{info.slurm?.description || ''}</td>
+                        <td>{info.slurm?.organization || ''}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -677,14 +708,27 @@ export function AdminConfig() {
                       <th>Partition</th>
                       <th>Display Name</th>
                       <th>Description</th>
+                      <th>Nodes</th>
+                      <th>CPUs</th>
+                      <th>Max Time</th>
+                      <th>State</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Object.entries(clusterConfig.partition_labels).map(([partition, info]) => (
                       <tr key={partition}>
-                        <td style={{ fontWeight: 600 }}>{partition}</td>
-                        <td>{info.display_name || 'N/A'}</td>
-                        <td>{info.description || 'N/A'}</td>
+                        <td style={{ fontWeight: 600 }}>
+                          {partition}
+                          {info.slurm?.default && (
+                            <span className="admin-badge admin-badge-blue" style={{ marginLeft: '0.5rem' }}>default</span>
+                          )}
+                        </td>
+                        <td>{info.display_name || ''}</td>
+                        <td>{info.description || ''}</td>
+                        <td title={info.slurm?.nodes}>{info.slurm?.total_nodes ?? ''}</td>
+                        <td>{info.slurm?.total_cpus ?? ''}</td>
+                        <td>{info.slurm?.max_time || ''}</td>
+                        <td>{info.slurm?.state || ''}</td>
                       </tr>
                     ))}
                   </tbody>
