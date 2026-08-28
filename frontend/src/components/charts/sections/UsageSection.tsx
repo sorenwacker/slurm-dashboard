@@ -308,12 +308,17 @@ const UsageSection: React.FC<UsageSectionProps> = ({
 
           {/* Utilization gauges */}
           {(clusterUtilization.cpu !== null || clusterUtilization.gpu !== null || clusterUtilization.memory !== null) && (
+            <>
+            <p style={{ fontSize: '0.85rem', color: '#666', margin: '0 0 0.5rem' }}>
+              Capacity-weighted over all configured nodes with known capacity for the selected range.
+            </p>
             <div className="gauge-grid" style={{ marginBottom: 'var(--space-lg)' }}>
               {clusterUtilization.cpu !== null && (
                 <div className="card gauge-card">
                   <GaugeChart
                     value={Math.round(clusterUtilization.cpu * 10) / 10}
-                    title="CPU utilization (all configured nodes)"
+                    title="CPU utilization"
+                    color="#04A5D5"
                     chartColors={chartColors}
                   />
                 </div>
@@ -322,7 +327,8 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                 <div className="card gauge-card">
                   <GaugeChart
                     value={Math.round(clusterUtilization.gpu * 10) / 10}
-                    title="GPU utilization (all configured nodes)"
+                    title="GPU utilization"
+                    color="#EC7300"
                     chartColors={chartColors}
                   />
                 </div>
@@ -338,12 +344,14 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                 <div className="card gauge-card">
                   <GaugeChart
                     value={Math.round(clusterUtilization.memory * 10) / 10}
-                    title="Memory allocation (all configured nodes)"
+                    title="Memory allocation"
+                    color={MEMORY_COLOR}
                     chartColors={chartColors}
                   />
                 </div>
               )}
             </div>
+            </>
           )}
 
           <div className="users-jobs-container">
