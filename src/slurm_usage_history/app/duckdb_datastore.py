@@ -473,6 +473,7 @@ class DuckDBDataStore(metaclass=Singleton):
         period_type: str = "month",
         format_accounts: bool = True,
         account_segments: int | None = None,
+        time_base: str = "submit",
     ) -> pd.DataFrame:
         """Filter data using DuckDB and return as pandas DataFrame.
 
@@ -492,6 +493,8 @@ class DuckDBDataStore(metaclass=Singleton):
             period_type: Not used in DuckDB implementation (kept for compatibility)
             format_accounts: Whether to format account names
             account_segments: Number of segments for account formatting
+            time_base: "submit" selects jobs submitted in the range; "overlap" selects jobs whose
+                runtime overlaps the range (used for node utilization)
 
         Returns:
             Filtered DataFrame
@@ -502,12 +505,20 @@ class DuckDBDataStore(metaclass=Singleton):
         # Build WHERE clause
         where_clauses = []
 
-        if start_date:
-            where_clauses.append(f"Submit >= '{start_date}'")
+        end_date_exclusive = None
         if end_date:
             # Make end_date inclusive by adding 1 day and using < comparison
             end_date_exclusive = (pd.to_datetime(end_date) + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
-            where_clauses.append(f"Submit < '{end_date_exclusive}'")
+        if time_base == "overlap":
+            if start_date:
+                where_clauses.append(f"(\"End\" IS NULL OR \"End\" >= '{start_date}')")
+            if end_date_exclusive:
+                where_clauses.append(f"Start < '{end_date_exclusive}'")
+        else:
+            if start_date:
+                where_clauses.append(f"Submit >= '{start_date}'")
+            if end_date_exclusive:
+                where_clauses.append(f"Submit < '{end_date_exclusive}'")
         if partitions:
             # Handle comma-separated partitions: match if any selected partition appears in the list
             partition_conditions = []

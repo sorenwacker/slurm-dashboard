@@ -37,7 +37,7 @@ const Charts: React.FC<ChartsProps> = ({
   const { chartColors, isDark } = useDarkMode();
   const timingStats = useTimingStats(data);
   const processedNodeData = useProcessedNodeData(data, hideUnusedNodes, sortByUsage, normalizeNodeUsage);
-  const clusterUtilization = useClusterUtilization(processedNodeData);
+  const clusterUtilization = useClusterUtilization(data, normalizeNodeUsage);
 
   // Create color map for consistent colors across charts
   const colorMap = useMemo(() => {

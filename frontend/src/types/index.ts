@@ -76,9 +76,17 @@ export interface SeriesData {
 }
 
 export interface NodeHardwareConfig {
-  cpu_cores: number;
-  gpu_count: number;
+  cpu_cores?: number;
+  gpu_count?: number;
   memory_gb?: number;  // 0 or absent when the node's memory is not configured
+  known?: boolean;     // false when the values are type defaults, not synced or configured hardware
+}
+
+export interface ClusterUtilization {
+  cpu: number | null;
+  gpu: number | null;
+  memory: number | null;
+  memory_coverage: number;  // share of jobs with known requested memory
 }
 
 export interface ChartData {
@@ -158,5 +166,6 @@ export interface AggregatedChartsResponse {
   memory_efficiency_over_time: ChartData;
   memory_per_job: ChartData;
   node_memory_usage: ChartData;
+  cluster_utilization: ClusterUtilization;
   user_activity_frequency: ChartData;
 }

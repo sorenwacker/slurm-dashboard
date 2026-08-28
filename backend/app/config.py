@@ -227,7 +227,8 @@ class ClusterConfig:
             node_name: Node name (will be normalized)
 
         Returns:
-            Dictionary with 'cpu_cores', 'gpu_count' and 'memory_gb' keys; memory_gb is 0 when unknown
+            Dictionary with 'cpu_cores', 'gpu_count', 'memory_gb' and 'known' keys; 'known' is False when the
+            values are type defaults rather than configured hardware; memory_gb is 0 when unknown
         """
         import re
 
@@ -241,7 +242,7 @@ class ClusterConfig:
             gpus = hardware.get("gpus", [])
             gpu_count = sum(g.get("count", 0) for g in gpus) if gpus else 0
             if cpu_cores > 0:
-                return {"cpu_cores": cpu_cores, "gpu_count": gpu_count, "memory_gb": memory_gb}
+                return {"cpu_cores": cpu_cores, "gpu_count": gpu_count, "memory_gb": memory_gb, "known": True}
 
         # Check node_type_patterns for matching pattern
         patterns = self.config.get("settings", {}).get("node_type_patterns", {})
@@ -252,6 +253,7 @@ class ClusterConfig:
                     "cpu_cores": pattern_config.get("cpu_cores", 48),
                     "gpu_count": pattern_config.get("gpu_count", 0),
                     "memory_gb": memory_gb,
+                    "known": True,
                 }
 
         # Fall back to hardware defaults based on node type
@@ -259,10 +261,20 @@ class ClusterConfig:
         defaults = self.config.get("settings", {}).get("hardware_defaults", {})
         type_defaults = defaults.get(node_type, {})
 
+        # Defaults are not measurements: callers must not normalize against them
         return {
             "cpu_cores": type_defaults.get("cpu_cores", 64),
             "gpu_count": type_defaults.get("gpu_count", 0),
             "memory_gb": memory_gb,
+            "known": False,
+        }
+
+    def get_all_node_capacities(self, cluster: str) -> Dict[str, Dict[str, Any]]:
+        """Hardware and type of every configured node of a cluster, keyed by canonical node name."""
+        node_labels = self.config.get("clusters", {}).get(cluster, {}).get("node_labels", {}) or {}
+        return {
+            node: {**self.get_node_hardware(cluster, node), "type": (info or {}).get("type", "cpu")}
+            for node, info in node_labels.items()
         }
 
     def get_hardware_defaults(self) -> Dict[str, Dict[str, int]]:

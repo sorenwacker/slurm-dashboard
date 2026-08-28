@@ -1,5 +1,5 @@
 import React from 'react';
-import type { AggregatedChartsResponse, ChartData } from '../../../types';
+import type { AggregatedChartsResponse } from '../../../types';
 import type { ChartColors } from '../../../hooks/useDarkMode';
 import StackedAreaChart from '../StackedAreaChart';
 import PieChart from '../PieChart';
@@ -7,17 +7,8 @@ import HistogramChart from '../HistogramChart';
 import GaugeChart from '../GaugeChart';
 import { COLORS } from '../chartHelpers';
 
-interface ProcessedNodeData {
-  cpu: ChartData | null;
-  gpu: ChartData | null;
-  memory: ChartData | null;
-}
-
-interface ClusterUtilization {
-  cpu: number | null;
-  gpu: number | null;
-  memory: number | null;
-}
+import type { ProcessedNodeData } from '../../../hooks/useProcessedNodeData';
+import type { ClusterUtilization } from '../../../types';
 
 const MEMORY_COLOR = '#2E8B57';
 
@@ -322,7 +313,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                 <div className="card gauge-card">
                   <GaugeChart
                     value={Math.round(clusterUtilization.cpu * 10) / 10}
-                    title="Average CPU Utilization"
+                    title="CPU utilization (all configured nodes)"
                     chartColors={chartColors}
                   />
                 </div>
@@ -331,16 +322,23 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                 <div className="card gauge-card">
                   <GaugeChart
                     value={Math.round(clusterUtilization.gpu * 10) / 10}
-                    title="Average GPU Utilization"
+                    title="GPU utilization (all configured nodes)"
                     chartColors={chartColors}
                   />
+                </div>
+              )}
+              {clusterUtilization.memory === null && clusterUtilization.memory_coverage > 0 && clusterUtilization.memory_coverage < 0.9 && (
+                <div className="card gauge-card">
+                  <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>
+                    Memory allocation gauge not shown: requested memory is known for {Math.round(clusterUtilization.memory_coverage * 100)}% of jobs in this range.
+                  </p>
                 </div>
               )}
               {clusterUtilization.memory !== null && (
                 <div className="card gauge-card">
                   <GaugeChart
                     value={Math.round(clusterUtilization.memory * 10) / 10}
-                    title="Average Memory Allocation"
+                    title="Memory allocation (all configured nodes)"
                     chartColors={chartColors}
                   />
                 </div>
@@ -372,6 +370,11 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                     barMode="stack"
                     chartColors={chartColors}
                   />
+                  {processedNodeData.cpu.unknownCapacity.length > 0 && (
+                    <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
+                      {processedNodeData.cpu.unknownCapacity.length} nodes without known capacity are not shown: {processedNodeData.cpu.unknownCapacity.join(', ')}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -399,6 +402,11 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                     barMode="stack"
                     chartColors={chartColors}
                   />
+                  {processedNodeData.memory.unknownCapacity.length > 0 && (
+                    <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
+                      {processedNodeData.memory.unknownCapacity.length} nodes without known capacity are not shown: {processedNodeData.memory.unknownCapacity.join(', ')}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -426,6 +434,11 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                     barMode="stack"
                     chartColors={chartColors}
                   />
+                  {processedNodeData.gpu.unknownCapacity.length > 0 && (
+                    <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
+                      {processedNodeData.gpu.unknownCapacity.length} nodes without known capacity are not shown: {processedNodeData.gpu.unknownCapacity.join(', ')}
+                    </p>
+                  )}
                 </div>
               </div>
             )}

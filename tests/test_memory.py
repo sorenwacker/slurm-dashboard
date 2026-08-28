@@ -5,6 +5,7 @@ import math
 import pandas as pd
 import pytest
 
+from slurm_usage_history.app.duckdb_datastore import Singleton
 from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
 from slurm_usage_history.memory import add_memory_columns, parse_memory_to_mb, parse_reqmem_to_mb
 
@@ -64,6 +65,11 @@ def test_add_memory_columns_keeps_existing_and_fills_gaps_from_legacy():
     assert "MemGBHours" not in out.columns
 
 
+@pytest.fixture(autouse=True)
+def reset_datastore_singleton():
+    Singleton._instances = {}
+
+
 def test_duckdb_filter_derives_memory_columns_from_mixed_files(tmp_path):
     """Old parquet files (MaxRSS strings, no ReqMemMB) and new ones combine without zero-filling."""
     data_dir = tmp_path / "host" / "data"
@@ -92,3 +98,31 @@ def test_duckdb_filter_derives_memory_columns_from_mixed_files(tmp_path):
     assert df.loc["new", "MaxRSSMB"] == 4096.0
     assert math.isnan(df.loc["old", "MemGBHours"])
     assert df.loc["old", "MaxRSSMB"] == 512.0
+
+
+def test_duckdb_filter_overlap_selects_jobs_running_in_window(tmp_path):
+    data_dir = tmp_path / "host" / "data"
+    data_dir.mkdir(parents=True)
+    pd.DataFrame(
+        {
+            "JobID": ["before", "straddle", "inside", "after"],
+            "User": ["u"] * 4,
+            "Account": ["a"] * 4,
+            "Partition": ["p"] * 4,
+            "QOS": ["q"] * 4,
+            "State": ["COMPLETED"] * 4,
+            "Submit": pd.to_datetime(["2026-07-01", "2026-07-20", "2026-08-02", "2026-08-05"]),
+            "Start": pd.to_datetime(["2026-07-01", "2026-07-25", "2026-08-02", "2026-08-05"]),
+            "End": pd.to_datetime(["2026-07-02", "2026-08-02", "2026-08-03", "2026-08-06"]),
+            "NodeList": ["n1"] * 4,
+            "CPUHours": [1.0] * 4,
+            "GPUHours": [0.0] * 4,
+        }
+    ).to_parquet(data_dir / "jobs.parquet")
+    store = DuckDBDataStore(str(tmp_path))
+
+    submitted = store.filter("host", "2026-08-01", "2026-08-03", format_accounts=False)
+    overlapping = store.filter("host", "2026-08-01", "2026-08-03", format_accounts=False, time_base="overlap")
+
+    assert sorted(submitted["JobID"]) == ["inside"]
+    assert sorted(overlapping["JobID"]) == ["inside", "straddle"]
