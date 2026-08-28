@@ -12,7 +12,24 @@ Quick guide for installing and configuring the SLURM data collection agent on yo
 
 ## Installation on Cluster
 
-### Recommended: Using Conda
+### Using uv
+
+`uv tool install` creates an isolated environment for the agent and puts `slurm-dashboard` on your PATH (`~/.local/bin`); no conda or venv is needed. uv ships its own Python builds, so it also works on clusters whose system Python is too old.
+
+```bash
+# Install uv (once)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install the agent
+uv tool install 'slurm-dashboard[agent] @ git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git'
+
+# Verify installation
+slurm-dashboard --help
+```
+
+To update later: `uv tool upgrade slurm-dashboard`.
+
+### Using Conda
 
 Conda provides the most reliable installation on older cluster systems (e.g., with GCC 4.8).
 
@@ -80,6 +97,19 @@ The easiest way to set up the agent is using a deploy key from your dashboard ad
 1. Ask your dashboard administrator to generate a deploy key for your cluster
 2. Copy the installation command from the admin panel (it includes everything you need)
 3. Run it on your cluster:
+
+The admin panel shows the command in two variants; use whichever tool is available on the cluster.
+
+With uv:
+
+```bash
+uv tool install 'slurm-dashboard[agent] @ git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git' && \
+slurm-dashboard setup \
+  --api-url https://dashboard.daic.tudelft.nl \
+  --deploy-key deploy_xxxxxxxxxxxx
+```
+
+With pip (inside your conda environment or venv):
 
 ```bash
 pip install 'git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git#egg=slurm-dashboard[agent]' && \

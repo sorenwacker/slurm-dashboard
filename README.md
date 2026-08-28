@@ -76,6 +76,11 @@ For cluster administrators, the recommended setup process uses deploy keys:
 3. Run on your cluster - it installs the agent and exchanges the deploy key for a permanent API key
 
 ```bash
+# with uv
+uv tool install 'slurm-dashboard[agent] @ git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git' && \
+slurm-dashboard setup --api-url https://your-dashboard.example.com --deploy-key deploy_xxx
+
+# or with pip
 pip install 'git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git#egg=slurm-dashboard[agent]' && \
 slurm-dashboard setup --api-url https://your-dashboard.example.com --deploy-key deploy_xxx
 ```
