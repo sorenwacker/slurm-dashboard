@@ -283,17 +283,31 @@ async def create_cluster(
             f"to match existing data directory"
         )
 
+    if db.get_cluster_by_name(cluster_name):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cluster with name '{cluster_name}' already exists",
+        )
+
+    # Write the YAML entry first: if the config file is not writable the
+    # request fails before any record exists, instead of leaving a cluster
+    # with an API key but no configuration.
     try:
-        cluster = db.create_cluster(
-            name=cluster_name,
+        ensure_cluster_yaml_config(
+            cluster_name=cluster_name,
             description=request.description,
             contact_email=request.contact_email,
             location=request.location,
         )
+    except OSError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Cannot write cluster configuration: {e}",
+        ) from e
 
-        # Ensure YAML configuration is created for this cluster
-        ensure_cluster_yaml_config(
-            cluster_name=cluster_name,
+    try:
+        cluster = db.create_cluster(
+            name=cluster_name,
             description=request.description,
             contact_email=request.contact_email,
             location=request.location,
@@ -302,7 +316,7 @@ async def create_cluster(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
-        )
+        ) from e
 
     return ClusterResponse(
         id=cluster["id"],

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
 
@@ -40,10 +40,7 @@ class Settings(BaseSettings):
     # CORS (comma-separated string)
     cors_origins: str = "http://localhost:3100"
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-        extra = "ignore"
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
     def get_api_keys(self) -> list[str]:
         """Parse API keys from comma-separated string."""
