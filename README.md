@@ -77,7 +77,7 @@ For cluster administrators, the recommended setup process uses deploy keys:
 
 ```bash
 # with uv
-uv tool install 'slurm-dashboard[agent] @ git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git' && \
+uv tool install --python 3.12 'slurm-dashboard[agent] @ git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git' && \
 slurm-dashboard setup --api-url https://your-dashboard.example.com --deploy-key deploy_xxx
 
 # or with pip

@@ -5,23 +5,22 @@ Quick guide for installing and configuring the SLURM data collection agent on yo
 ## Prerequisites
 
 - SLURM cluster with `sacct` access
-- Python 3.10-3.12 (3.14+ not yet supported by pandas)
-- Conda or venv for isolated environments
+- Python 3.10-3.12 (installed by uv if the system Python does not match)
 - Git (for GitLab installation)
 - Network access to dashboard API
 
 ## Installation on Cluster
 
-### Using uv
+### Using uv (Recommended)
 
-`uv tool install` creates an isolated environment for the agent and puts `slurm-dashboard` on your PATH (`~/.local/bin`); no conda or venv is needed. uv ships its own Python builds, so it also works on clusters whose system Python is too old.
+`uv tool install` creates an isolated environment for the agent and puts `slurm-dashboard` on your PATH (`~/.local/bin`). uv downloads its own Python build, so the system Python version does not matter. `--python 3.12` is required: the agent pins `pyarrow<15` and `numpy<2` for old-GCC compatibility, and those have no wheels for Python 3.13 or later.
 
 ```bash
 # Install uv (once)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install the agent
-uv tool install 'slurm-dashboard[agent] @ git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git'
+uv tool install --python 3.12 'slurm-dashboard[agent] @ git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git'
 
 # Verify installation
 slurm-dashboard --help
@@ -29,35 +28,13 @@ slurm-dashboard --help
 
 To update later: `uv tool upgrade slurm-dashboard`.
 
-### Using Conda
-
-Conda provides the most reliable installation on older cluster systems (e.g., with GCC 4.8).
-
-```bash
-# Create conda environment with Python 3.11
-conda create -n slurm-dash python=3.11 -y
-conda activate slurm-dash
-
-# On older systems (GCC < 8.4), install modern compilers first
-conda install -y gcc_linux-64 gxx_linux-64
-
-# Install the agent
-pip install "git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git#egg=slurm-dashboard[agent]"
-
-# Add to PATH if needed
-export PATH="$HOME/.local/bin:$PATH"
-
-# Verify installation
-slurm-dashboard --help
-```
-
 ### Alternative: Using venv
 
-If conda is not available:
+Requires a system `python3` between 3.10 and 3.12.
 
 ```bash
-# Create virtual environment with Python 3.10-3.12
-python3.11 -m venv ~/slurm-dash-venv
+python3 --version
+python3 -m venv ~/slurm-dash-venv
 source ~/slurm-dash-venv/bin/activate
 
 # Install the agent
@@ -76,13 +53,13 @@ slurm-dashboard --help
 
 ### Important Notes
 
-- **Python version**: Use Python 3.10-3.12 (not 3.14+, pandas doesn't support it yet)
+- **Python version**: 3.10-3.12. On Python 3.13+ the install fails while building `pyarrow`; use the uv route or a venv with an older Python.
 - **PATH setup**: If `slurm-dashboard` command is not found, add `~/.local/bin` to PATH:
   ```bash
   export PATH="$HOME/.local/bin:$PATH"
   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
   ```
-- **Old systems**: On clusters with GCC < 8.4, install compilers via conda first
+- **Old systems**: the pinned `pandas`, `numpy`, and `pyarrow` versions ship wheels that run on GCC 4.8-era systems, so no compiler is needed
 
 ## Setup Data Collection
 
@@ -103,13 +80,13 @@ The admin panel shows the command in two variants; use whichever tool is availab
 With uv:
 
 ```bash
-uv tool install 'slurm-dashboard[agent] @ git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git' && \
+uv tool install --python 3.12 'slurm-dashboard[agent] @ git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git' && \
 slurm-dashboard setup \
   --api-url https://dashboard.daic.tudelft.nl \
   --deploy-key deploy_xxxxxxxxxxxx
 ```
 
-With pip (inside your conda environment or venv):
+With pip (inside an activated venv):
 
 ```bash
 pip install 'git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git#egg=slurm-dashboard[agent]' && \
@@ -133,9 +110,6 @@ The deploy key:
 If you prefer manual setup or already have an API key:
 
 ```bash
-# Activate your conda environment
-conda activate slurm-dash
-
 # Create config with your credentials
 slurm-dashboard create-config \
   --api-url https://dashboard.daic.tudelft.nl \
@@ -200,12 +174,11 @@ To keep the configuration current, add `--sync-config` to the `run` command in t
 # Edit crontab
 crontab -e
 
-# Add daily collection at 2 AM
-# Adjust paths based on your conda installation
-0 2 * * * source ~/miniforge3/etc/profile.d/conda.sh && conda activate slurm-dash && slurm-dashboard run --config ~/config.json --sync-config >> ~/agent.log 2>&1
+# Add daily collection at 2 AM (uv tool install puts slurm-dashboard in ~/.local/bin)
+0 2 * * * $HOME/.local/bin/slurm-dashboard run --config ~/config.json --sync-config >> ~/agent.log 2>&1
 ```
 
-**For venv instead of conda:**
+**For a venv install:**
 ```bash
 0 2 * * * source ~/slurm-dash-venv/bin/activate && slurm-dashboard run --config ~/config.json --sync-config >> ~/agent.log 2>&1
 ```
@@ -335,25 +308,21 @@ sacct --starttime $(date -d '7 days ago' +%Y-%m-%d) --format=JobID,Start,End,Sta
 sacctmgr show configuration
 ```
 
-### Python 3.14 Installation Fails
+### Install Fails Building pyarrow (Python 3.13+)
 
-pandas doesn't yet support Python 3.14. Use Python 3.10-3.12:
+The agent pins `pyarrow<15` and `numpy<2`, which have no wheels for Python 3.13 or later, so pip or uv tries to compile them and fails. Install with a supported interpreter:
 
 ```bash
-# Recreate conda environment with correct Python version
-conda create -n slurm-dash python=3.11 -y
-conda activate slurm-dash
-pip install "git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git#egg=slurm-dashboard[agent]"
+uv tool uninstall slurm-dashboard
+uv tool install --python 3.12 'slurm-dashboard[agent] @ git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git'
 ```
 
-### GCC Too Old (GCC < 8.4)
+### Git Not Found During Install
 
-On older systems, pandas compilation fails. Install modern compilers via conda:
+uv and pip call `git` for `git+https://` sources. If the node has no `git`, install from the repository archive instead:
 
 ```bash
-conda activate slurm-dash
-conda install -y gcc_linux-64 gxx_linux-64
-pip install "git+https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git#egg=slurm-dashboard[agent]"
+uv tool install --python 3.12 'slurm-dashboard[agent] @ https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history/-/archive/main/slurm-usage-history-main.tar.gz'
 ```
 
 ### Command Not Found

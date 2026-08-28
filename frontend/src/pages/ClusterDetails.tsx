@@ -6,7 +6,7 @@ import './AdminClusters.css';
 const AGENT_PACKAGE = 'slurm-dashboard[agent]';
 const AGENT_REPO = 'https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git';
 const INSTALL_COMMANDS = [
-  { label: 'uv', install: `uv tool install '${AGENT_PACKAGE} @ git+${AGENT_REPO}'` },
+  { label: 'uv', install: `uv tool install --python 3.12 '${AGENT_PACKAGE} @ git+${AGENT_REPO}'` },
   { label: 'pip', install: `pip install 'git+${AGENT_REPO}#egg=${AGENT_PACKAGE}'` },
 ];
 
