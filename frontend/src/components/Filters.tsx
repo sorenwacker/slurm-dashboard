@@ -339,10 +339,10 @@ const Filters: React.FC<FiltersProps> = ({
         </div>
       )}
 
-      {/* Always visible: Time Period */}
+      {/* Always visible: Binning Period */}
       <div className="filter-group">
         <label htmlFor="period-type" title="Auto mode selects granularity based on date range">
-          Time Period
+          Binning Period
         </label>
         <select
           id="period-type"
