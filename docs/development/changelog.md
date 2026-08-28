@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Node utilization: jobs overlapping the window are counted for the overlapping hours only, multi-node jobs are split across their nodes instead of counted once per node, gauges are capacity-weighted over all configured nodes, and nodes without synced capacity are no longer normalized against default values (see docs/user-guide/utilization.md)
 - Dashboard date filters are kept inside the cluster's data range: the initial start date is the first data point when the cluster has less than six weeks of data, and typed dates outside the range snap to the nearest bound
 - Ingest endpoint crashed with 500 on jobs that never started (null Start) while deriving the week column; it now stores them with empty timing columns and logs the traceback on failure
 - Exporter sent the literal string `None` as `Start`/`End` for jobs that never started, which made the dashboard reject the whole batch with 422

@@ -11,6 +11,7 @@ import json
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 
+from ..config import get_cluster_config
 from ..core.config import get_settings
 from ..core.saml_auth import get_current_user_saml
 from ..models.data_models import FilterRequest
@@ -184,34 +185,28 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
         period_type = request.period_type or "month"
         color_by = request.color_by  # Can be: Account, Partition, State, QOS, User, or None
 
-        # Calculate total hours for client-side normalization
-        total_hours = None
-        try:
-            if request.start_date and request.end_date:
-                start = datetime.strptime(request.start_date, "%Y-%m-%d")
-                end = datetime.strptime(request.end_date, "%Y-%m-%d")
-            elif "Submit" in df.columns:
-                start = pd.to_datetime(df["Submit"].min())
-                end = pd.to_datetime(df["Submit"].max())
-            else:
-                start = end = None
-
-            if start and end:
-                # Add 1 day to end to include the last day fully
-                delta = (end - start).days + 1
-                total_hours = delta * 24.0
-        except Exception:
-            total_hours = None
-
-        # Get node usage data (always return raw values - normalization done client-side)
+        # Node utilization uses jobs overlapping the window and the window length as capacity time
+        window = _window(request, df)
+        total_hours = (window[1] - window[0]).total_seconds() / 3600.0 if window else None
+        overlap_df = datastore.filter(
+            hostname=request.hostname,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            partitions=request.partitions,
+            accounts=request.accounts,
+            users=request.users,
+            qos=request.qos,
+            states=request.states,
+            time_base="overlap",
+        )
+        if request.account_segments:
+            overlap_df = format_accounts_in_df(overlap_df, request.account_segments)
         node_usage = generate_node_usage(
-            df,
+            overlap_df,
             color_by=color_by,
-            hide_unused=False,  # Always return all nodes
-            sort_by_usage=False,  # Alphabetical order (client handles sorting)
-            normalize=False,  # Always return raw values (normalization done client-side)
-            cluster_name=request.hostname,
-            total_hours=total_hours,
+            hide_unused=False,  # Always return all nodes (client handles hiding)
+            window=window,
+            capacities=get_cluster_config().get_all_node_capacities(request.hostname),
         )
 
         charts_data = {
@@ -255,6 +250,7 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
             "node_cpu_usage": {**node_usage["cpu_usage"], "total_hours": total_hours},
             "node_gpu_usage": {**node_usage["gpu_usage"], "total_hours": total_hours},
             "node_memory_usage": {**node_usage["memory_usage"], "total_hours": total_hours},
+            "cluster_utilization": node_usage["cluster_utilization"],
             # User activity frequency distribution
             "user_activity_frequency": generate_user_activity_frequency(df, period_type, color_by),
         }
@@ -271,6 +267,19 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
         logger.error(f"Charts endpoint error: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error generating charts: {str(e)}")
+
+
+def _window(request: FilterRequest, df: pd.DataFrame) -> tuple[pd.Timestamp, pd.Timestamp] | None:
+    """Selected range as (start, end_exclusive); falls back to the submit range of the data."""
+    if request.start_date and request.end_date:
+        start = pd.Timestamp(request.start_date)
+        end = pd.Timestamp(request.end_date) + pd.Timedelta(days=1)
+    elif "Submit" in df.columns and not df.empty:
+        start = pd.to_datetime(df["Submit"].min()).normalize()
+        end = pd.to_datetime(df["Submit"].max()).normalize() + pd.Timedelta(days=1)
+    else:
+        return None
+    return (start, end) if end > start else None
 
 
 def _empty_charts_response() -> dict[str, Any]:
@@ -300,6 +309,7 @@ def _empty_charts_response() -> dict[str, Any]:
         "memory_efficiency_over_time": {"x": [], "y": []},
         "memory_per_job": {"x": [], "y": []},
         "node_memory_usage": {"x": [], "y": []},
+        "cluster_utilization": {"cpu": None, "gpu": None, "memory": None, "memory_coverage": 0.0},
     }
 
 

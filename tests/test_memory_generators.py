@@ -87,5 +87,7 @@ def test_get_node_hardware_reports_memory(tmp_path):
         )
     )
     config = ClusterConfig(str(path))
-    assert config.get_node_hardware("T", "n1") == {"cpu_cores": 8, "gpu_count": 0, "memory_gb": 128}
+    assert config.get_node_hardware("T", "n1") == {"cpu_cores": 8, "gpu_count": 0, "memory_gb": 128, "known": True}
     assert config.get_node_hardware("T", "n2")["memory_gb"] == 0
+    assert config.get_node_hardware("T", "n2")["known"] is False
+    assert config.get_all_node_capacities("T")["n1"]["type"] == "cpu"

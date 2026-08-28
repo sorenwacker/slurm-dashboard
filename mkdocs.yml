@@ -51,6 +51,7 @@ nav:
       - Cluster Setup: user-guide/cluster-setup.md
       - Configuration: user-guide/configuration.md
       - Memory Usage: user-guide/memory-usage.md
+      - Utilization: user-guide/utilization.md
   - Deployment:
       - SAML Setup: deployment/saml-setup.md
   - Development:
