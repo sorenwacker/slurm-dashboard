@@ -47,7 +47,7 @@ cluster_utilization = sum over nodes of resource_hours(node) / sum over nodes of
 
 An idle node with known capacity lowers the gauge; an unknown-capacity node does not appear in either sum. Nodes of type `login` and `storage` are excluded.
 
-The memory gauge is shown only when requested memory is known for at least 90 % of the jobs in the range; otherwise the page states the coverage instead. This happens for data collected before the agent reported memory fields.
+When requested memory is known for fewer than 90 % of the jobs in the range, the memory gauge carries a warning stating the coverage; it then describes only the jobs with memory data. This happens for data collected before the agent reported memory fields.
 
 ## Where to look when a number is surprising
 

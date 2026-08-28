@@ -1510,3 +1510,15 @@ body {
     border: 1px solid #ccc;
   }
 }
+
+/* Figure captions under charts */
+.chart-caption {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #6b7280;
+}
+
+.chart-caption-warning {
+  color: #92400e;
+}

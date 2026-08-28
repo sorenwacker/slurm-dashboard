@@ -1,4 +1,5 @@
 import React from 'react';
+import ChartCaption from '../ChartCaption';
 import type { AggregatedChartsResponse } from '../../../types';
 import type { ChartColors } from '../../../hooks/useDarkMode';
 import StackedAreaChart from '../StackedAreaChart';
@@ -42,6 +43,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
                   periodType={periodType}
                   chartColors={chartColors}
                 />
+                <ChartCaption text="Distinct users with at least one job starting in the period." />
               </div>
             )}
             {data.user_activity_frequency && (
@@ -85,6 +87,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
                     chartColors={chartColors}
                   />
                 )}
+                <ChartCaption text="How many periods each user was active in: users on the x-axis grouped by number of active periods." />
               </div>
             )}
           </div>
@@ -108,6 +111,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
                   periodType={periodType}
                   chartColors={chartColors}
                 />
+                <ChartCaption text="Jobs submitted per period, stacked by the selected colour dimension." />
               </div>
             )}
             {data.jobs_distribution && (
@@ -149,6 +153,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
                     chartColors={chartColors}
                   />
                 )}
+                <ChartCaption text="Jobs per user, or per colour dimension when one is selected." />
               </div>
             )}
           </div>
