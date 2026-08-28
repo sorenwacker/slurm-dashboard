@@ -177,3 +177,6 @@ _version.py
 # Ansible deployment files (kept separate from application code)
 ansible/
 docker-compose.dev.tmp.yml
+
+# Writable runtime configuration; see CLUSTER_CONFIG_PATH
+backend/config/clusters.yaml

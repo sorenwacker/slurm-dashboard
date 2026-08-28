@@ -7,6 +7,7 @@ from pathlib import Path
 import yaml
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
+from ..config import default_cluster_config_path
 from ..core.admin_auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     authenticate_admin,
@@ -69,11 +70,8 @@ def ensure_cluster_yaml_config(cluster_name: str, description: str | None = None
         contact_email: Optional contact email
         location: Optional location
     """
-    config_dir = Path(__file__).parent.parent.parent / "config"
-    config_file = config_dir / "clusters.yaml"
-
-    # Create config directory if it doesn't exist
-    config_dir.mkdir(exist_ok=True)
+    config_file = default_cluster_config_path()
+    config_file.parent.mkdir(parents=True, exist_ok=True)
 
     # Load existing config or create new
     if config_file.exists():
@@ -236,7 +234,7 @@ async def list_clusters(admin: str = Depends(get_current_admin)):
             description=c.get("description"),
             contact_email=c.get("contact_email"),
             location=c.get("location"),
-            api_key=c["api_key"],
+            api_key_prefix=c.get("api_key_prefix", ""),
             api_key_created=c["api_key_created"],
             active=c["active"],
             created_at=c["created_at"],
@@ -324,7 +322,8 @@ async def create_cluster(
         description=cluster.get("description"),
         contact_email=cluster.get("contact_email"),
         location=cluster.get("location"),
-        api_key=cluster["api_key"],
+        api_key=cluster.get("api_key"),
+        api_key_prefix=cluster.get("api_key_prefix", ""),
         api_key_created=cluster["api_key_created"],
         active=cluster["active"],
         created_at=cluster["created_at"],
@@ -363,7 +362,8 @@ async def get_cluster(
         description=cluster.get("description"),
         contact_email=cluster.get("contact_email"),
         location=cluster.get("location"),
-        api_key=cluster["api_key"],
+        api_key=cluster.get("api_key"),
+        api_key_prefix=cluster.get("api_key_prefix", ""),
         api_key_created=cluster["api_key_created"],
         active=cluster["active"],
         created_at=cluster["created_at"],
@@ -410,7 +410,8 @@ async def update_cluster(
         description=cluster.get("description"),
         contact_email=cluster.get("contact_email"),
         location=cluster.get("location"),
-        api_key=cluster["api_key"],
+        api_key=cluster.get("api_key"),
+        api_key_prefix=cluster.get("api_key_prefix", ""),
         api_key_created=cluster["api_key_created"],
         active=cluster["active"],
         created_at=cluster["created_at"],

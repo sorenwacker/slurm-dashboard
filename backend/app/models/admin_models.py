@@ -40,7 +40,8 @@ class ClusterResponse(BaseModel):
     description: Optional[str]
     contact_email: Optional[str]
     location: Optional[str]
-    api_key: str
+    api_key: Optional[str] = None  # full key, only in the response that issued it
+    api_key_prefix: str = ""
     api_key_created: datetime
     active: bool
     created_at: datetime

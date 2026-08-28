@@ -35,7 +35,8 @@ export interface Cluster {
   description?: string;
   contact_email?: string;
   location?: string;
-  api_key: string;
+  api_key?: string;        // full key, present only in the response that issued it
+  api_key_prefix: string;
   api_key_created: string;
   active: boolean;
   created_at: string;

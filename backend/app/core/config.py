@@ -35,6 +35,7 @@ class Settings(BaseSettings):
 
     # Data
     data_path: str = "data"
+    cluster_config_path: Optional[str] = None  # writable clusters.yaml; default is inside the checkout
     auto_refresh_interval: int = 600
 
     # CORS (comma-separated string)

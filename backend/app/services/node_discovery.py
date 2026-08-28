@@ -20,8 +20,9 @@ class NodeDiscoveryService:
             config_path: Path to clusters.yaml file
         """
         if config_path is None:
-            # Default to project config directory
-            config_path = Path(__file__).parent.parent.parent / "config" / "clusters.yaml"
+            from ..config import default_cluster_config_path
+
+            config_path = default_cluster_config_path()
 
         self.config_path = Path(config_path)
 
