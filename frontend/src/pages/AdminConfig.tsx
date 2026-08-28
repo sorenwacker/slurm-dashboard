@@ -600,22 +600,30 @@ export function AdminConfig() {
                             <div className="admin-hardware-cards">
                               {nodeInfo.hardware.cpu && (
                                 <div className="admin-hardware-card hw-cpu">
-                                  <span className="admin-hardware-label">CPU:</span> {nodeInfo.hardware.cpu.model || 'N/A'}
-                                  <br />
-                                  {nodeInfo.hardware.cpu.cores || 'N/A'} cores, {nodeInfo.hardware.cpu.threads || 'N/A'} threads
+                                  <span className="admin-hardware-label">CPU:</span>{' '}
+                                  {[
+                                    nodeInfo.hardware.cpu.model,
+                                    nodeInfo.hardware.cpu.cores ? `${nodeInfo.hardware.cpu.cores} cores` : null,
+                                    nodeInfo.hardware.cpu.threads ? `${nodeInfo.hardware.cpu.threads} threads` : null,
+                                  ].filter(Boolean).join(', ') || 'unknown'}
                                 </div>
                               )}
                               {nodeInfo.hardware.ram && (
                                 <div className="admin-hardware-card hw-ram">
-                                  <span className="admin-hardware-label">RAM:</span> {nodeInfo.hardware.ram.total_gb || 'N/A'} GB {nodeInfo.hardware.ram.type || ''}
+                                  <span className="admin-hardware-label">RAM:</span>{' '}
+                                  {nodeInfo.hardware.ram.total_gb ? `${nodeInfo.hardware.ram.total_gb} GB ${nodeInfo.hardware.ram.type || ''}`.trim() : 'unknown'}
                                 </div>
                               )}
                               {nodeInfo.hardware.gpus && nodeInfo.hardware.gpus.length > 0 && (
                                 <div className="admin-hardware-card hw-gpu">
-                                  <span className="admin-hardware-label">GPU:</span> {nodeInfo.hardware.gpus[0].count || 'N/A'}x {nodeInfo.hardware.gpus[0].model || 'N/A'}
-                                  <br />
-                                  {nodeInfo.hardware.gpus[0].memory_gb || 'N/A'} GB
-                                  {nodeInfo.hardware.gpus[0].nvlink && ' • NVLink'}
+                                  <span className="admin-hardware-label">GPU:</span>{' '}
+                                  {nodeInfo.hardware.gpus.map((gpu) =>
+                                    [
+                                      `${gpu.count || '?'}x ${gpu.model || 'unknown'}`,
+                                      gpu.memory_gb ? `${gpu.memory_gb} GB` : null,
+                                      gpu.nvlink ? 'NVLink' : null,
+                                    ].filter(Boolean).join(', ')
+                                  ).join('; ')}
                                 </div>
                               )}
                             </div>
