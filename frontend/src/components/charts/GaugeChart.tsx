@@ -18,7 +18,7 @@ const GaugeChart: React.FC<GaugeChartProps> = ({ value, title, color, chartColor
   return (
     <div>
       <h3 style={{ textAlign: 'center' }}>{title}</h3>
-      <div style={{ width: '100%', height: '170px' }}>
+      <div style={{ width: '100%', height: '200px' }}>
         <Plot
           data={[
             {
@@ -37,7 +37,7 @@ const GaugeChart: React.FC<GaugeChartProps> = ({ value, title, color, chartColor
                   ticklen: 4,
                   tickcolor: 'rgba(0,0,0,0)',
                 },
-                bar: { color, thickness: 0.35 },
+                bar: { color, thickness: 0.4 },
                 bgcolor: track,
                 borderwidth: 0,
               },
@@ -45,7 +45,7 @@ const GaugeChart: React.FC<GaugeChartProps> = ({ value, title, color, chartColor
           ]}
           layout={{
             autosize: true,
-            margin: { l: 24, r: 24, t: 10, b: 0 },
+            margin: { l: 40, r: 40, t: 36, b: 24 },
             paper_bgcolor: 'rgba(0,0,0,0)',
             font: { color: textColor },
           }}
