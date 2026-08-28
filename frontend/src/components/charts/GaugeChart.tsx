@@ -30,8 +30,8 @@ const GaugeChart: React.FC<GaugeChartProps> = ({ value, title, color, chartColor
                 shape: 'angular',
                 axis: {
                   range: [0, 100],
-                  tickvals: [0, 100],
-                  ticktext: ['0%', '100%'],
+                  tickvals: [0, 25, 50, 75, 100],
+                  ticktext: ['0%', '25%', '50%', '75%', '100%'],
                   tickfont: { color: textColor, size: 12 },
                   tickwidth: 0,
                   ticklen: 4,
