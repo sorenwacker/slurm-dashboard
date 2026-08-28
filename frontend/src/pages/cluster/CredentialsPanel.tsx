@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { adminClient, type Cluster } from '../../api/adminClient';
-import { maskKey } from './maskKey';
 
 const AGENT_PACKAGE = 'slurm-dashboard[agent]';
 const AGENT_REPO = 'https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history.git';
@@ -33,7 +32,6 @@ export function CredentialsPanel({ cluster, onChanged, onError }: CredentialsPan
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
   const [newDeployKey, setNewDeployKey] = useState<string | null>(null);
   const [copied, setCopied] = useState('');
-  const [revealed, setRevealed] = useState(false);
 
   const copy = async (text: string, label: string) => {
     await navigator.clipboard.writeText(text);
@@ -69,7 +67,6 @@ export function CredentialsPanel({ cluster, onChanged, onError }: CredentialsPan
   };
 
   const deploy = deployKeyState(cluster);
-  const apiKey = newApiKey ?? cluster.api_key;
 
   return (
     <section className="cp-card">
@@ -77,16 +74,25 @@ export function CredentialsPanel({ cluster, onChanged, onError }: CredentialsPan
       <dl className="cp-dl">
         <dt>API key</dt>
         <dd>
-          <code className="cp-code">{revealed ? apiKey : maskKey(apiKey)}</code>
-          <button type="button" className="cp-btn cp-btn-small" onClick={() => setRevealed(!revealed)}>
-            {revealed ? 'Hide' : 'Reveal'}
-          </button>
-          <button type="button" className="cp-btn cp-btn-small" onClick={() => copy(apiKey, 'api')}>
-            {copied === 'api' ? 'Copied' : 'Copy'}
-          </button>
-          <button type="button" className="cp-btn cp-btn-small cp-btn-danger" onClick={rotate} disabled={busy}>
-            Rotate
-          </button>
+          {newApiKey ? (
+            <>
+              <code className="cp-code">{newApiKey}</code>
+              <button type="button" className="cp-btn cp-btn-small" onClick={() => copy(newApiKey, 'api')}>
+                {copied === 'api' ? 'Copied' : 'Copy'}
+              </button>
+              <div className="cp-inline-error">Shown once. Copy it now; it cannot be displayed again.</div>
+            </>
+          ) : (
+            <>
+              <code className="cp-code">{cluster.api_key_prefix}…</code>
+              <span className="cp-muted">prefix; the key is stored hashed and can only be replaced</span>
+            </>
+          )}
+          <div>
+            <button type="button" className="cp-btn cp-btn-small cp-btn-danger" onClick={rotate} disabled={busy}>
+              Rotate
+            </button>
+          </div>
           <div className="cp-muted">Created {formatDate(cluster.api_key_created)}</div>
         </dd>
         <dt>Deploy key</dt>

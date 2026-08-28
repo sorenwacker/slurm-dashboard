@@ -42,7 +42,7 @@ async def verify_api_key(api_key: str = Security(api_key_header)) -> str:
         return "unknown"
 
     # No valid key found
-    if not legacy_api_keys and not db.get_all_active_api_keys():
+    if not legacy_api_keys and not db.has_active_api_keys():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="No API keys configured on server",

@@ -1,12 +1,25 @@
 """Simple JSON-based database for cluster management."""
 
+import hashlib
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
 from uuid import uuid4
 
 from ..core.admin_auth import generate_api_key
+
+PREFIX_LENGTH = 8
+
+
+def hash_api_key(api_key: str) -> str:
+    """Keys are 32 random bytes, so an unsalted SHA-256 is enough to make the stored value useless."""
+    return hashlib.sha256(api_key.encode()).hexdigest()
+
+
+def _store_api_key(cluster: dict, api_key: str) -> None:
+    cluster["api_key_hash"] = hash_api_key(api_key)
+    cluster["api_key_prefix"] = api_key[:PREFIX_LENGTH]
+    cluster.pop("api_key", None)
 
 
 class ClusterDB:
@@ -25,7 +38,7 @@ class ClusterDB:
     def _read_db(self) -> dict:
         """Read database from file."""
         try:
-            with open(self.db_path, "r") as f:
+            with open(self.db_path) as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             return {"clusters": {}, "stats": {}}
@@ -38,9 +51,9 @@ class ClusterDB:
     def create_cluster(
         self,
         name: str,
-        description: Optional[str] = None,
-        contact_email: Optional[str] = None,
-        location: Optional[str] = None,
+        description: str | None = None,
+        contact_email: str | None = None,
+        location: str | None = None,
     ) -> dict:
         """Create a new cluster and generate API key."""
         db = self._read_db()
@@ -60,13 +73,13 @@ class ClusterDB:
             "description": description,
             "contact_email": contact_email,
             "location": location,
-            "api_key": api_key,
             "api_key_created": now.isoformat(),
             "active": True,
             "created_at": now.isoformat(),
             "updated_at": now.isoformat(),
         }
 
+        _store_api_key(cluster, api_key)
         db["clusters"][cluster_id] = cluster
 
         # Initialize stats
@@ -76,9 +89,9 @@ class ClusterDB:
         }
 
         self._write_db(db)
-        return cluster
+        return {**cluster, "api_key": api_key}
 
-    def get_cluster(self, cluster_id: str) -> Optional[dict]:
+    def get_cluster(self, cluster_id: str) -> dict | None:
         """Get cluster by ID."""
         db = self._read_db()
         cluster = db["clusters"].get(cluster_id)
@@ -91,7 +104,7 @@ class ClusterDB:
 
         return cluster
 
-    def get_cluster_by_name(self, name: str) -> Optional[dict]:
+    def get_cluster_by_name(self, name: str) -> dict | None:
         """Get cluster by name."""
         db = self._read_db()
         for cluster in db["clusters"].values():
@@ -103,7 +116,7 @@ class ClusterDB:
                 return cluster
         return None
 
-    def get_all_clusters(self) -> List[dict]:
+    def get_all_clusters(self) -> list[dict]:
         """Get all clusters."""
         db = self._read_db()
         clusters = []
@@ -119,11 +132,11 @@ class ClusterDB:
     def update_cluster(
         self,
         cluster_id: str,
-        description: Optional[str] = None,
-        contact_email: Optional[str] = None,
-        location: Optional[str] = None,
-        active: Optional[bool] = None,
-    ) -> Optional[dict]:
+        description: str | None = None,
+        contact_email: str | None = None,
+        location: str | None = None,
+        active: bool | None = None,
+    ) -> dict | None:
         """Update cluster information."""
         db = self._read_db()
 
@@ -160,7 +173,7 @@ class ClusterDB:
         self._write_db(db)
         return True
 
-    def rotate_api_key(self, cluster_id: str) -> Optional[str]:
+    def rotate_api_key(self, cluster_id: str) -> str | None:
         """Generate a new API key for a cluster."""
         db = self._read_db()
 
@@ -168,31 +181,38 @@ class ClusterDB:
             return None
 
         new_api_key = generate_api_key()
-        db["clusters"][cluster_id]["api_key"] = new_api_key
+        _store_api_key(db["clusters"][cluster_id], new_api_key)
         db["clusters"][cluster_id]["api_key_created"] = datetime.utcnow().isoformat()
         db["clusters"][cluster_id]["updated_at"] = datetime.utcnow().isoformat()
 
         self._write_db(db)
         return new_api_key
 
-    def verify_api_key(self, api_key: str) -> Optional[str]:
-        """Verify API key and return cluster name if valid."""
+    def verify_api_key(self, api_key: str) -> str | None:
+        """Return the active cluster name for a key, or None.
+
+        Records that still hold a plaintext ``api_key`` (created before hashing)
+        are migrated to a hash the first time they are verified.
+        """
         db = self._read_db()
-
+        key_hash = hash_api_key(api_key)
         for cluster in db["clusters"].values():
-            if cluster["api_key"] == api_key and cluster["active"]:
+            if not cluster.get("active", True):
+                continue
+            if cluster.get("api_key_hash") == key_hash:
                 return cluster["name"]
-
+            if cluster.get("api_key") == api_key:
+                _store_api_key(cluster, api_key)
+                self._write_db(db)
+                return cluster["name"]
         return None
 
-    def get_all_active_api_keys(self) -> List[str]:
-        """Get all active API keys."""
+    def has_active_api_keys(self) -> bool:
+        """Whether any active cluster has a key configured."""
         db = self._read_db()
-        return [
-            cluster["api_key"]
-            for cluster in db["clusters"].values()
-            if cluster["active"]
-        ]
+        return any(
+            c.get("active", True) and (c.get("api_key_hash") or c.get("api_key")) for c in db["clusters"].values()
+        )
 
     def update_submission_stats(self, cluster_name: str, job_count: int):
         """Update submission statistics for a cluster."""
@@ -219,7 +239,7 @@ class ClusterDB:
 
         self._write_db(db)
 
-    def generate_deploy_key(self, cluster_id: str, expires_days: int = 7) -> Optional[str]:
+    def generate_deploy_key(self, cluster_id: str, expires_days: int = 7) -> str | None:
         """Generate a one-time deployment key for a cluster.
 
         Args:
@@ -248,11 +268,11 @@ class ClusterDB:
         self._write_db(db)
         return deploy_key
 
-    def exchange_deploy_key(self, deploy_key: str, client_ip: str = None) -> Optional[dict]:
-        """Exchange a deploy key for the actual API key.
+    def exchange_deploy_key(self, deploy_key: str, client_ip: str = None) -> dict | None:
+        """Exchange a deploy key for a freshly issued API key.
 
-        Invalidates the deploy key after use and records the IP address.
-        Returns cluster info with api_key or None if invalid/already used/expired.
+        Keys are stored hashed, so the exchange rotates the cluster's key and
+        returns the new plaintext once. Invalidates the deploy key and records the IP.
 
         Args:
             deploy_key: The deploy key to exchange
@@ -283,6 +303,10 @@ class ClusterDB:
             if datetime.utcnow() > expires_dt:
                 return None
 
+        api_key = generate_api_key()
+        _store_api_key(db["clusters"][cluster_id], api_key)
+        db["clusters"][cluster_id]["api_key_created"] = datetime.utcnow().isoformat()
+
         # Mark deploy key as used
         db["clusters"][cluster_id]["deploy_key_used"] = True
         db["clusters"][cluster_id]["deploy_key_used_at"] = datetime.utcnow().isoformat()
@@ -294,7 +318,7 @@ class ClusterDB:
         return {
             "cluster_id": cluster_id,
             "cluster_name": cluster["name"],
-            "api_key": cluster["api_key"],
+            "api_key": api_key,
         }
 
 

@@ -6,6 +6,16 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 
+def default_cluster_config_path() -> Path:
+    """CLUSTER_CONFIG_PATH from settings, or backend/config/clusters.yaml inside the checkout."""
+    from .core.config import get_settings
+
+    configured = get_settings().cluster_config_path
+    if configured:
+        return Path(configured).expanduser()
+    return Path(__file__).parent.parent / "config" / "clusters.yaml"
+
+
 class ClusterConfig:
     """Manages cluster configuration from YAML file."""
 
@@ -16,9 +26,7 @@ class ClusterConfig:
             config_path: Path to clusters.yaml file. If None, uses default location.
         """
         if config_path is None:
-            # Try to find config file in backend directory
-            current_dir = Path(__file__).parent.parent
-            config_path = current_dir / "config" / "clusters.yaml"
+            config_path = default_cluster_config_path()
 
         self.config_path = Path(config_path)
         self.config: Dict[str, Any] = {}

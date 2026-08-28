@@ -329,7 +329,7 @@ function CreateClusterForm({ onSuccess, onCancel, onAPIKeyGenerated }: CreateClu
         location: location || undefined,
       });
 
-      onAPIKeyGenerated(cluster.api_key);
+      if (cluster.api_key) onAPIKeyGenerated(cluster.api_key);
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create cluster');

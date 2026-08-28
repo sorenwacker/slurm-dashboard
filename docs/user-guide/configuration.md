@@ -26,10 +26,6 @@ ADMIN_USERS=admin:$2b$12$tCIgrmuyRCjOPJdAyds0kehbikagSkZqTKkavZTl9teDfT9aNps2.
 ADMIN_SECRET_KEY=your-random-secret-key-here
 ```
 
-**Current Admin Credentials:**
-- Username: `admin`
-- Password: `KUhN7Ty6Fb7tigTE7c5mfEYoLba00dp1vSNVmKwgLqg`
-
 #### SAML-based Access
 ```bash
 # Admin emails - users with these emails get admin access after SAML login
@@ -47,12 +43,15 @@ SUPERADMIN_EMAILS=admin@example.com
 ### Other Dashboard Settings
 
 ```bash
-# API Keys for agent data uploads (comma-separated)
-# Note: These are legacy - prefer using per-cluster API keys from database
+# Legacy API keys for agent data uploads (comma-separated); prefer per-cluster keys
 API_KEYS=legacy-key-1,legacy-key-2
 
 # Data storage path
 DATA_PATH=/data/slurm-usage-history
+
+# Cluster configuration file (default: backend/config/clusters.yaml inside the checkout).
+# Set it to a path outside the checkout in production; the app writes to this file.
+CLUSTER_CONFIG_PATH=/data/slurm-usage-history/clusters.yaml
 
 # CORS origins (comma-separated)
 CORS_ORIGINS=https://dashboard.daic.tudelft.nl,https://dashboard2.example.com
@@ -69,9 +68,9 @@ DUCKDB_HOME=/opt/slurm-usage-history/.duckdb
 
 ---
 
-## 2. Cluster-specific Configuration (config/clusters.yaml)
+## 2. Cluster-specific Configuration (clusters.yaml)
 
-Located at: `/opt/slurm-usage-history/config/clusters.yaml`
+Located at the path in `CLUSTER_CONFIG_PATH`; without that setting, `backend/config/clusters.yaml` inside the checkout is used. The application writes this file (agent sync, node discovery, admin edits), so in production it must live outside the git checkout, otherwise every deployment competes with it. `backend/config/clusters.example.yaml` in the repository shows the structure.
 
 Each cluster can have its own configuration with node labels, hardware specs, account mappings, and partition information.
 
@@ -269,7 +268,7 @@ Every cluster has one page, `/admin/clusters/<name>`, reached from the cluster l
 - SLURM: version and cluster name as reported by the agent.
 - Sync status: time of the last `sync-config`, number of nodes with SLURM hardware, number of nodes known only from job data, number of partitions and accounts. If the cluster was never synced, the page shows the command to run.
 - Data status: first and last job date, jobs submitted through the API, time of the last submission.
-- Credentials: the API key, masked except for its last four characters until revealed, with copy and rotate; and the one-time deploy key with the install command.
+- Credentials: the API key prefix and creation time, with rotate; and the one-time deploy key with the install command. API keys are stored as SHA-256 hashes, so the full key is shown exactly once: when the cluster is created, when the key is rotated, and to the agent when it exchanges a deploy key (which issues a fresh key). A lost key is replaced by rotating it.
 
 **Nodes**
 
