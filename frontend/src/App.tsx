@@ -3,8 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import { AdminLogin } from './pages/AdminLogin';
 import { AdminClusters } from './pages/AdminClusters';
-import { ClusterDetails } from './pages/ClusterDetails';
-import { AdminConfig } from './pages/AdminConfig';
+import { ClusterPage } from './pages/cluster/ClusterPage';
 import { AdminUsers } from './pages/AdminUsers';
 import './App.css';
 
@@ -26,8 +25,8 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/clusters" element={<AdminClusters />} />
-          <Route path="/admin/clusters/:clusterId" element={<ClusterDetails />} />
-          <Route path="/admin/config" element={<AdminConfig />} />
+          <Route path="/admin/clusters/:clusterName" element={<ClusterPage />} />
+          <Route path="/admin/config" element={<Navigate to="/admin/clusters" replace />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

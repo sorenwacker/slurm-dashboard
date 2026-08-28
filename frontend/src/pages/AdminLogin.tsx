@@ -72,7 +72,6 @@ export function AdminLogin() {
           <div className="login-card">
             <div className="login-header">
               <div className="login-icon">
-                <span>🔐</span>
               </div>
               <h2 className="login-title">Checking authentication...</h2>
             </div>
@@ -93,7 +92,6 @@ export function AdminLogin() {
           {/* Header */}
           <div className="login-header">
             <div className="login-icon">
-              <span>🔐</span>
             </div>
             <h2 className="login-title">Admin Login</h2>
             <p className="login-subtitle">
@@ -105,7 +103,7 @@ export function AdminLogin() {
           {error && (
             <div className="login-error">
               <div className="login-error-content">
-                <span className="login-error-icon">⚠️</span>
+                
                 <div className="login-error-text">{error}</div>
                 <button
                   onClick={() => setError('')}

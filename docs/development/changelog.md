@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exporter sent the literal string `None` as `Start`/`End` for jobs that never started, which made the dashboard reject the whole batch with 422
 
 ### Changed
+- Admin: one cluster page per cluster (`/admin/clusters/<name>`) with Overview, Nodes, Partitions, Accounts, and YAML tabs replaces the Cluster Details and Configuration pages; labels are edited in place per entry; the Auto-Generate action is removed
 - `requires-python` bounded to `<3.13` because the pinned `pyarrow`/`numpy` have no wheels for 3.13; install commands pass `--python 3.12` and the conda instructions are replaced by uv and venv
 
 ### Added

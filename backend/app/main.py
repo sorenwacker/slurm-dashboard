@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from .api import admin, agent, charts, config_admin, dashboard, data, reports, saml
+from .api import admin, agent, charts, cluster_admin, config_admin, dashboard, data, reports, saml
 from .core.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -60,6 +60,7 @@ app.include_router(charts.router, prefix=f"{settings.api_prefix}/dashboard", tag
 app.include_router(reports.router, prefix=f"{settings.api_prefix}/reports", tags=["Reports"])
 app.include_router(admin.router, prefix=f"{settings.api_prefix}/admin", tags=["Admin"])
 app.include_router(config_admin.router, prefix=f"{settings.api_prefix}/admin", tags=["Config Admin"])
+app.include_router(cluster_admin.router, prefix=f"{settings.api_prefix}/admin", tags=["Cluster Admin"])
 app.include_router(saml.router, prefix="/saml", tags=["SAML Authentication"])
 
 

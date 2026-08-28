@@ -271,18 +271,11 @@ export function AdminClusters() {
                     <td>
                       <div className="clusters-actions-menu">
                         <a
-                          href={`/admin/clusters/${cluster.id}`}
+                          href={`/admin/clusters/${encodeURIComponent(cluster.name)}`}
                           className="clusters-action-btn action-primary"
                           style={{ textDecoration: 'none', fontWeight: 600 }}
                         >
-                          Manage Keys
-                        </a>
-                        <a
-                          href={`/admin/config?cluster=${cluster.name}`}
-                          className="clusters-action-btn action-config"
-                          style={{ textDecoration: 'none' }}
-                        >
-                          Configure
+                          Open
                         </a>
                         <button
                           onClick={() => handleToggleActive(cluster)}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminClient } from '../api/adminClient';
-import './AdminConfig.css';
+import './AdminUsers.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8100';
 
@@ -151,7 +151,6 @@ export function AdminUsers() {
         {/* Messages */}
         {error && (
           <div className="admin-message admin-message-error">
-            <span>⚠️</span>
             <span>{error}</span>
             <button onClick={() => setError('')} className="admin-message-close">×</button>
           </div>
@@ -159,7 +158,6 @@ export function AdminUsers() {
 
         {success && (
           <div className="admin-message admin-message-success">
-            <span>✓</span>
             <span>{success}</span>
             <button onClick={() => setSuccess('')} className="admin-message-close">×</button>
           </div>
@@ -182,7 +180,7 @@ export function AdminUsers() {
         <div className="admin-table-container" style={{ marginBottom: '2rem' }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid #dee2e6' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>⭐</span> Superadmin Emails
+              Superadmin Emails
             </h2>
             <p style={{ fontSize: '0.875rem', color: '#6c757d', marginBottom: '1rem' }}>
               Users with these email addresses have full administrative access
@@ -261,7 +259,7 @@ export function AdminUsers() {
         <div className="admin-table-container" style={{ marginBottom: '2rem' }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid #dee2e6' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>☺</span> Admin Emails
+              Admin Emails
             </h2>
             <p style={{ fontSize: '0.875rem', color: '#6c757d', marginBottom: '1rem' }}>
               Users with these email addresses have standard administrative access
