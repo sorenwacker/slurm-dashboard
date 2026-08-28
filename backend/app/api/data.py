@@ -61,17 +61,14 @@ async def ingest_data(
         if "Submit" in df.columns:
             df["SubmitDay"] = df["Submit"].dt.normalize()
             df["SubmitYearMonth"] = df["Submit"].dt.to_period("M").astype(str)
-            df["SubmitYearWeek"] = (
-                df["Submit"].dt.to_period("W").apply(lambda r: r.start_time).dt.strftime("%Y-%m-%d")
-            )
+            df["SubmitYearWeek"] = df["Submit"].dt.to_period("W").dt.start_time.dt.strftime("%Y-%m-%d")
             df["SubmitYear"] = df["Submit"].dt.year
 
         if "Start" in df.columns:
             df["StartDay"] = df["Start"].dt.normalize()
             df["StartYearMonth"] = df["Start"].dt.to_period("M").astype(str)
-            df["StartYearWeek"] = (
-                df["Start"].dt.to_period("W").apply(lambda r: r.start_time).dt.strftime("%Y-%m-%d")
-            )
+            # Vectorized so NaT (jobs that never started) stays NaT instead of raising
+            df["StartYearWeek"] = df["Start"].dt.to_period("W").dt.start_time.dt.strftime("%Y-%m-%d")
             df["StartYear"] = df["Start"].dt.year
 
         # Calculate timing columns
@@ -137,10 +134,12 @@ async def ingest_data(
         )
 
     except Exception as e:
+        logger.error(f"Error ingesting data for {request.hostname}: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
             detail=f"Error ingesting data: {str(e)}",
-        )
+        ) from e
 
 
 @router.post("/reload")
