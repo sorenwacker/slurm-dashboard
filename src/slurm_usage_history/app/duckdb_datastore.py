@@ -474,6 +474,7 @@ class DuckDBDataStore(metaclass=Singleton):
         format_accounts: bool = True,
         account_segments: int | None = None,
         time_base: str = "submit",
+        columns: list[str] | None = None,
     ) -> pd.DataFrame:
         """Filter data using DuckDB and return as pandas DataFrame.
 
@@ -495,6 +496,8 @@ class DuckDBDataStore(metaclass=Singleton):
             account_segments: Number of segments for account formatting
             time_base: "submit" selects jobs submitted in the range; "overlap" selects jobs whose
                 runtime overlaps the range (used for node utilization)
+            columns: Read only these columns (intersected with what the files contain);
+                None reads everything
 
         Returns:
             Filtered DataFrame
@@ -544,19 +547,30 @@ class DuckDBDataStore(metaclass=Singleton):
 
         where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
 
-        # Build and execute query
-        # Strategy: Select all columns first, then normalize in pandas for compatibility
-        # with both old and new parquet file formats
-        query = f"""
-        SELECT *
-        FROM read_parquet('{file_pattern}', union_by_name=true, binary_as_string=true)
-        WHERE {where_sql}
-        """
-
+        # Build and execute query. Column names vary across file generations, so a
+        # requested projection is intersected with what the files actually contain
+        # and the variants are normalized in pandas afterwards.
         import time
         query_start = time.time()
 
         conn = self._get_connection()
+        select_sql = "*"
+        if columns:
+            available = {
+                row[0]
+                for row in conn.execute(
+                    f"DESCRIBE SELECT * FROM read_parquet('{file_pattern}', union_by_name=true, binary_as_string=true)"
+                ).fetchall()
+            }
+            selected = [c for c in columns if c in available]
+            if selected:
+                select_sql = ", ".join(f'"{c}"' for c in selected)
+        query = f"""
+        SELECT {select_sql}
+        FROM read_parquet('{file_pattern}', union_by_name=true, binary_as_string=true)
+        WHERE {where_sql}
+        """
+
         df = conn.execute(query).df()
 
         query_elapsed = time.time() - query_start

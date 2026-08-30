@@ -126,3 +126,37 @@ def test_duckdb_filter_overlap_selects_jobs_running_in_window(tmp_path):
 
     assert sorted(submitted["JobID"]) == ["inside"]
     assert sorted(overlapping["JobID"]) == ["inside", "straddle"]
+
+
+def test_duckdb_filter_column_projection(tmp_path):
+    data_dir = tmp_path / "host" / "data"
+    data_dir.mkdir(parents=True)
+    pd.DataFrame(
+        {
+            "JobID": ["1"],
+            "User": ["u"],
+            "Account": ["a"],
+            "Partition": ["p"],
+            "QOS": ["q"],
+            "State": ["COMPLETED"],
+            "Submit": pd.to_datetime(["2026-08-01"]),
+            "Start": pd.to_datetime(["2026-08-01"]),
+            "End": pd.to_datetime(["2026-08-02"]),
+            "NodeList": ["n1"],
+            "CPUHours": [1.0],
+            "GPUHours": [0.0],
+            "AveCPU": ["50%"],
+            "TotalCPU": ["1:00:00"],
+        }
+    ).to_parquet(data_dir / "jobs.parquet")
+    store = DuckDBDataStore(str(tmp_path))
+
+    df = store.filter("host", format_accounts=False, columns=["User", "CPUHours", "Start", "End", "Missing"])
+
+    assert "AveCPU" not in df.columns
+    assert "TotalCPU" not in df.columns
+    assert df["CPUHours"].tolist() == [1.0]
+    assert "ElapsedHours" in df.columns  # derived columns still appear
+
+    unrestricted = store.filter("host", format_accounts=False)
+    assert "AveCPU" in unrestricted.columns

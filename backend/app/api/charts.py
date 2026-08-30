@@ -67,6 +67,19 @@ settings = get_settings()
 # Import shared datastore singleton
 from ..datastore_singleton import get_datastore
 
+# Every column any chart reads, in every naming generation of the parquet files.
+# The datastore intersects this with what the files contain.
+CHART_COLUMNS = [
+    "User", "Account", "Partition", "QOS", "State",
+    "Submit", "Start", "End", "NodeList",
+    "CPUHours", "CPU-hours", "GPUHours", "GPU-hours", "MemGBHours",
+    "AllocCPUS", "CPUs", "AllocGPUS", "GPUs", "AllocNodes", "Nodes",
+    "ReqMemMB", "MaxRSSMB", "MaxRSS",
+    "WaitingTimeHours", "WaitingTime [h]", "WaitingTime", "ElapsedHours", "Elapsed [h]",
+    "SubmitDay", "SubmitYearWeek", "SubmitYearMonth", "SubmitYear",
+    "StartDay", "StartYearWeek", "StartYearMonth", "StartYear",
+]
+
 # Simple in-memory cache for chart data
 # Cache structure: {cache_key: (timestamp, data)}
 _chart_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
@@ -169,6 +182,7 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
             complete_periods_only=request.complete_periods_only,
             period_type=request.period_type,
             time_base="overlap",
+            columns=CHART_COLUMNS,
         )
         df = _submitted_in_range(overlap_df, request.start_date, request.end_date)
 
