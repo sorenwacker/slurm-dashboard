@@ -63,17 +63,23 @@ def node_resource_hours(
         return pd.DataFrame(columns=["NodeList", *columns])
 
     raw = df["NodeList"]
-    all_strings = raw.map(lambda v: isinstance(v, str) or v is None).all()
-    # Node lists repeat heavily; expand each distinct value once
-    if all_strings:
-        expanded = {value: _expand_nodelist(value) for value in raw.dropna().unique()}
-        node_lists = raw.map(lambda v: expanded.get(v, []))
-    else:
-        node_lists = raw.map(_expand_nodelist)
+    # Node lists repeat heavily (a few hundred distinct values for ~1M jobs), so all
+    # per-value work happens on the distinct values; per-row operations are dict maps.
+    try:
+        uniques = raw.dropna().unique()
+        all_strings = all(isinstance(u, str) for u in uniques)
+    except TypeError:  # unhashable entries (lists/arrays)
+        all_strings = False
 
     work = pd.DataFrame(index=df.index)
     fraction = window_fraction(df, window)
-    share = fraction / node_lists.map(len).replace(0, np.nan)
+    if all_strings:
+        expanded = {value: _expand_nodelist(value) for value in uniques}
+        lengths = raw.map({value: len(nodes) for value, nodes in expanded.items()})
+        share = fraction / lengths.replace(0, np.nan)
+    else:
+        node_lists = raw.map(_expand_nodelist)
+        share = fraction / node_lists.map(len).replace(0, np.nan)
     for column in columns:
         if column in df.columns:
             work[column] = pd.to_numeric(df[column], errors="coerce") * share
