@@ -121,3 +121,15 @@ def test_memory_coverage_without_memory_column():
     result = generate_node_usage(jobs().drop(columns=["MemGBHours"]), window=WINDOW, capacities=CAPACITIES)
     assert result["cluster_utilization"]["memory_coverage"] == 0.0
     assert result["cluster_utilization"]["memory"] is None
+
+
+def test_string_node_lists_match_expanded_lists():
+    as_lists = jobs()
+    as_strings = as_lists.assign(NodeList=["n1,n2", "n1", "n3"])
+    left = node_resource_hours(as_lists, WINDOW).set_index("NodeList").sort_index()
+    right = node_resource_hours(as_strings, WINDOW).set_index("NodeList").sort_index()
+    pd.testing.assert_frame_equal(left, right)
+
+    left_colored = node_resource_hours(as_lists, WINDOW, "Account").set_index(["NodeList", "Account"]).sort_index()
+    right_colored = node_resource_hours(as_strings, WINDOW, "Account").set_index(["NodeList", "Account"]).sort_index()
+    pd.testing.assert_frame_equal(left_colored, right_colored)
