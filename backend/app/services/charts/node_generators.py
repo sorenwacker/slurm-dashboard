@@ -62,30 +62,41 @@ def node_resource_hours(
     if "NodeList" not in df.columns or df.empty:
         return pd.DataFrame(columns=["NodeList", *columns])
 
-    work = pd.DataFrame(index=df.index)
-    # Node lists repeat heavily; expand each distinct string once
     raw = df["NodeList"]
-    if raw.map(lambda v: isinstance(v, str) or v is None).all():
+    all_strings = raw.map(lambda v: isinstance(v, str) or v is None).all()
+    # Node lists repeat heavily; expand each distinct value once
+    if all_strings:
         expanded = {value: _expand_nodelist(value) for value in raw.dropna().unique()}
-        work["NodeList"] = raw.map(lambda v: expanded.get(v, []))
+        node_lists = raw.map(lambda v: expanded.get(v, []))
     else:
-        work["NodeList"] = raw.map(_expand_nodelist)
+        node_lists = raw.map(_expand_nodelist)
+
+    work = pd.DataFrame(index=df.index)
     fraction = window_fraction(df, window)
-    share = fraction / work["NodeList"].map(len).replace(0, np.nan)
+    share = fraction / node_lists.map(len).replace(0, np.nan)
     for column in columns:
-        values = (
-            pd.to_numeric(df[column], errors="coerce") if column in df.columns else pd.Series(np.nan, index=df.index)
-        )
-        work[column] = values * share
-    group_cols = ["NodeList"]
+        if column in df.columns:
+            work[column] = pd.to_numeric(df[column], errors="coerce") * share
+        else:
+            work[column] = np.nan
+    group_cols = []
     if color_by and color_by in df.columns:
         work[color_by] = df[color_by]
         group_cols.append(color_by)
 
-    exploded = work.explode("NodeList")
+    if all_strings:
+        # Aggregate per distinct node-list string first, then explode the small result
+        work["_nodes"] = raw
+        grouped = work.groupby(["_nodes", *group_cols], as_index=False, dropna=False)[columns].sum(min_count=1)
+        grouped["NodeList"] = grouped["_nodes"].map(expanded)
+        exploded = grouped.drop(columns=["_nodes"]).explode("NodeList")
+    else:
+        work["NodeList"] = node_lists
+        exploded = work.explode("NodeList")
+
     exploded = exploded[exploded["NodeList"].notna() & (exploded["NodeList"] != "")]
     exploded["NodeList"] = exploded["NodeList"].astype(str)
-    return exploded.groupby(group_cols, as_index=False)[columns].sum(min_count=1)
+    return exploded.groupby(["NodeList", *group_cols], as_index=False)[columns].sum(min_count=1)
 
 
 def _chart(node_hours: pd.DataFrame, hours_column: str, color_by: str | None, hide_unused: bool) -> dict[str, Any]:
