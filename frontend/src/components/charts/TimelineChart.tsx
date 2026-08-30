@@ -1,5 +1,5 @@
 import React from 'react';
-import Plot from 'react-plotly.js';
+import Plot from './Plot';
 import type { TrendData } from '../../types';
 import { getColorForLabel, getCommonLayout, getCommonConfig, type ChartColorOptions } from './chartHelpers';
 

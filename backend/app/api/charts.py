@@ -3,10 +3,14 @@
 This module provides endpoints that return pre-aggregated chart data instead of raw job records,
 significantly improving performance by reducing payload size and leveraging pandas aggregation speed.
 """
-from datetime import datetime
-from typing import Any, Optional, TYPE_CHECKING
 import hashlib
 import json
+
+# Import datastore
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
@@ -16,42 +20,34 @@ from ..core.config import get_settings
 from ..core.saml_auth import get_current_user_saml
 from ..models.data_models import FilterRequest
 from ..services.charts import (
-    format_account_name,
     format_accounts_in_df,
-    generate_cpu_usage_over_time,
-    generate_gpu_usage_over_time,
-    generate_jobs_over_time,
+    generate_active_users_distribution,
     generate_active_users_over_time,
-    generate_waiting_times_over_time,
+    generate_by_dimension,
+    generate_cpu_usage_over_time,
+    generate_cpus_per_job,
+    generate_gpu_usage_over_time,
+    generate_gpus_per_job,
+    generate_job_duration_hist,
     generate_job_duration_over_time,
-    generate_jobs_by_account,
+    generate_job_duration_stacked,
+    generate_job_duration_trends,
     generate_jobs_by_partition,
     generate_jobs_by_state,
-    generate_waiting_times_hist,
-    generate_job_duration_hist,
-    generate_active_users_distribution,
     generate_jobs_distribution,
-    generate_job_duration_stacked,
-    generate_waiting_times_stacked,
-    generate_waiting_times_trends,
-    generate_job_duration_trends,
-    generate_cpus_per_job,
-    generate_gpus_per_job,
-    generate_nodes_per_job,
-    generate_cpu_hours_by_account,
-    generate_gpu_hours_by_account,
-    generate_by_dimension,
-    generate_node_usage,
-    generate_memory_usage_over_time,
+    generate_jobs_over_time,
     generate_memory_efficiency_over_time,
     generate_memory_per_job,
-    total_memory_gb_hours,
+    generate_memory_usage_over_time,
+    generate_node_usage,
+    generate_nodes_per_job,
     generate_user_activity_frequency,
+    generate_waiting_times_hist,
+    generate_waiting_times_over_time,
+    generate_waiting_times_stacked,
+    generate_waiting_times_trends,
+    total_memory_gb_hours,
 )
-
-# Import datastore
-import sys
-from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 
@@ -59,8 +55,8 @@ if TYPE_CHECKING:
     from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
 
 try:
-    from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
     from slurm_usage_history.app.datastore import PandasDataStore
+    from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
 except ImportError:
     DuckDBDataStore = None  # type: ignore
     PandasDataStore = None  # type: ignore
@@ -101,16 +97,15 @@ def _generate_cache_key(request: FilterRequest) -> str:
     return hashlib.md5(cache_str.encode()).hexdigest()
 
 
-def _get_from_cache(cache_key: str) -> Optional[dict[str, Any]]:
+def _get_from_cache(cache_key: str) -> dict[str, Any] | None:
     """Get data from cache if it exists and is not expired."""
     if cache_key in _chart_cache:
         timestamp, data = _chart_cache[cache_key]
         age_seconds = (datetime.now() - timestamp).total_seconds()
         if age_seconds < CACHE_TTL_SECONDS:
             return data
-        else:
-            # Remove expired entry
-            del _chart_cache[cache_key]
+        # Remove expired entry
+        del _chart_cache[cache_key]
     return None
 
 
@@ -160,8 +155,9 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
 
         datastore = get_datastore()
 
-        # Apply filters to get the base dataset
-        df = datastore.filter(
+        # One DuckDB scan: jobs overlapping the range are a superset of jobs submitted in it
+        # (Start >= Submit), so the submit-based frame is a row subset of the overlap frame.
+        overlap_df = datastore.filter(
             hostname=request.hostname,
             start_date=request.start_date,
             end_date=request.end_date,
@@ -172,7 +168,9 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
             states=request.states,
             complete_periods_only=request.complete_periods_only,
             period_type=request.period_type,
+            time_base="overlap",
         )
+        df = _submitted_in_range(overlap_df, request.start_date, request.end_date)
 
         if df.empty:
             return _empty_charts_response()
@@ -188,17 +186,6 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
         # Node utilization uses jobs overlapping the window and the window length as capacity time
         window = _window(request, df)
         total_hours = (window[1] - window[0]).total_seconds() / 3600.0 if window else None
-        overlap_df = datastore.filter(
-            hostname=request.hostname,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            partitions=request.partitions,
-            accounts=request.accounts,
-            users=request.users,
-            qos=request.qos,
-            states=request.states,
-            time_base="overlap",
-        )
         if request.account_segments:
             overlap_df = format_accounts_in_df(overlap_df, request.account_segments)
         node_usage = generate_node_usage(
@@ -264,9 +251,22 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
         import logging
         import traceback
         logger = logging.getLogger(__name__)
-        logger.error(f"Charts endpoint error: {str(e)}")
+        logger.error(f"Charts endpoint error: {e!s}")
         logger.error(f"Traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"Error generating charts: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating charts: {e!s}")
+
+
+def _submitted_in_range(df: pd.DataFrame, start_date: str | None, end_date: str | None) -> pd.DataFrame:
+    """Rows submitted inside [start_date, end_date]; the whole frame when no bound is given."""
+    if df.empty or "Submit" not in df.columns or not (start_date or end_date):
+        return df
+    submit = pd.to_datetime(df["Submit"])
+    mask = pd.Series(True, index=df.index)
+    if start_date:
+        mask &= submit >= pd.Timestamp(start_date)
+    if end_date:
+        mask &= submit < pd.Timestamp(end_date) + pd.Timedelta(days=1)
+    return df[mask]
 
 
 def _window(request: FilterRequest, df: pd.DataFrame) -> tuple[pd.Timestamp, pd.Timestamp] | None:
@@ -316,7 +316,7 @@ def _empty_charts_response() -> dict[str, Any]:
 def _generate_summary(df: pd.DataFrame) -> dict[str, Any]:
     """Generate summary statistics."""
     return {
-        "total_jobs": int(len(df)),
+        "total_jobs": len(df),
         "total_cpu_hours": float(df["CPUHours"].sum()) if "CPUHours" in df.columns else 0.0,
         "total_gpu_hours": float(df["GPUHours"].sum()) if "GPUHours" in df.columns else 0.0,
         "total_memory_gb_hours": total_memory_gb_hours(df),

@@ -63,7 +63,13 @@ def node_resource_hours(
         return pd.DataFrame(columns=["NodeList", *columns])
 
     work = pd.DataFrame(index=df.index)
-    work["NodeList"] = df["NodeList"].map(_expand_nodelist)
+    # Node lists repeat heavily; expand each distinct string once
+    raw = df["NodeList"]
+    if raw.map(lambda v: isinstance(v, str) or v is None).all():
+        expanded = {value: _expand_nodelist(value) for value in raw.dropna().unique()}
+        work["NodeList"] = raw.map(lambda v: expanded.get(v, []))
+    else:
+        work["NodeList"] = raw.map(_expand_nodelist)
     fraction = window_fraction(df, window)
     share = fraction / work["NodeList"].map(len).replace(0, np.nan)
     for column in columns:

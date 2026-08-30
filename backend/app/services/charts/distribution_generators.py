@@ -1,5 +1,5 @@
 """Distribution chart generators for histograms, pie charts, and stacked charts."""
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -167,7 +167,7 @@ def _generate_trends(
     df: pd.DataFrame,
     value_column: str,
     period_type: str,
-    color_by: Optional[str],
+    color_by: str | None,
     stat: str,
     filter_nulls: bool = False,
     filter_positive: bool = False,
@@ -203,80 +203,39 @@ def _generate_trends(
     if df_work.empty:
         return {"x": [], "stats": {}}
 
-    df_filtered = df_work.copy()
-    all_periods = sorted(df_filtered[time_column].unique())
+    all_periods = sorted(df_work[time_column].unique())
 
-    # Helper to calculate a single statistic
-    def calc_stat(data: pd.Series, stat_name: str) -> float:
-        if data.empty:
-            return 0.0
+    def stat_series(grouped, stat_name: str) -> pd.Series:
         if stat_name == "mean":
-            return float(data.mean())
-        elif stat_name == "median":
-            return float(data.median())
-        elif stat_name == "max":
-            return float(data.max())
-        elif stat_name.startswith("p"):
-            percentile = int(stat_name[1:]) / 100.0
-            return float(data.quantile(percentile))
-        return float(data.median())
+            return grouped.mean()
+        if stat_name == "max":
+            return grouped.max()
+        if stat_name.startswith("p"):
+            return grouped.quantile(int(stat_name[1:]) / 100.0)
+        return grouped.median()
 
-    # Multi-line mode when color_by is specified
-    if color_by and color_by != "None" and color_by in df_filtered.columns:
-        groups = sorted(df_filtered[color_by].dropna().unique())
-        series = []
+    # Multi-line mode when color_by is specified: one statistic per (group, period)
+    if color_by and color_by != "None" and color_by in df_work.columns:
+        with_group = df_work[df_work[color_by].notna()]
+        groups = sorted(with_group[color_by].unique())
+        values = stat_series(with_group.groupby([color_by, time_column])[value_column], stat)
+        table = values.unstack(time_column).reindex(index=groups, columns=all_periods).fillna(0.0)
+        series = [{"name": str(group), "data": [float(v) for v in table.loc[group]]} for group in groups]
+        return {"x": all_periods, "series": series}
 
-        for group in groups:
-            group_df = df_filtered[df_filtered[color_by] == group]
-            values = []
-
-            for period in all_periods:
-                period_data = group_df[group_df[time_column] == period][value_column]
-                values.append(calc_stat(period_data, stat))
-
-            series.append({
-                "name": str(group),
-                "data": values,
-            })
-
-        return {
-            "x": all_periods,
-            "series": series,
+    # Single line mode: all statistics per period in one pass
+    grouped = df_work.groupby(time_column)[value_column]
+    stats_table = pd.DataFrame(
+        {
+            "mean": grouped.mean(),
+            "median": grouped.median(),
+            "max": grouped.max(),
+            **{f"p{q}": grouped.quantile(q / 100.0) for q in (25, 50, 75, 90, 95, 99)},
         }
-
-    # Single line mode - calculate all statistics
-    stats = {
-        "mean": [],
-        "median": [],
-        "max": [],
-        "p25": [],
-        "p50": [],
-        "p75": [],
-        "p90": [],
-        "p95": [],
-        "p99": [],
-    }
-
-    for period in all_periods:
-        period_data = df_filtered[df_filtered[time_column] == period][value_column]
-
-        if not period_data.empty:
-            stats["mean"].append(float(period_data.mean()))
-            stats["median"].append(float(period_data.median()))
-            stats["max"].append(float(period_data.max()))
-            stats["p25"].append(float(period_data.quantile(0.25)))
-            stats["p50"].append(float(period_data.quantile(0.50)))
-            stats["p75"].append(float(period_data.quantile(0.75)))
-            stats["p90"].append(float(period_data.quantile(0.90)))
-            stats["p95"].append(float(period_data.quantile(0.95)))
-            stats["p99"].append(float(period_data.quantile(0.99)))
-        else:
-            for key in stats:
-                stats[key].append(0.0)
-
+    ).reindex(all_periods).fillna(0.0)
     return {
         "x": all_periods,
-        "stats": stats,
+        "stats": {column: [float(v) for v in stats_table[column]] for column in stats_table.columns},
     }
 
 
@@ -437,7 +396,7 @@ def generate_jobs_by_state(df: pd.DataFrame) -> dict[str, list]:
 def _aggregate_value_histogram(
     df: pd.DataFrame,
     value_column: str,
-    color_by: Optional[str] = None,
+    color_by: str | None = None,
     filter_positive: bool = False,
     top_n: int = 15,
 ) -> dict[str, Any]:
@@ -510,12 +469,12 @@ def _aggregate_value_histogram(
     }
 
 
-def generate_waiting_times_hist(df: pd.DataFrame, color_by: Optional[str] = None) -> dict[str, Any]:
+def generate_waiting_times_hist(df: pd.DataFrame, color_by: str | None = None) -> dict[str, Any]:
     """Aggregate waiting times into histogram bins with numeric x-axis."""
     return _aggregate_value_histogram(df, "WaitingTimeHours", color_by, filter_positive=False)
 
 
-def generate_job_duration_hist(df: pd.DataFrame, color_by: Optional[str] = None) -> dict[str, Any]:
+def generate_job_duration_hist(df: pd.DataFrame, color_by: str | None = None) -> dict[str, Any]:
     """Aggregate job durations into histogram bins with numeric x-axis."""
     return _aggregate_value_histogram(df, "ElapsedHours", color_by, filter_positive=True)
 
@@ -523,10 +482,10 @@ def generate_job_duration_hist(df: pd.DataFrame, color_by: Optional[str] = None)
 def _aggregate_period_distribution(
     df: pd.DataFrame,
     period_type: str,
-    color_by: Optional[str],
+    color_by: str | None,
     agg_func,
     metric_name: str,
-    allowed_pie_dimensions: Optional[list[str]] = None
+    allowed_pie_dimensions: list[str] | None = None
 ) -> dict[str, Any]:
     """Generic function to create distribution histograms for period-based metrics."""
     if df.empty:
@@ -572,7 +531,7 @@ def _aggregate_period_distribution(
     }
 
 
-def generate_active_users_distribution(df: pd.DataFrame, period_type: str = "month", color_by: Optional[str] = None) -> dict[str, Any]:
+def generate_active_users_distribution(df: pd.DataFrame, period_type: str = "month", color_by: str | None = None) -> dict[str, Any]:
     """Aggregate active users distribution.
 
     Shows histogram of how many unique users were active per period.
@@ -652,7 +611,7 @@ def generate_active_users_distribution(df: pd.DataFrame, period_type: str = "mon
     )
 
 
-def generate_jobs_distribution(df: pd.DataFrame, period_type: str = "month", color_by: Optional[str] = None, top_n: int = 15) -> dict[str, Any]:
+def generate_jobs_distribution(df: pd.DataFrame, period_type: str = "month", color_by: str | None = None, top_n: int = 15) -> dict[str, Any]:
     """Aggregate jobs distribution.
 
     When color_by is set to a valid dimension:
@@ -742,7 +701,7 @@ def generate_waiting_times_stacked(df: pd.DataFrame, period_type: str = "month")
     )
 
 
-def generate_waiting_times_trends(df: pd.DataFrame, period_type: str = "month", color_by: Optional[str] = None, stat: str = "median") -> dict[str, Any]:
+def generate_waiting_times_trends(df: pd.DataFrame, period_type: str = "month", color_by: str | None = None, stat: str = "median") -> dict[str, Any]:
     """Aggregate waiting time statistics (mean, median, max, percentiles) by time period."""
     return _generate_trends(
         df=df,
@@ -755,7 +714,7 @@ def generate_waiting_times_trends(df: pd.DataFrame, period_type: str = "month", 
     )
 
 
-def generate_job_duration_trends(df: pd.DataFrame, period_type: str = "month", color_by: Optional[str] = None, stat: str = "median") -> dict[str, Any]:
+def generate_job_duration_trends(df: pd.DataFrame, period_type: str = "month", color_by: str | None = None, stat: str = "median") -> dict[str, Any]:
     """Aggregate job duration statistics (mean, median, max, percentiles) by time period."""
     return _generate_trends(
         df=df,
@@ -846,7 +805,7 @@ def generate_gpu_hours_by_account(df: pd.DataFrame) -> dict[str, list]:
 def generate_user_activity_frequency(
     df: pd.DataFrame,
     period_type: str = "day",
-    color_by: Optional[str] = None,
+    color_by: str | None = None,
     top_n: int = 15,
 ) -> dict[str, Any]:
     """Generate distribution of user activity frequency.
@@ -901,7 +860,7 @@ def generate_user_activity_frequency(
     }.get(period_type, "periods")
 
     total_periods = df[time_column].nunique()
-    total_users = int(len(user_period_counts))
+    total_users = len(user_period_counts)
 
     # Pie chart mode for meaningful groupings
     pie_chart_dimensions = ["User", "Account", "Partition", "QOS"]

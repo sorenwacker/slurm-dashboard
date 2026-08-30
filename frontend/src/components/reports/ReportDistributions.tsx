@@ -1,5 +1,5 @@
 import React from 'react';
-import Plot from 'react-plotly.js';
+import Plot from '../charts/Plot';
 import { COLORS } from '../../theme/colors';
 import { formatHours } from './reportHelpers';
 
