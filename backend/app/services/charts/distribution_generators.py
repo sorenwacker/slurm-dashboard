@@ -113,13 +113,13 @@ def _generate_stacked_distribution(
     if time_column is None:
         return {"x": [], "series": []}
 
-    # Filter nulls if needed
+    # Only the two columns take part; copying them is cheap
+    df_work = df_work[[time_column, value_column]]
     if filter_nulls:
-        df_work = df_work[df_work[value_column].notna()].copy()
+        df_work = df_work[df_work[value_column].notna()]
         if df_work.empty:
             return {"x": [], "series": []}
-    else:
-        df_work = df_work.copy()
+    df_work = df_work.copy()
 
     # Categorize values into bins
     bin_edges = [b[1] for b in bins] + [float('inf')]
@@ -193,6 +193,10 @@ def _generate_trends(
     df_work, time_column = _get_time_column(df, period_type)
     if time_column is None:
         return {"x": [], "stats": {}}
+
+    # Work on the few columns needed so row filters do not copy the whole frame
+    columns = [time_column, value_column] + ([color_by] if color_by and color_by in df_work.columns else [])
+    df_work = df_work[columns]
 
     # Apply filters
     if filter_nulls:

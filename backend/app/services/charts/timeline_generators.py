@@ -71,6 +71,10 @@ def _generate_timeline(
             logger.warning(f"Time column '{time_column}' not found in DataFrame. Available columns: {df.columns.tolist()}")
             return {"x": [], "y": []}
 
+    # Keep only the columns this chart aggregates so the filters below copy little
+    needed = [time_column] + [c for c in (value_column, color_by) if c and c in df_copy.columns and c != time_column]
+    df_copy = df_copy[needed].copy()
+
     # Normalize week timestamps to Monday 00:00:00 if needed
     if normalize_weeks and period_type == "week" and time_column in df_copy.columns:
         df_copy = df_copy.copy() if df_copy is df else df_copy
