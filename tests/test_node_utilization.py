@@ -126,6 +126,9 @@ def test_memory_coverage_without_memory_column():
 def test_string_node_lists_match_expanded_lists():
     as_lists = jobs()
     as_strings = as_lists.assign(NodeList=["n1,n2", "n1", "n3"])
+    with_nan = as_strings.assign(NodeList=["n1,n2", float("nan"), "n3"])
+    nan_hours = node_resource_hours(with_nan, WINDOW)
+    assert "n1" in set(nan_hours["NodeList"])  # nan rows drop out, fast path still taken
     left = node_resource_hours(as_lists, WINDOW).set_index("NodeList").sort_index()
     right = node_resource_hours(as_strings, WINDOW).set_index("NodeList").sort_index()
     pd.testing.assert_frame_equal(left, right)
