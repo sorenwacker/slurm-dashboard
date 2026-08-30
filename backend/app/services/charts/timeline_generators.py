@@ -1,6 +1,6 @@
 """Timeline chart generators for CPU, GPU, jobs, and users over time."""
 import logging
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 import pandas as pd
 
@@ -92,11 +92,11 @@ def _generate_timeline(
     def aggregate_simple(data: pd.DataFrame, group_col: str) -> pd.Series:
         if aggregation == "sum":
             return data.groupby(group_col)[value_column].sum()
-        elif aggregation == "mean":
+        if aggregation == "mean":
             return data.groupby(group_col)[value_column].mean()
-        elif aggregation == "nunique":
+        if aggregation == "nunique":
             return data.groupby(group_col)[value_column].nunique()
-        elif aggregation == "count":
+        if aggregation == "count":
             return data[group_col].value_counts()
         raise ValueError(f"Unknown aggregation: {aggregation}")
 
@@ -133,31 +133,21 @@ def _generate_timeline(
         sort_agg = "sum" if aggregation in ("sum", "count") else "mean"
         all_groups = grouped.groupby(color_by)[agg_col].agg(sort_agg).sort_values(ascending=False).index.tolist()
 
-    grouped_filtered = grouped[grouped[color_by].isin(all_groups)]
-
-    # Get all time periods (sorted)
+    # One pivot instead of one DataFrame filter per (group, period) cell
     all_periods = sorted(df_copy[time_column].unique())
-
-    # Build series for each group
-    series = []
-    for group in all_groups:
-        group_data = grouped_filtered[grouped_filtered[color_by] == group]
-        data = []
-        for period in all_periods:
-            period_data = group_data[group_data[time_column] == period]
-            if period_data.empty:
-                data.append(0 if aggregation in ("count", "nunique") else 0.0)
-            else:
-                val = period_data[agg_col].sum() if aggregation in ("sum", "count", "nunique") else period_data[agg_col].mean()
-                if aggregation in ("count", "nunique"):
-                    data.append(int(val) if pd.notna(val) else 0)
-                else:
-                    data.append(float(val) if pd.notna(val) else 0.0)
-
-        series.append({
+    table = (
+        grouped.pivot_table(index=color_by, columns=time_column, values=agg_col, aggfunc="sum", fill_value=0)
+        .reindex(index=all_groups, columns=all_periods)
+        .fillna(0)
+    )
+    integer_valued = aggregation in ("count", "nunique")
+    series = [
+        {
             "name": str(group),
-            "data": data,
-        })
+            "data": [int(v) if integer_valued else float(v) for v in table.loc[group]],
+        }
+        for group in all_groups
+    ]
 
     return {
         "x": all_periods,

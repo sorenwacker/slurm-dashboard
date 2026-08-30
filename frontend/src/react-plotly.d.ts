@@ -22,3 +22,19 @@ declare module 'react-plotly.js' {
 
   export default class Plot extends Component<PlotProps> {}
 }
+
+declare module 'react-plotly.js/factory' {
+  import { ComponentType } from 'react';
+  import type { PlotProps } from 'react-plotly.js';
+
+  export default function createPlotlyComponent(plotly: unknown): ComponentType<PlotProps>;
+}
+
+declare module 'plotly.js/lib/core' {
+  const Plotly: { register: (modules: unknown[]) => void };
+  export default Plotly;
+}
+declare module 'plotly.js/lib/bar' { const mod: unknown; export default mod; }
+declare module 'plotly.js/lib/scatter' { const mod: unknown; export default mod; }
+declare module 'plotly.js/lib/pie' { const mod: unknown; export default mod; }
+declare module 'plotly.js/lib/indicator' { const mod: unknown; export default mod; }
