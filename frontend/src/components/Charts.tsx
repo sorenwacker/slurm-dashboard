@@ -1,24 +1,17 @@
 import React, { useMemo } from 'react';
 import type { AggregatedChartsResponse } from '../types';
 import { createGlobalColorMap } from './charts/chartHelpers';
+import { RESOURCE_SECTIONS } from './charts/resourceConfigs';
 import useDarkMode from '../hooks/useDarkMode';
 import { useTimingStats } from '../hooks/useTimingStats';
 import { useProcessedNodeData, useClusterUtilization } from '../hooks/useProcessedNodeData';
-import {
-  UsersJobsSection,
-  UsageSection,
-  TimingSection,
-  ResourcesSection,
-} from './charts/sections';
+import { UsersJobsSection, ResourceSection, TimingSection } from './charts/sections';
 
 interface ChartsProps {
   data: AggregatedChartsResponse | undefined;
   hideUnusedNodes: boolean;
-  setHideUnusedNodes: (value: boolean) => void;
   sortByUsage: boolean;
-  setSortByUsage: (value: boolean) => void;
   normalizeNodeUsage: boolean;
-  setNormalizeNodeUsage: (value: boolean) => void;
   colorBy: string;
   periodType: string;
 }
@@ -26,11 +19,8 @@ interface ChartsProps {
 const Charts: React.FC<ChartsProps> = ({
   data,
   hideUnusedNodes,
-  setHideUnusedNodes,
   sortByUsage,
-  setSortByUsage,
   normalizeNodeUsage,
-  setNormalizeNodeUsage,
   colorBy,
   periodType,
 }) => {
@@ -47,22 +37,22 @@ const Charts: React.FC<ChartsProps> = ({
 
     const allLabels: string[] = [];
 
-    const extractSeriesNames = (chartData: any) => {
-      if (chartData?.series) {
-        chartData.series.forEach((series: any) => allLabels.push(String(series.name)));
-      }
+    const extractSeriesNames = (chartData: { series?: { name: string | number }[] } | undefined) => {
+      chartData?.series?.forEach((series) => allLabels.push(String(series.name)));
     };
 
-    // Extract from all chart data that has series
     // NOTE: Timing section charts are excluded from color mapping
     extractSeriesNames(data.active_users_over_time);
     extractSeriesNames(data.jobs_over_time);
     extractSeriesNames(data.cpu_usage_over_time);
     extractSeriesNames(data.gpu_usage_over_time);
+    extractSeriesNames(data.memory_usage_over_time);
     extractSeriesNames(data.cpu_hours_by_account);
     extractSeriesNames(data.gpu_hours_by_account);
+    extractSeriesNames(data.memory_hours_by_account);
     extractSeriesNames(data.node_cpu_usage);
     extractSeriesNames(data.node_gpu_usage);
+    extractSeriesNames(data.node_memory_usage);
 
     return allLabels.length > 0 ? createGlobalColorMap(allLabels) : null;
   }, [data, colorBy]);
@@ -77,6 +67,12 @@ const Charts: React.FC<ChartsProps> = ({
     );
   }
 
+  const nodeCharts = {
+    cpu: processedNodeData.cpu,
+    gpu: processedNodeData.gpu,
+    memory: processedNodeData.memory,
+  };
+
   return (
     <div>
       <UsersJobsSection
@@ -87,21 +83,19 @@ const Charts: React.FC<ChartsProps> = ({
         chartColors={chartColors}
       />
 
-      <UsageSection
-        data={data}
-        colorMap={colorMap}
-        colorBy={colorBy}
-        periodType={periodType}
-        chartColors={chartColors}
-        processedNodeData={processedNodeData}
-        clusterUtilization={clusterUtilization}
-        hideUnusedNodes={hideUnusedNodes}
-        setHideUnusedNodes={setHideUnusedNodes}
-        sortByUsage={sortByUsage}
-        setSortByUsage={setSortByUsage}
-        normalizeNodeUsage={normalizeNodeUsage}
-        setNormalizeNodeUsage={setNormalizeNodeUsage}
-      />
+      {RESOURCE_SECTIONS.map((config) => (
+        <ResourceSection
+          key={config.title}
+          config={config}
+          data={data}
+          colorMap={colorMap}
+          colorBy={colorBy}
+          periodType={periodType}
+          chartColors={chartColors}
+          nodeChart={nodeCharts[config.gaugeKey]}
+          utilization={clusterUtilization}
+        />
+      ))}
 
       <TimingSection
         data={data}
@@ -110,12 +104,6 @@ const Charts: React.FC<ChartsProps> = ({
         chartColors={chartColors}
         isDark={isDark}
         timingStats={timingStats}
-      />
-
-      <ResourcesSection
-        data={data}
-        colorMap={colorMap}
-        chartColors={chartColors}
       />
     </div>
   );
