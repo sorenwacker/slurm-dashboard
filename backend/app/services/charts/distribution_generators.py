@@ -32,13 +32,13 @@ DURATION_BINS = [
     ("> 7d", 168, float("inf")),
 ]
 DURATION_COLORS = [
-    "#d4edda",  # Very light green
-    "#c3e6cb",
-    "#a3d5a1",
-    "#7bc77e",
-    "#52b058",
-    "#3d9142",
-    "#28a745",  # Dark green
+    "#d7f4f1",  # Very light teal
+    "#b2e6e0",
+    "#84d3cb",
+    "#54bcb1",
+    "#2ba396",
+    "#178a7e",
+    "#0f766e",  # Dark teal
 ]
 
 # Waiting time stacked chart bins (6 bins with red gradient)

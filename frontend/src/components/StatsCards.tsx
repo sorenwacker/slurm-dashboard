@@ -15,7 +15,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ data }) => {
 
   return (
     <div className="stats-grid">
-      <div className="stat-card" style={{ borderLeft: '4px solid #28a745' }}>
+      <div className="stat-card" style={{ borderLeft: '4px solid #64748B' }}>
         <h4>Total Active Users</h4>
         <div className="stat-value">{formatNumber(summary.total_users)}</div>
         <div className="stat-label">Unique users in period</div>

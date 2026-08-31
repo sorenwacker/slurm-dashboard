@@ -5,7 +5,7 @@ import type { ChartColors } from '../../../hooks/useDarkMode';
 import StackedAreaChart from '../StackedAreaChart';
 import PieChart from '../PieChart';
 import HistogramChart from '../HistogramChart';
-import { COLORS } from '../chartHelpers';
+import { COLORS, SECTION_COLORS } from '../chartHelpers';
 
 interface UsersJobsSectionProps {
   data: AggregatedChartsResponse;
@@ -36,7 +36,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
                   data={data.active_users_over_time}
                   xTitle="Period"
                   yTitle="Number of Users"
-                  defaultColor="#28a745"
+                  defaultColor={SECTION_COLORS.users}
                   colorMap={colorMap}
                   defaultName="Active Users"
                   chartType="area"
@@ -78,7 +78,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
                     data={data.user_activity_frequency}
                     xTitle={`Active ${data.user_activity_frequency.period_label || 'periods'}`}
                     yTitle="Number of Users"
-                    defaultColor="#28a745"
+                    defaultColor={SECTION_COLORS.users}
                     colorMap={null}
                     isHistogram={true}
                     showMedianMean={true}

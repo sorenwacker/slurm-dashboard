@@ -251,7 +251,14 @@ const UsageSection: React.FC<UsageSectionProps> = ({
           (data.memory_efficiency_over_time?.series?.length ?? 0) > 0) && (
           <div className="subsection">
             <h2 className="subsection-header">Efficiency</h2>
-            <div className="chart-row-2col">
+            <div
+              className={
+                (data.cpu_efficiency_over_time?.series?.length ?? 0) > 0 &&
+                (data.memory_efficiency_over_time?.series?.length ?? 0) > 0
+                  ? 'chart-row-2col'
+                  : undefined
+              }
+            >
               {(data.cpu_efficiency_over_time?.series?.length ?? 0) > 0 && (
                 <div className="card">
                   <h3>

@@ -1,6 +1,18 @@
 import type { ChartData } from '../../types';
 
 // Base color palette for reference (used for pie charts and fallbacks)
+/** One colour per meaning across the dashboard; memory owns green, duration owns teal. */
+export const SECTION_COLORS = {
+  users: '#64748B',
+  jobs: '#6F42C1',
+  cpu: '#04A5D5',
+  gpu: '#EC7300',
+  memory: '#2E8B57',
+  waiting: '#DC3545',
+  duration: '#0F766E',
+  nodes: '#64748B',
+} as const;
+
 export const COLORS = [
   '#04A5D5', '#EC7300', '#28a745', '#6f42c1', '#dc3545',
   '#17a2b8', '#ffc107', '#e83e8c', '#6c757d', '#fd7e14'
