@@ -241,6 +241,52 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                   <ChartCaption text="Memory-hours split by the colour dimension; without one, the distribution of memory-hours per period." />
                 </div>
               )}
+              {data.memory_per_job && data.memory_per_job.x.length > 0 && (
+                <div className="card">
+                  <h3>Memory per Job</h3>
+                  <HistogramChart
+                    data={data.memory_per_job}
+                    xTitle="Requested Memory (GB)"
+                    yTitle="Number of Jobs"
+                    defaultColor={MEMORY_COLOR}
+                    colorMap={null}
+                    chartColors={chartColors}
+                  />
+                  <ChartCaption text="Number of jobs per requested memory size in GB (20 most common sizes)." />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Efficiency Section: consumed vs allocated; no GPU data in SLURM accounting */}
+        {((data.cpu_efficiency_over_time && data.cpu_efficiency_over_time.x.length > 0) ||
+          (data.memory_efficiency_over_time && data.memory_efficiency_over_time.x.length > 0)) && (
+          <div className="subsection">
+            <h2 className="subsection-header">Efficiency</h2>
+            <div className="chart-row-2col">
+              {data.cpu_efficiency_over_time && data.cpu_efficiency_over_time.x.length > 0 && (
+                <div className="card">
+                  <h3>
+                    CPU Efficiency
+                    <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>
+                      {' '}(used / allocated)
+                    </span>
+                  </h3>
+                  <StackedAreaChart
+                    data={data.cpu_efficiency_over_time}
+                    xTitle="Period"
+                    yTitle="Used (%)"
+                    defaultColor="#04A5D5"
+                    colorMap={null}
+                    defaultName="CPU used (%)"
+                    chartType="area"
+                    periodType={periodType}
+                    chartColors={chartColors}
+                  />
+                  <ChartCaption text="Consumed core-time (sacct TotalCPU) divided by allocated core-time, per period, over jobs reporting both. GPU efficiency is not available from SLURM accounting." />
+                </div>
+              )}
               {data.memory_efficiency_over_time && data.memory_efficiency_over_time.x.length > 0 && (
                 <div className="card">
                   <h3>
@@ -263,18 +309,20 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                   <ChartCaption text="Sum of peak memory used divided by sum of requested memory, per period, over jobs reporting both." />
                 </div>
               )}
-              {data.memory_per_job && data.memory_per_job.x.length > 0 && (
+              {data.efficiency_by_group && data.efficiency_by_group.x.length > 0 && (
                 <div className="card">
-                  <h3>Memory per Job</h3>
-                  <HistogramChart
-                    data={data.memory_per_job}
-                    xTitle="Requested Memory (GB)"
-                    yTitle="Number of Jobs"
-                    defaultColor={MEMORY_COLOR}
+                  <h3>Efficiency by {colorBy || 'Account'}</h3>
+                  <StackedAreaChart
+                    data={data.efficiency_by_group}
+                    xTitle={colorBy || 'Account'}
+                    yTitle="Used (%)"
+                    defaultColor="#04A5D5"
                     colorMap={null}
+                    chartType="bar"
+                    barMode="group"
                     chartColors={chartColors}
                   />
-                  <ChartCaption text="Number of jobs per requested memory size in GB (20 most common sizes)." />
+                  <ChartCaption text="Consumed over allocated resources per group, for the groups with the most allocated CPU-hours. Memory uses peak usage and is an upper bound." />
                 </div>
               )}
             </div>

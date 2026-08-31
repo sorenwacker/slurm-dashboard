@@ -54,3 +54,14 @@ When requested memory is known for fewer than 90 % of the jobs in the range, the
 - Node missing from the normalized chart: it has no synced capacity for that resource. Run `sync-config` or set the hardware on the cluster page's YAML tab.
 - Utilization above 100 %: check the node's `hardware` block against `scontrol show node <name>`, and check whether multi-node jobs list more nodes than they actually used.
 - Gauge lower than the node charts suggest: idle configured nodes count in the denominator; the node charts hide unused nodes by default.
+
+## Efficiency
+
+Efficiency compares what jobs consumed with what they allocated; it does not affect the allocation charts and gauges above.
+
+- CPU efficiency of a period = `sum(CPUUsedHours) / sum(CPUHours)` over jobs reporting both. `CPUUsedHours` is sacct's `TotalCPU` (consumed core-time), a measured value.
+- Memory efficiency uses peak usage (`MaxRSS`) over requested memory and is therefore an upper bound; see [Memory Usage](memory-usage.md).
+- Efficiency by group shows both ratios per account (or the selected colour dimension), for the groups with the most allocated CPU-hours.
+- GPU efficiency cannot be computed from SLURM accounting.
+
+Jobs collected before the agent reported `CPUUsedHours` are excluded from CPU efficiency; a period with no such jobs is omitted.

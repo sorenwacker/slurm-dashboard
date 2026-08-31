@@ -20,6 +20,33 @@ from urllib3.util.retry import Retry
 
 from slurm_usage_history.memory import parse_memory_to_mb, parse_reqmem_to_mb
 
+
+def parse_duration_hours(value) -> Optional[float]:
+    """Convert a SLURM duration ([D-]HH:MM:SS or MM:SS[.ms]) to hours; None when absent or unparseable."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    text = str(value).strip()
+    if not text or text.lower() in ("none", "unknown", "nan"):
+        return None
+    days = 0
+    if '-' in text:
+        day_part, text = text.split('-', 1)
+        try:
+            days = int(day_part)
+        except ValueError:
+            return None
+    parts = text.split(':')
+    try:
+        if len(parts) == 3:
+            seconds = int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
+        elif len(parts) == 2:
+            seconds = int(parts[0]) * 60 + float(parts[1])
+        else:
+            return None
+    except ValueError:
+        return None
+    return days * 24.0 + seconds / 3600.0
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -281,6 +308,12 @@ class SlurmDataExtractor:
 
         df['ReqMemMB'] = df.apply(requested_memory, axis=1)
 
+        # Consumed core-time (TotalCPU) as a measured counterpart to CPUHours
+        if 'TotalCPU' in df.columns:
+            df['CPUUsedHours'] = df['TotalCPU'].map(parse_duration_hours)
+        else:
+            df['CPUUsedHours'] = None
+
         # Filter out jobs with missing critical fields (malformed data)
         initial_count = len(df)
 
@@ -315,6 +348,7 @@ class SlurmDataExtractor:
                 'NodeList': str(row['NodeList']) if pd.notna(row['NodeList']) else None,
                 'ReqMemMB': float(row['ReqMemMB']) if pd.notna(row['ReqMemMB']) else None,
                 'MaxRSSMB': float(row['MaxRSSMB']) if pd.notna(row['MaxRSSMB']) else None,
+                'CPUUsedHours': float(row['CPUUsedHours']) if pd.notna(row['CPUUsedHours']) else None,
             }
             jobs.append(job)
 
