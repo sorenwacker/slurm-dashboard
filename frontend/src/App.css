@@ -854,11 +854,20 @@ body {
     grid-template-columns: 3fr 2fr;
     gap: var(--space-lg);
   }
+
+  /* With two columns the per-job card wraps; let it span the full row instead of leaving a hole */
+  .resource-top-row > :nth-child(3) {
+    grid-column: 1 / -1;
+  }
 }
 
 @container (min-width: 1500px) {
   .resource-top-row {
     grid-template-columns: 2fr 1fr 1fr;
+  }
+
+  .resource-top-row > :nth-child(3) {
+    grid-column: auto;
   }
 }
 
