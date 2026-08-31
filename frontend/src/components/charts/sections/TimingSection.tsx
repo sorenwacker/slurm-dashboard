@@ -10,6 +10,7 @@ import HistogramChart from '../HistogramChart';
 import StackedPercentageChart from '../StackedPercentageChart';
 import { COLORS } from '../chartHelpers';
 import { SECTION_COLORS } from '../chartHelpers';
+import ScatterChart from '../ScatterChart';
 
 interface TimingSectionProps {
   data: AggregatedChartsResponse;
@@ -210,6 +211,28 @@ const TimingSection: React.FC<TimingSectionProps> = ({
           </div>
         )}
       </div>
+
+      {data.wait_duration_scatter && data.wait_duration_scatter.series.length > 0 && (
+        <div className="card" style={{ marginTop: 'var(--space-md)' }}>
+          <h3>
+            Waiting Time vs Job Duration
+            <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>
+              {' '}({data.wait_duration_scatter.sampled
+                ? `sample of 5,000 of ${data.wait_duration_scatter.total_jobs.toLocaleString()} jobs`
+                : `${data.wait_duration_scatter.total_jobs.toLocaleString()} jobs`})
+            </span>
+          </h3>
+          <ScatterChart
+            series={data.wait_duration_scatter.series}
+            xTitle="Job Duration (hours)"
+            yTitle="Waiting Time (hours)"
+            defaultColor={SECTION_COLORS.duration}
+            colorMap={colorMap}
+            chartColors={chartColors}
+          />
+          <ChartCaption text="One point per job, log axes, values under one minute shown as one minute. Split by the colour dimension when one is selected; above 5,000 jobs a fixed random sample is drawn." />
+        </div>
+      )}
     </section>
   );
 };

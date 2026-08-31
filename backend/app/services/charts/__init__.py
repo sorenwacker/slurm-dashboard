@@ -68,12 +68,14 @@ __all__ = [
     "generate_node_usage",
     "generate_nodes_per_job",
     "generate_user_activity_frequency",
+    "generate_wait_duration_scatter",
     "generate_waiting_times_hist",
     "generate_waiting_times_over_time",
     "generate_waiting_times_stacked",
     "generate_waiting_times_trends",
     "total_memory_gb_hours",
 ]
+from .distribution_generators import generate_wait_duration_scatter
 from .efficiency_generators import (
     generate_cpu_efficiency_over_time,
     generate_memory_efficiency_over_time,

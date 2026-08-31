@@ -125,6 +125,12 @@ export interface TrendData {
   };
 }
 
+export interface WaitDurationScatter {
+  series: { name: string; x: number[]; y: number[] }[];
+  sampled: boolean;
+  total_jobs: number;
+}
+
 export interface PieChartData {
   labels: string[];
   values: number[];
@@ -154,6 +160,7 @@ export interface AggregatedChartsResponse {
   waiting_times_over_time: ChartData;
   job_duration_over_time: ChartData;
   waiting_times_trends: TrendData;
+  wait_duration_scatter: WaitDurationScatter;
   job_duration_trends: TrendData;
   cpus_per_job: ChartData;
   gpus_per_job: ChartData;
