@@ -1,7 +1,7 @@
 """CLI entry point for slurm-backend command."""
 
-import sys
 import logging
+import sys
 
 
 def main():

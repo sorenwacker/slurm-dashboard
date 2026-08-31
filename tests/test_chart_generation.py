@@ -1,30 +1,31 @@
-import pytest
-import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
+import pytest
 from backend.app.services.charts.distribution_generators import (
-    generate_jobs_by_state,
-    generate_jobs_by_partition,
-    generate_jobs_by_account,
-    generate_waiting_times_hist,
-    generate_job_duration_hist,
-    generate_waiting_times_stacked,
-    generate_job_duration_stacked,
-    generate_waiting_times_trends,
-    generate_job_duration_trends,
-    generate_nodes_per_job,
-    generate_cpus_per_job,
-    generate_gpus_per_job,
     generate_cpu_hours_by_account,
+    generate_cpus_per_job,
     generate_gpu_hours_by_account,
+    generate_gpus_per_job,
+    generate_job_duration_hist,
+    generate_job_duration_stacked,
+    generate_job_duration_trends,
+    generate_jobs_by_account,
+    generate_jobs_by_partition,
+    generate_jobs_by_state,
+    generate_nodes_per_job,
+    generate_waiting_times_hist,
+    generate_waiting_times_stacked,
+    generate_waiting_times_trends,
 )
 from backend.app.services.charts.timeline_generators import (
+    generate_active_users_over_time,
     generate_cpu_usage_over_time,
     generate_gpu_usage_over_time,
-    generate_active_users_over_time,
+    generate_job_duration_over_time,
     generate_jobs_over_time,
     generate_waiting_times_over_time,
-    generate_job_duration_over_time,
 )
 
 

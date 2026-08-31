@@ -2,26 +2,25 @@
 
 import json
 import os
-import logging
+import re
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Any, Pattern
+from typing import Any
 
 import yaml
-import re
 
 
 class NodeConfiguration:
     """Class to handle node configuration for resources normalization."""
 
-    def __init__(self, config_file: Optional[str] = None):
+    def __init__(self, config_file: str | None = None):
         """
         Initialize the Node Configuration.
 
         Args:
             config_file: Path to config file (YAML or JSON)
         """
-        self.config: Dict[str, Any] = {}
-        self.config_file: Optional[str] = config_file
+        self.config: dict[str, Any] = {}
+        self.config_file: str | None = config_file
 
         if config_file:
             self.load_config(config_file)
@@ -32,7 +31,7 @@ class NodeConfiguration:
     def _load_default_config(self) -> None:
         """Try to load configuration from default locations."""
         # Check for configs in common locations
-        possible_paths: List[str] = [
+        possible_paths: list[str] = [
             os.path.expanduser("~/.config/slurm_usage/node_config.yaml"),
             os.path.expanduser("~/.config/slurm_usage/node_config.json"),
             "/etc/slurm_usage/node_config.yaml",
@@ -146,7 +145,7 @@ class NodeConfiguration:
         regex_pattern = pattern.replace("*", ".*")
         return re.match(f"^{regex_pattern}$", node_name) is not None
 
-    def get_all_node_resources(self, node_names: List[str]) -> Dict[str, Dict[str, int]]:
+    def get_all_node_resources(self, node_names: list[str]) -> dict[str, dict[str, int]]:
         """
         Get CPU and GPU counts for a list of nodes.
 
@@ -156,7 +155,7 @@ class NodeConfiguration:
         Returns:
             dict: Dictionary mapping node names to resource dictionaries
         """
-        resources: Dict[str, Dict[str, int]] = {}
+        resources: dict[str, dict[str, int]] = {}
 
         for node in node_names:
             resources[node] = {

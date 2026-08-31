@@ -24,6 +24,7 @@ from ..services.charts import (
     generate_active_users_distribution,
     generate_active_users_over_time,
     generate_by_dimension,
+    generate_cpu_efficiency_over_time,
     generate_cpu_usage_over_time,
     generate_cpus_per_job,
     generate_gpu_usage_over_time,
@@ -47,7 +48,6 @@ from ..services.charts import (
     generate_waiting_times_stacked,
     generate_waiting_times_trends,
     total_memory_gb_hours,
-    generate_cpu_efficiency_over_time,
 )
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))

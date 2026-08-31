@@ -1,7 +1,7 @@
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -14,8 +14,8 @@ from ..models.data_models import FilterRequest, HealthResponse, MetadataResponse
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 
 try:
-    from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
     from slurm_usage_history.app.datastore import PandasDataStore
+    from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
 except ImportError:
     DuckDBDataStore = None
     PandasDataStore = None
@@ -31,18 +31,17 @@ def convert_numpy_to_native(obj: Any) -> Any:
     """Convert numpy/pandas types to Python native types for JSON serialization."""
     if isinstance(obj, (np.integer, np.floating)):
         return obj.item()
-    elif isinstance(obj, np.ndarray):
+    if isinstance(obj, np.ndarray):
         return obj.tolist()
-    elif isinstance(obj, dict):
+    if isinstance(obj, dict):
         return {key: convert_numpy_to_native(value) for key, value in obj.items()}
-    elif isinstance(obj, list):
+    if isinstance(obj, list):
         return [convert_numpy_to_native(item) for item in obj]
-    elif isinstance(obj, (np.bool_, bool)):
+    if isinstance(obj, (np.bool_, bool)):
         return bool(obj)
-    elif obj is None or isinstance(obj, (str, int, float)):
+    if obj is None or isinstance(obj, (str, int, float)):
         return obj
-    else:
-        return str(obj)
+    return str(obj)
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -78,9 +77,9 @@ async def get_version() -> dict:
 
 @router.get("/metadata", response_model=MetadataResponse)
 async def get_metadata(
-    hostname: Optional[str] = Query(None, description="Filter metadata for specific hostname"),
-    start_date: Optional[str] = Query(None, description="Filter metadata from this date"),
-    end_date: Optional[str] = Query(None, description="Filter metadata until this date"),
+    hostname: str | None = Query(None, description="Filter metadata for specific hostname"),
+    start_date: str | None = Query(None, description="Filter metadata from this date"),
+    end_date: str | None = Query(None, description="Filter metadata until this date"),
     current_user: dict = Depends(get_current_user_saml)
 ) -> MetadataResponse:
     """Get metadata for all clusters including available filters.
@@ -151,11 +150,11 @@ async def get_metadata(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching metadata: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching metadata: {e!s}")
 
 
 @router.post("/reload-data")
-async def reload_data(hostname: Optional[str] = None, current_user: dict = Depends(get_current_user_saml)) -> dict:
+async def reload_data(hostname: str | None = None, current_user: dict = Depends(get_current_user_saml)) -> dict:
     """Reload data from disk, checking for new/updated files.
 
     Args:
@@ -185,29 +184,28 @@ async def reload_data(hostname: Optional[str] = None, current_user: dict = Depen
                 "updated": updated,
                 "hostname": hostname
             }
-        else:
-            # Check all clusters for updates
-            updated = datastore.check_for_updates()
+        # Check all clusters for updates
+        updated = datastore.check_for_updates()
 
-            # Re-initialize hosts to pick up any new cluster directories
-            datastore._initialize_hosts()
-            hostnames = datastore.get_hostnames()
+        # Re-initialize hosts to pick up any new cluster directories
+        datastore._initialize_hosts()
+        hostnames = datastore.get_hostnames()
 
-            # Load data for any newly discovered clusters
-            for host in hostnames:
-                if datastore.hosts[host]["data"] is None:
-                    datastore._load_host_data(host)
+        # Load data for any newly discovered clusters
+        for host in hostnames:
+            if datastore.hosts[host]["data"] is None:
+                datastore._load_host_data(host)
 
-            return {
-                "status": "success",
-                "message": "Data reload completed for all clusters",
-                "updated": updated,
-                "clusters": hostnames
-            }
+        return {
+            "status": "success",
+            "message": "Data reload completed for all clusters",
+            "updated": updated,
+            "clusters": hostnames
+        }
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reloading data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error reloading data: {e!s}")
 
 
 @router.post("/filter")
@@ -247,7 +245,7 @@ async def filter_data(request: FilterRequest, current_user: dict = Depends(get_c
 
         # Calculate summary statistics
         summary = {
-            "total_jobs": int(len(df)),
+            "total_jobs": len(df),
             "total_cpu_hours": float(df["CPUHours"].sum()) if "CPUHours" in df.columns else 0.0,
             "total_gpu_hours": float(df["GPUHours"].sum()) if "GPUHours" in df.columns else 0.0,
             "total_users": int(df["User"].nunique()) if "User" in df.columns else 0,
@@ -257,7 +255,7 @@ async def filter_data(request: FilterRequest, current_user: dict = Depends(get_c
         return summary
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error filtering data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error filtering data: {e!s}")
 
 
 @router.get("/stats/{hostname}")
@@ -304,4 +302,4 @@ async def get_cluster_stats(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching stats: {e!s}")

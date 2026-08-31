@@ -11,7 +11,6 @@ Usage:
 """
 
 import argparse
-import os
 import random
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -490,7 +489,7 @@ class SyntheticClusterDataGenerator:
         """
         outages = outages or []
 
-        print(f"Initializing user lifecycles...")
+        print("Initializing user lifecycles...")
         self.initialize_user_lifecycles(start_date, end_date)
 
         print(f"Generating job submission times from {start_date} to {end_date}...")
@@ -604,7 +603,7 @@ def main():
         output_dir = script_dir / "data" / args.cluster / "weekly-data"
 
     # Generate data
-    print(f"=== Synthetic Cluster Data Generator ===")
+    print("=== Synthetic Cluster Data Generator ===")
     print(f"Cluster: {args.cluster}")
     print(f"Date range: {args.start_date} to {args.end_date}")
     print(f"Jobs per day (avg): {args.jobs_per_day}")
@@ -623,11 +622,11 @@ def main():
     print("\n=== Dataset Summary ===")
     print(f"Total jobs: {len(df)}")
     print(f"Date range: {df['Submit'].min()} to {df['Submit'].max()}")
-    print(f"\nJob states:")
+    print("\nJob states:")
     print(df["State"].value_counts().to_string())
-    print(f"\nPartitions:")
+    print("\nPartitions:")
     print(df["Partition"].value_counts().to_string())
-    print(f"\nQoS:")
+    print("\nQoS:")
     print(df["QOS"].value_counts().to_string())
     print(f"\nTotal CPU-hours: {df['CPU-hours'].sum():,.2f}")
     print(f"Total GPU-hours: {df['GPU-hours'].sum():,.2f}")
@@ -637,7 +636,7 @@ def main():
 
     print("\n=== Generation Complete ===")
     print(f"Data saved to: {output_dir}")
-    print(f"\nTo use this data, update backend configuration:")
+    print("\nTo use this data, update backend configuration:")
     print(f"  CLUSTER_{args.cluster.upper()}_DATA_PATH={output_dir}")
 
     return 0

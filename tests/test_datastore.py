@@ -25,7 +25,7 @@ def reset_singleton():
     return
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_formatter():
     """Create a mock account formatter."""
     formatter = MagicMock()
@@ -34,7 +34,7 @@ def mock_formatter():
     return formatter
 
 
-@pytest.fixture()
+@pytest.fixture
 def test_data():
     """Create test data for the datastore."""
     # Create 3 days of data with various attributes
@@ -76,7 +76,7 @@ def test_data():
     return pd.DataFrame(data)
 
 
-@pytest.fixture()
+@pytest.fixture
 def temp_datadir(test_data):
     """Create a temporary directory with test data files."""
     with tempfile.TemporaryDirectory() as temp_dir:

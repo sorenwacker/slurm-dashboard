@@ -150,7 +150,7 @@ class DuckDBDataStore(metaclass=Singleton):
             cluster_data = None
             for db_path in possible_paths:
                 if db_path.exists():
-                    with open(db_path, "r") as f:
+                    with open(db_path) as f:
                         cluster_data = json.load(f)
                     break
 

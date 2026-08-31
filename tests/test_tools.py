@@ -1,4 +1,3 @@
-import pytest
 from slurm_usage_history.tools import unpack_nodelist_string
 
 

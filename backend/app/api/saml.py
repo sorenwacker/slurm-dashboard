@@ -1,8 +1,7 @@
 """SAML SSO endpoints."""
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 
 from ..core.saml_auth import (
     create_session_token,
@@ -15,7 +14,7 @@ router = APIRouter()
 
 
 @router.get("/login")
-async def saml_login(request: Request, redirect_to: Optional[str] = None):
+async def saml_login(request: Request, redirect_to: str | None = None):
     """Initiate SAML login.
 
     Args:
@@ -81,6 +80,7 @@ async def saml_acs(request: Request):
     }
 
     from onelogin.saml2.auth import OneLogin_Saml2_Auth
+
     from ..core.saml_auth import load_saml_settings
 
     saml_settings = load_saml_settings()
@@ -245,6 +245,7 @@ async def saml_sls(request: Request):
             "post_data": dict(form_data),
         }
         from onelogin.saml2.auth import OneLogin_Saml2_Auth
+
         from ..core.saml_auth import load_saml_settings
 
         saml_settings = load_saml_settings()
@@ -272,7 +273,7 @@ async def saml_sls(request: Request):
 
 
 @router.get("/logout")
-async def saml_logout(request: Request, redirect_to: Optional[str] = None):
+async def saml_logout(request: Request, redirect_to: str | None = None):
     """Initiate SAML logout.
 
     Args:
@@ -318,7 +319,7 @@ async def saml_status(request: Request):
 @router.get("/me")
 async def get_current_user_info(
     current_user: dict = Depends(get_current_user_saml),
-    dev_admin: Optional[bool] = None,
+    dev_admin: bool | None = None,
 ):
     """Get current authenticated user information including role.
 
@@ -335,7 +336,7 @@ async def get_current_user_info(
 
     # Extract email from SAML attributes
     email = None
-    if "attributes" in current_user and current_user["attributes"]:
+    if current_user.get("attributes"):
         # Try common SAML email attribute names
         email_attrs = current_user["attributes"].get("email") or \
                      current_user["attributes"].get("mail") or \

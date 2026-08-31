@@ -1,10 +1,9 @@
 """Admin authentication and authorization."""
 
-import bcrypt
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional
 
+import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -39,7 +38,7 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create JWT access token."""
     to_encode = data.copy()
     if expires_delta:
@@ -71,7 +70,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
         raise credentials_exception
 
 
-def authenticate_admin(username: str, password: str) -> Optional[str]:
+def authenticate_admin(username: str, password: str) -> str | None:
     """Authenticate admin user and return username if valid."""
     # Get admin credentials from settings
     admin_users = settings.get_admin_users()

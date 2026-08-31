@@ -95,7 +95,7 @@ async def generate_report(
                     "Content-Disposition": f"attachment; filename=report_{hostname}_{filename_suffix}.json"
                 },
             )
-        elif format == "csv":
+        if format == "csv":
             csv_content = format_report_as_csv(report_data)
             return Response(
                 content=csv_content,
@@ -104,7 +104,7 @@ async def generate_report(
                     "Content-Disposition": f"attachment; filename=report_{hostname}_{filename_suffix}.csv"
                 },
             )
-        elif format == "pdf":
+        if format == "pdf":
             pdf_content = format_report_as_pdf(report_data)
             return Response(
                 content=pdf_content,
@@ -117,7 +117,7 @@ async def generate_report(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating report: {e!s}")
 
 
 @router.get("/preview")
@@ -188,7 +188,7 @@ async def preview_report(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating report preview: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating report preview: {e!s}")
 
 
 @router.get("/available-periods/{hostname}")
@@ -249,4 +249,4 @@ async def get_available_periods(hostname: str, current_user: dict = Depends(get_
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching available periods: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching available periods: {e!s}")

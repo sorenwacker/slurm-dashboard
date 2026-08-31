@@ -150,7 +150,7 @@ async def upload_data(
         logger.error(f"Failed to save uploaded file: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to save file: {str(e)}",
+            detail=f"Failed to save file: {e!s}",
         ) from e
 
 
@@ -229,7 +229,7 @@ async def list_uploaded_files(
         logger.error(f"Failed to list files for {cluster_name}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list files: {str(e)}",
+            detail=f"Failed to list files: {e!s}",
         ) from e
 
 
@@ -262,7 +262,7 @@ async def upload_cluster_config(
     except yaml.YAMLError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid YAML syntax: {str(e)}",
+            detail=f"Invalid YAML syntax: {e!s}",
         ) from e
 
     service = NodeDiscoveryService(get_cluster_config_path())
@@ -274,7 +274,7 @@ async def upload_cluster_config(
         logger.error(f"Failed to write cluster config: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to save configuration: {str(e)}",
+            detail=f"Failed to save configuration: {e!s}",
         ) from e
 
     reload_cluster_config()

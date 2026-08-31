@@ -1,12 +1,11 @@
 import logging
-
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from .api import admin, agent, charts, cluster_admin, config_admin, dashboard, data, reports, saml
 from .core.config import get_settings

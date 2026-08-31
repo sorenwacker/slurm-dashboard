@@ -23,10 +23,6 @@ from reportlab.platypus import (
 from .pdf_charts import (
     create_bar_chart,
     create_comparison_timeline,
-    create_cumulative_chart,
-    create_pie_chart,
-    create_stacked_bar_chart,
-    create_timeline_chart,
 )
 
 
@@ -34,15 +30,15 @@ def convert_numpy_to_native(obj: Any) -> Any:
     """Convert NumPy types to native Python types for JSON serialization."""
     if isinstance(obj, np.integer):
         return int(obj)
-    elif isinstance(obj, np.floating):
+    if isinstance(obj, np.floating):
         return float(obj)
-    elif isinstance(obj, np.ndarray):
+    if isinstance(obj, np.ndarray):
         return obj.tolist()
-    elif isinstance(obj, dict):
+    if isinstance(obj, dict):
         return {key: convert_numpy_to_native(value) for key, value in obj.items()}
-    elif isinstance(obj, list):
+    if isinstance(obj, list):
         return [convert_numpy_to_native(item) for item in obj]
-    elif isinstance(obj, pd.Timestamp):
+    if isinstance(obj, pd.Timestamp):
         return obj.isoformat()
     return obj
 
@@ -52,12 +48,12 @@ def format_report_as_csv(report_data: dict[str, Any]) -> str:
     output = StringIO()
 
     # Write header
-    output.write(f"# SLURM Usage Report\n")
+    output.write("# SLURM Usage Report\n")
     output.write(f"# Report Type: {report_data['report_type']}\n")
     output.write(f"# Cluster: {report_data['hostname']}\n")
     output.write(f"# Period: {report_data['period']['start_date']} to {report_data['period']['end_date']}\n")
     output.write(f"# Generated: {report_data['generated_at']}\n")
-    output.write(f"\n")
+    output.write("\n")
 
     # Summary section
     output.write("# SUMMARY\n")
@@ -66,7 +62,7 @@ def format_report_as_csv(report_data: dict[str, Any]) -> str:
     output.write(f"Total CPU Hours,{summary['total_cpu_hours']:.2f}\n")
     output.write(f"Total GPU Hours,{summary['total_gpu_hours']:.2f}\n")
     output.write(f"Total Users,{summary['total_users']}\n")
-    output.write(f"\n")
+    output.write("\n")
 
     # By Account section
     if report_data["by_account"]:
@@ -75,7 +71,7 @@ def format_report_as_csv(report_data: dict[str, Any]) -> str:
         writer.writeheader()
         for row in report_data["by_account"]:
             writer.writerow(row)
-        output.write(f"\n")
+        output.write("\n")
 
     # By User section intentionally omitted to protect user privacy
     # Individual user data is not included in reports
@@ -87,7 +83,7 @@ def format_report_as_csv(report_data: dict[str, Any]) -> str:
         writer.writeheader()
         for row in report_data["by_partition"]:
             writer.writerow(row)
-        output.write(f"\n")
+        output.write("\n")
 
     # By State section
     if report_data["by_state"]:
@@ -104,10 +100,9 @@ def format_hours_readable(hours: float) -> str:
     """Format hours into a readable string (e.g., '1,234.5 hours' or '51.4 days')."""
     if hours < 24:
         return f"{hours:,.1f} hours"
-    elif hours < 168:  # Less than a week
+    if hours < 168:  # Less than a week
         return f"{hours/24:,.1f} days"
-    else:
-        return f"{hours/168:,.1f} weeks"
+    return f"{hours/168:,.1f} weeks"
 
 
 def format_report_as_pdf(report_data: dict[str, Any]) -> bytes:
@@ -155,7 +150,7 @@ def format_report_as_pdf(report_data: dict[str, Any]) -> bytes:
     story = []
 
     # Title
-    story.append(Paragraph(f"<b>SLURM Usage Report</b>", title_style))
+    story.append(Paragraph("<b>SLURM Usage Report</b>", title_style))
     story.append(Paragraph(f"{report_data['report_type']}", heading_style))
     story.append(Spacer(1, 0.2*inch))
 

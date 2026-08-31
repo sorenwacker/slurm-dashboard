@@ -1,8 +1,10 @@
 import functools
 import re
 import time
+from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Any, Callable, List, TypeVar, Union, Optional
+from typing import Any, TypeVar
+
 import pandas as pd
 
 T = TypeVar('T')  # For generic function typing
@@ -19,7 +21,7 @@ def timeit(func: Callable[..., T]) -> Callable[..., T]:
     return wrapper_timeit
 
 
-def natural_sort_key(s: Optional[Union[str, Any]]) -> Union[List[Union[int, str]], Any]:
+def natural_sort_key(s: str | Any | None) -> list[int | str] | Any:
     """
     Natural sorting function that handles numeric parts in strings properly.
     For example: "cpu2" will come before "cpu11" with natural sorting.
@@ -112,7 +114,7 @@ def print_column_info_in_markdown(df: pd.DataFrame) -> None:
         df: The dataframe to inspect.
     """
     # Create a list to store the column data type and example value
-    column_info: List[List[Any]] = []
+    column_info: list[list[Any]] = []
 
     for column in df.columns:
         dtype = df[column].dtype
@@ -126,7 +128,7 @@ def print_column_info_in_markdown(df: pd.DataFrame) -> None:
     print(column_info_df.to_markdown(index=False))
 
 
-def categorize_time(hours: Union[float, int]) -> str:
+def categorize_time(hours: float | int) -> str:
     """
     Categorize time in hours into predefined categories.
 
@@ -185,7 +187,7 @@ def categorize_time_series(hours_series: pd.Series) -> pd.Series:
     return categorized_series.astype("category")
 
 
-def unpack_nodelist_string(nodelist_str: Optional[str]) -> List[str]:
+def unpack_nodelist_string(nodelist_str: str | None) -> list[str]:
     """
     Unpacks a GPU string into a list of individual components.
     Handles ranges (e.g., gpu[08-09,11,14]) and single items (e.g., gpu16).
@@ -206,7 +208,7 @@ def unpack_nodelist_string(nodelist_str: Optional[str]) -> List[str]:
         return []
 
     # Initialize a list to collect unpacked values
-    unpacked_list: List[str] = []
+    unpacked_list: list[str] = []
 
     # Match patterns for ranges and list items
     range_pattern = re.compile(r"(\d+)-(\d+)")

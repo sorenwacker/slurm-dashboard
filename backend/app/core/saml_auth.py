@@ -2,12 +2,9 @@
 import json
 import os
 from pathlib import Path
-from typing import Optional
 
 from fastapi import Cookie, HTTPException, Request, status
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
-from onelogin.saml2.settings import OneLogin_Saml2_Settings
-from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 from .config import get_settings
 
@@ -29,7 +26,7 @@ def load_saml_settings() -> dict:
     if not os.path.exists(saml_settings_path):
         raise FileNotFoundError(f"SAML settings file not found: {saml_settings_path}")
 
-    with open(saml_settings_path, "r") as f:
+    with open(saml_settings_path) as f:
         saml_settings = json.load(f)
 
     # Load certificates from files
@@ -38,11 +35,11 @@ def load_saml_settings() -> dict:
     sp_key_file = cert_path / "sp.key"
 
     if sp_cert_file.exists():
-        with open(sp_cert_file, "r") as f:
+        with open(sp_cert_file) as f:
             saml_settings["sp"]["x509cert"] = f.read()
 
     if sp_key_file.exists():
-        with open(sp_key_file, "r") as f:
+        with open(sp_key_file) as f:
             saml_settings["sp"]["privateKey"] = f.read()
 
     return saml_settings
@@ -81,7 +78,7 @@ def is_saml_enabled() -> bool:
 
 
 async def get_current_user_saml(
-    session_token: Optional[str] = Cookie(None, alias="session_token")
+    session_token: str | None = Cookie(None, alias="session_token")
 ) -> dict:
     """Get current user from SAML session token.
 
@@ -142,8 +139,9 @@ def create_session_token(user_data: dict, expiry_hours: int = 24) -> str:
     Returns:
         JWT token string
     """
-    import jwt
     from datetime import datetime, timedelta
+
+    import jwt
 
     secret_key = os.getenv("SECRET_KEY")
     if not secret_key:

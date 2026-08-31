@@ -17,11 +17,11 @@ from ..core.admin_auth import (
 from ..core.config import get_settings
 from ..db.clusters import get_cluster_db
 from ..models.admin_models import (
+    AdminLoginRequest,
+    AdminLoginResponse,
     AdminRole,
     APIKeyRotateRequest,
     APIKeyRotateResponse,
-    AdminLoginRequest,
-    AdminLoginResponse,
     ClusterCreate,
     ClusterListResponse,
     ClusterResponse,
@@ -75,7 +75,7 @@ def ensure_cluster_yaml_config(cluster_name: str, description: str | None = None
 
     # Load existing config or create new
     if config_file.exists():
-        with open(config_file, 'r') as f:
+        with open(config_file) as f:
             config = yaml.safe_load(f) or {}
     else:
         config = {"clusters": {}, "settings": {}}
@@ -166,7 +166,7 @@ async def get_admin_token_from_saml(request: Request):
         user_data = await get_current_user_saml(session_token=session_token)
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated via SAML",
@@ -176,7 +176,7 @@ async def get_admin_token_from_saml(request: Request):
     # Extract email from SAML attributes (similar to /saml/me endpoint)
     settings = get_settings()
     email = None
-    if "attributes" in user_data and user_data["attributes"]:
+    if user_data.get("attributes"):
         email_attrs = user_data["attributes"].get("email") or \
                      user_data["attributes"].get("mail") or \
                      user_data["attributes"].get("emailAddress")
@@ -445,7 +445,7 @@ async def delete_cluster(
             detail="Cluster not found",
         )
 
-    return None
+    return
 
 
 @router.post("/clusters/rotate-key", response_model=APIKeyRotateResponse)
@@ -482,8 +482,8 @@ async def get_admin_emails(admin: str = Depends(get_current_admin)):
     Reads from database first, falls back to environment variables.
     Requires admin authentication.
     """
-    from pathlib import Path
     import json
+    from pathlib import Path
 
     admin_emails = []
     superadmin_emails = []
@@ -492,7 +492,7 @@ async def get_admin_emails(admin: str = Depends(get_current_admin)):
     db_path = Path("data/clusters.json")
     if db_path.exists():
         try:
-            with open(db_path, 'r') as f:
+            with open(db_path) as f:
                 data = json.load(f)
             if "admin_users" in data:
                 admin_emails = data["admin_users"].get("admin_emails", [])
@@ -600,8 +600,8 @@ async def update_admin_emails(
     Stores admin emails in the database.
     Requires admin authentication.
     """
-    from pathlib import Path
     import json
+    from pathlib import Path
 
     # Use cluster database file for admin emails
     db_path = Path("data/clusters.json")
@@ -613,12 +613,12 @@ async def update_admin_emails(
 
     # Read current database
     try:
-        with open(db_path, 'r') as f:
+        with open(db_path) as f:
             data = json.load(f)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to read database: {str(e)}",
+            detail=f"Failed to read database: {e!s}",
         )
 
     # Ensure admin_users section exists
@@ -636,7 +636,7 @@ async def update_admin_emails(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to write database: {str(e)}",
+            detail=f"Failed to write database: {e!s}",
         )
 
     logger.info(f"Admin emails updated by {admin}: {len(admin_emails)} admins, {len(superadmin_emails)} superadmins")

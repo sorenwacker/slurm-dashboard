@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 from backend.app.services.charts.node_generators import generate_node_usage
 
 

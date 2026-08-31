@@ -11,7 +11,6 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import pandas as pd
 import requests
@@ -21,7 +20,7 @@ from urllib3.util.retry import Retry
 from slurm_usage_history.memory import parse_memory_to_mb, parse_reqmem_to_mb
 
 
-def parse_duration_hours(value) -> Optional[float]:
+def parse_duration_hours(value) -> float | None:
     """Convert a SLURM duration ([D-]HH:MM:SS or MM:SS[.ms]) to hours; None when absent or unparseable."""
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return None
@@ -58,7 +57,7 @@ logger = logging.getLogger('slurm-usage-history-exporter')
 SLURM_MISSING_VALUES = {"", "none", "unknown", "nan", "nat"}
 
 
-def normalize_timestamp(value) -> Optional[str]:
+def normalize_timestamp(value) -> str | None:
     """Return a timestamp string, or None for sacct placeholders such as ``None`` and ``Unknown``."""
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return None
@@ -77,7 +76,7 @@ class SlurmDataExtractor:
         "TotalCPU,NodeList,AllocTRES,ReqMem,Cluster"
     )
 
-    def __init__(self, cluster_name: Optional[str] = None):
+    def __init__(self, cluster_name: str | None = None):
         self.cluster_name = cluster_name or self._get_cluster_name()
         logger.info(f"Initialized extractor for cluster: {self.cluster_name}")
 
@@ -181,7 +180,7 @@ class SlurmDataExtractor:
             logger.error(f"Error extracting jobs: {e}")
             raise
 
-    def format_jobs(self, df: pd.DataFrame) -> List[Dict]:
+    def format_jobs(self, df: pd.DataFrame) -> list[dict]:
         """
         Format raw SLURM data into dashboard API format
 
@@ -379,7 +378,7 @@ class DashboardClient:
 
         logger.info(f"Initialized dashboard client for {api_url}")
 
-    def submit_jobs(self, hostname: str, jobs: List[Dict]) -> Dict:
+    def submit_jobs(self, hostname: str, jobs: list[dict]) -> dict:
         """
         Submit job data to the dashboard API
 
@@ -433,7 +432,7 @@ class DashboardClient:
             logger.error(f"Error submitting jobs: {e}")
             raise
 
-    def check_health(self) -> Dict:
+    def check_health(self) -> dict:
         """Check dashboard health status"""
         endpoint = f"{self.api_url}/api/dashboard/health"
         try:
@@ -445,14 +444,14 @@ class DashboardClient:
             raise
 
 
-def load_config(config_path: Path) -> Dict:
+def load_config(config_path: Path) -> dict:
     """Load configuration from JSON file"""
     logger.info(f"Loading configuration from {config_path}")
 
     if not config_path.exists():
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-    with open(config_path, 'r') as f:
+    with open(config_path) as f:
         config = json.load(f)
 
     # Validate required fields
@@ -464,7 +463,7 @@ def load_config(config_path: Path) -> Dict:
     return config
 
 
-def generate_weekly_chunks(start_date: str, end_date: str) -> List[tuple]:
+def generate_weekly_chunks(start_date: str, end_date: str) -> list[tuple]:
     """
     Split date range into weekly chunks to avoid overloading SLURM and API.
 

@@ -66,10 +66,9 @@ def calculate_comparison_metrics(
     def calc_change_percent(current: float, previous: float) -> float:
         if previous > 0:
             return ((current - previous) / previous) * 100
-        elif current > 0:
+        if current > 0:
             return 100.0  # If previous was 0 and current is positive, 100% increase
-        else:
-            return 0.0
+        return 0.0
 
     jobs_change = calc_change_percent(
         current_summary["total_jobs"],

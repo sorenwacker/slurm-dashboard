@@ -138,7 +138,7 @@ async def ingest_data(
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error ingesting data: {str(e)}",
+            detail=f"Error ingesting data: {e!s}",
         ) from e
 
 
@@ -181,5 +181,5 @@ async def reload_datastore(
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error reloading datastore: {str(e)}",
+            detail=f"Error reloading datastore: {e!s}",
         )

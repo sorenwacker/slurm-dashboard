@@ -6,9 +6,10 @@ import os
 import re
 import subprocess
 import time
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
+from typing import cast
 
 import pandas as pd
 from tqdm import tqdm
@@ -16,7 +17,7 @@ from tqdm import tqdm
 from ..tools import categorize_time, month_to_date, unpack_nodelist_string, week_to_date
 
 
-def parse_iso_week(iso_week_str: str) -> Tuple[int, int]:
+def parse_iso_week(iso_week_str: str) -> tuple[int, int]:
     """
     Parse an ISO week string in the format YYYY-Www (e.g., 2025-W01).
 
@@ -42,10 +43,10 @@ def parse_iso_week(iso_week_str: str) -> Tuple[int, int]:
 
 
 def calculate_date_range(
-    weeks_back: Optional[int] = None, 
-    from_date: Optional[str] = None, 
-    to_date: Optional[str] = None
-) -> Tuple[int, int, int, int]:
+    weeks_back: int | None = None,
+    from_date: str | None = None,
+    to_date: str | None = None
+) -> tuple[int, int, int, int]:
     """
     Calculate date range for data extraction based on different inputs.
 
@@ -87,7 +88,7 @@ class UsageDataFetcher:
     Fetches usage data from the SLURM database.
     """
 
-    def __init__(self, command_executor: Optional[Callable] = None):
+    def __init__(self, command_executor: Callable | None = None):
         """
         Initialize the UsageDataFetcher with an optional command executor.
         This allows dependency injection for better testing.
@@ -98,11 +99,11 @@ class UsageDataFetcher:
         self.command_executor: Callable = command_executor or subprocess.run
 
     def export_usage_data(
-        self, 
-        from_year: int, 
-        from_week: int, 
-        until_year: Optional[int] = None, 
-        until_week: Optional[int] = None, 
+        self,
+        from_year: int,
+        from_week: int,
+        until_year: int | None = None,
+        until_week: int | None = None,
         verbose: bool = False
     ) -> pd.DataFrame:
         """
@@ -154,9 +155,9 @@ class UsageDataFetcher:
         return combined_df
 
     def run_sacct_command(
-        self, 
-        sacct_start: str, 
-        sacct_end: str, 
+        self,
+        sacct_start: str,
+        sacct_end: str,
         verbose: bool = False
     ) -> pd.DataFrame:
         """
@@ -173,7 +174,7 @@ class UsageDataFetcher:
 
         format_string = "--format=JobID,User,QOS,Account,Partition,Submit,Start,End,State,Elapsed,AveDiskRead,AveDiskWrite,AveCPU,MaxRSS,AllocCPUS,TotalCPU,NodeList,AllocTRES,Cluster"
 
-        command: List[str] = [
+        command: list[str] = [
             "sacct",
             format_string,
             "--parsable2",
@@ -208,10 +209,10 @@ class UsageDataFetcher:
 
     @staticmethod
     def get_week_dates(
-        year: int, 
-        week: int, 
+        year: int,
+        week: int,
         chunk_size: int = 7
-    ) -> Tuple[datetime, datetime]:
+    ) -> tuple[datetime, datetime]:
         """
         Calculate the start and end dates of a specific week.
 
@@ -235,7 +236,6 @@ class UsageDataFormatter:
 
     def __init__(self):
         """Initialize the UsageDataFormatter."""
-        pass
 
     def format_usage_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -327,7 +327,7 @@ class UsageDataFormatter:
             ordered=True,
         )
 
-        columns: List[str] = [
+        columns: list[str] = [
             "User",
             "QOS",
             "Account",
@@ -359,11 +359,11 @@ class UsageDataFormatter:
             "MaxRSS",
             "Cluster"
         ]
-        
+
         return df[columns]
 
     @staticmethod
-    def convert_mem_to_gb(mem_value: Union[str, float, None]) -> float:
+    def convert_mem_to_gb(mem_value: str | float | None) -> float:
         """
         Convert memory value to gigabytes.
 
@@ -402,9 +402,9 @@ class DataExporter:
         self,
         data_fetcher: UsageDataFetcher,
         data_formatter: UsageDataFormatter,
-        api_url: Optional[str] = None,
-        api_key: Optional[str] = None,
-        cluster_name: Optional[str] = None,
+        api_url: str | None = None,
+        api_key: str | None = None,
+        cluster_name: str | None = None,
     ):
         """
         Initialize the DataExporter.
@@ -461,10 +461,9 @@ class DataExporter:
 
                 if response.status_code in (200, 201):
                     return True
-                else:
-                    print(f"Upload failed: HTTP {response.status_code}")
-                    print(f"Response: {response.text}")
-                    return False
+                print(f"Upload failed: HTTP {response.status_code}")
+                print(f"Response: {response.text}")
+                return False
 
         except Exception as e:
             print(f"Error uploading file to API: {e}")
@@ -493,9 +492,8 @@ class DataExporter:
                 files = data.get("files", [])
                 print(f"✓ Server has {len(files)} files already uploaded")
                 return set(files)
-            else:
-                print(f"Warning: Could not get server file list (HTTP {response.status_code})")
-                return set()
+            print(f"Warning: Could not get server file list (HTTP {response.status_code})")
+            return set()
 
         except Exception as e:
             print(f"Warning: Could not get server file list: {e}")
@@ -505,12 +503,12 @@ class DataExporter:
         self,
         from_year: int,
         from_week: int,
-        until_year: Optional[int] = None,
-        until_week: Optional[int] = None,
+        until_year: int | None = None,
+        until_week: int | None = None,
         output_dir: str = "slurmo_weekly_data",
         overwrite: bool = False,
         verbose: bool = False,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Fetch data weekly and save to Parquet files.
 
@@ -540,7 +538,7 @@ class DataExporter:
 
         current_year = from_year
         current_week = from_week
-        data_files: List[str] = []
+        data_files: list[str] = []
 
         # Use tqdm for progress bar
         pbar = tqdm(
@@ -641,7 +639,7 @@ def main() -> None:
         type=str,
         help="Ending date in ISO week format (e.g., 2025-W52). Only valid with --from",
     )
-    
+
     parser.add_argument(
         "--output-dir",
         type=str,
