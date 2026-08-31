@@ -1,4 +1,5 @@
 """Configuration management for cluster labels and node synonyms."""
+
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -281,7 +282,12 @@ class ClusterConfig:
         """Hardware and type of every configured node of a cluster, keyed by canonical node name."""
         node_labels = self.config.get("clusters", {}).get(cluster, {}).get("node_labels", {}) or {}
         return {
-            node: {**self.get_node_hardware(cluster, node), "type": (info or {}).get("type", "cpu")}
+            node: {
+                **self.get_node_hardware(cluster, node),
+                "type": (info or {}).get("type", "cpu"),
+                # Written only by the agent sync: the node exists in SLURM right now
+                "synced": "partitions" in (info or {}),
+            }
             for node, info in node_labels.items()
         }
 

@@ -319,7 +319,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
           {(clusterUtilization.cpu !== null || clusterUtilization.gpu !== null || clusterUtilization.memory !== null) && (
             <>
             <p style={{ fontSize: '0.85rem', color: '#666', margin: '0 0 0.5rem' }}>
-              Capacity-weighted over all configured nodes with known capacity for the selected range.
+              Capacity-weighted over nodes with known capacity that SLURM reports or that ran jobs in the selected range.
             </p>
             <div className="gauge-grid" style={{ marginBottom: 'var(--space-lg)' }}>
               {clusterUtilization.cpu !== null && (
@@ -396,6 +396,38 @@ const UsageSection: React.FC<UsageSectionProps> = ({
               </div>
             )}
 
+            {/* GPU Node Usage */}
+            {processedNodeData.gpu && processedNodeData.gpu.x.length > 0 && (
+              <div className="subsection">
+                <h2 className="subsection-header">GPU Usage by Node</h2>
+                <div className="card">
+                  <h3>
+                    GPU Usage by Node{' '}
+                    {processedNodeData.gpu.normalized && (
+                      <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>
+                        (% of capacity)
+                      </span>
+                    )}
+                  </h3>
+                  <StackedAreaChart
+                    data={processedNodeData.gpu}
+                    xTitle="Node"
+                    yTitle={processedNodeData.gpu.normalized ? "Utilization (%)" : "GPU Hours"}
+                    defaultColor="#EC7300"
+                    colorMap={colorMap}
+                    chartType="bar"
+                    barMode="stack"
+                    chartColors={chartColors}
+                  />
+                  {processedNodeData.gpu.unknownCapacity.length > 0 && (
+                    <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
+                      {processedNodeData.gpu.unknownCapacity.length} nodes without known capacity are not shown: {processedNodeData.gpu.unknownCapacity.join(', ')}
+                    </p>
+                  )}
+                  <ChartCaption text="GPU-hours per node from jobs overlapping the range, split equally over a job's nodes. Normalized: percentage of the node's known GPU count over the range." />
+                </div>
+              </div>
+            )}
             {/* Memory Node Usage */}
             {processedNodeData.memory && processedNodeData.memory.x.length > 0 && (
               <div className="subsection">
@@ -429,38 +461,6 @@ const UsageSection: React.FC<UsageSectionProps> = ({
               </div>
             )}
 
-            {/* GPU Node Usage */}
-            {processedNodeData.gpu && processedNodeData.gpu.x.length > 0 && (
-              <div className="subsection">
-                <h2 className="subsection-header">GPU Usage by Node</h2>
-                <div className="card">
-                  <h3>
-                    GPU Usage by Node{' '}
-                    {processedNodeData.gpu.normalized && (
-                      <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>
-                        (% of capacity)
-                      </span>
-                    )}
-                  </h3>
-                  <StackedAreaChart
-                    data={processedNodeData.gpu}
-                    xTitle="Node"
-                    yTitle={processedNodeData.gpu.normalized ? "Utilization (%)" : "GPU Hours"}
-                    defaultColor="#EC7300"
-                    colorMap={colorMap}
-                    chartType="bar"
-                    barMode="stack"
-                    chartColors={chartColors}
-                  />
-                  {processedNodeData.gpu.unknownCapacity.length > 0 && (
-                    <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
-                      {processedNodeData.gpu.unknownCapacity.length} nodes without known capacity are not shown: {processedNodeData.gpu.unknownCapacity.join(', ')}
-                    </p>
-                  )}
-                  <ChartCaption text="GPU-hours per node from jobs overlapping the range, split equally over a job's nodes. Normalized: percentage of the node's known GPU count over the range." />
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}

@@ -45,7 +45,7 @@ The gauges show capacity-weighted utilization over **all configured nodes** with
 cluster_utilization = sum over nodes of resource_hours(node) / sum over nodes of (capacity(node) * hours)
 ```
 
-An idle node with known capacity lowers the gauge; an unknown-capacity node does not appear in either sum. Nodes of type `login` and `storage` are excluded.
+An idle node with known capacity lowers the gauge; an unknown-capacity node does not appear in either sum. Nodes of type `login` and `storage` are excluded. A configured node that the last `sync-config` run did not report and that ran nothing in the range is treated as decommissioned and excluded - on clusters that never ran `sync-config`, only nodes with usage in the range count as capacity.
 
 When requested memory is known for fewer than 90 % of the jobs in the range, the memory gauge carries a warning stating the coverage; it then describes only the jobs with memory data. This happens for data collected before the agent reported memory fields.
 

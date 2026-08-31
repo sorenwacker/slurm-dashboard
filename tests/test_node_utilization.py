@@ -66,11 +66,11 @@ def test_node_hours_keeps_full_hours_without_window():
 
 
 CAPACITIES = {
-    "n1": {"cpu_cores": 8, "gpu_count": 2, "memory_gb": 64, "known": True, "type": "gpu"},
-    "n2": {"cpu_cores": 8, "gpu_count": 0, "memory_gb": 64, "known": True, "type": "cpu"},
-    "idle": {"cpu_cores": 4, "gpu_count": 0, "memory_gb": 0, "known": True, "type": "cpu"},
-    "unknown": {"cpu_cores": 64, "gpu_count": 0, "memory_gb": 0, "known": False, "type": "cpu"},
-    "login": {"cpu_cores": 8, "gpu_count": 0, "memory_gb": 32, "known": True, "type": "login"},
+    "n1": {"cpu_cores": 8, "gpu_count": 2, "memory_gb": 64, "known": True, "synced": True, "type": "gpu"},
+    "n2": {"cpu_cores": 8, "gpu_count": 0, "memory_gb": 64, "known": True, "synced": False, "type": "cpu"},
+    "idle": {"cpu_cores": 4, "gpu_count": 0, "memory_gb": 0, "known": True, "synced": True, "type": "cpu"},
+    "unknown": {"cpu_cores": 64, "gpu_count": 0, "memory_gb": 0, "known": False, "synced": False, "type": "cpu"},
+    "login": {"cpu_cores": 8, "gpu_count": 0, "memory_gb": 32, "known": True, "synced": True, "type": "login"},
 }
 
 
@@ -83,6 +83,21 @@ def test_cluster_utilization_is_capacity_weighted_over_configured_nodes():
     assert result["gpu"] == pytest.approx(10.0 / 96.0 * 100.0)
     # memory: 640 over (64 + 64) * 48 = 6144; idle has no memory capacity
     assert result["memory"] == pytest.approx(640.0 / 6144.0 * 100.0)
+
+
+def test_ghost_nodes_are_excluded_from_the_denominator():
+    """A configured node neither reported by SLURM nor used in the window does not count as capacity."""
+    hours = node_resource_hours(jobs(), WINDOW)
+    ghost = {"cpu_cores": 8, "gpu_count": 3, "memory_gb": 64, "known": True, "synced": False, "type": "gpu"}
+    with_ghost = {**CAPACITIES, "ghost": ghost}
+    result = cluster_utilization(hours, with_ghost, 48.0)
+    assert result == cluster_utilization(hours, CAPACITIES, 48.0)
+    # the same node, synced, does count
+    synced_ghost = {**with_ghost, "ghost": {**ghost, "synced": True}}
+    assert cluster_utilization(hours, synced_ghost, 48.0)["gpu"] < result["gpu"]
+    # an unsynced node with usage in the window counts (n2 is unsynced but used)
+    without_n2 = {k: v for k, v in CAPACITIES.items() if k != "n2"}
+    assert cluster_utilization(hours, without_n2, 48.0)["cpu"] > result["cpu"]
 
 
 def test_cluster_utilization_none_without_capacity_or_window():

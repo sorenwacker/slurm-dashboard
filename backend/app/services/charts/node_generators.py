@@ -129,7 +129,9 @@ def cluster_utilization(
     """Capacity-weighted utilization per resource over all configured compute nodes with known capacity.
 
     ``capacities`` maps every configured node to its hardware dict (``cpu_cores``, ``gpu_count``,
-    ``memory_gb``, ``known``, ``type``). Nodes with unknown or zero capacity are left out of both sums.
+    ``memory_gb``, ``known``, ``synced``, ``type``). Nodes with unknown or zero capacity are left out
+    of both sums, and so are configured nodes that SLURM does not report (not ``synced``) and that ran
+    nothing in the window - those are usually decommissioned and would dilute the denominator.
     """
     if not window_hours or window_hours <= 0:
         return dict.fromkeys(RESOURCES)
@@ -138,6 +140,7 @@ def cluster_utilization(
         if not node_hours.empty
         else pd.DataFrame()
     )
+    active_nodes = set(used[used.fillna(0.0).sum(axis=1) > 0].index) if not used.empty else set()
     result: dict[str, float | None] = {}
     for resource, spec in RESOURCES.items():
         if used.empty or used[spec["hours"]].notna().sum() == 0:
@@ -148,6 +151,8 @@ def cluster_utilization(
         for node, hw in capacities.items():
             if hw.get("type", "cpu") not in COMPUTE_NODE_TYPES or not hw.get("known"):
                 continue
+            if not hw.get("synced") and node not in active_nodes:
+                continue  # in the config but neither reported by SLURM nor used in the window
             capacity = float(hw.get(spec["capacity"]) or 0)
             if capacity <= 0:
                 continue
