@@ -23,12 +23,12 @@ SLURM's accounting database does not store memory samples. Two per-job values ar
 
 ## Charts
 
-The Usage section gains a Memory subsection next to CPU and GPU:
+The dashboard has a Memory section next to CPU and GPU; each resource section groups everything about that resource:
 
 - **Memory Usage** - allocated memory-hours (GB-hours) per period, stacked by the selected colour dimension.
 - **Memory Usage by Account / Distribution** - same split as the CPU and GPU charts.
-- **Memory per Job** (in the Allocated Resources section) - histogram of requested memory per job in GB.
-- **Memory Efficiency** (in the Efficiency subsection) - percentage of requested memory actually used, per period; peak-based, so an upper bound. See [Utilization](utilization.md#efficiency).
+- **Memory per Job** - histogram of requested memory per job in GB.
+- **Memory Efficiency** - percentage of requested memory actually used, per period; peak-based, so an upper bound. See [Utilization](utilization.md#efficiency).
 
 Usage by Node gains a Memory row alongside CPU and GPU. With "Normalize" enabled it shows the percentage of each node's memory that was allocated over the selected range, and the cluster-wide utilization gauges gain a Memory gauge. A node at high memory utilization with low CPU utilization is memory-bound: its cores sit idle because its memory is fully allocated.
 

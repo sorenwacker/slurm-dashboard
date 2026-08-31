@@ -173,6 +173,12 @@ const Dashboard: React.FC = () => {
               periodType={overviewState.periodType}
               setPeriodType={overviewActions.setPeriodType}
               currentPeriodType={actualPeriodType}
+              hideUnusedNodes={overviewState.hideUnusedNodes}
+              setHideUnusedNodes={overviewActions.setHideUnusedNodes}
+              sortByUsage={overviewState.sortByUsage}
+              setSortByUsage={overviewActions.setSortByUsage}
+              normalizeNodeUsage={overviewState.normalizeNodeUsage}
+              setNormalizeNodeUsage={overviewActions.setNormalizeNodeUsage}
             />
           ) : (
             <ReportControls
@@ -216,11 +222,8 @@ const Dashboard: React.FC = () => {
                   <Charts
                     data={chartsData}
                     hideUnusedNodes={overviewState.hideUnusedNodes}
-                    setHideUnusedNodes={overviewActions.setHideUnusedNodes}
                     sortByUsage={overviewState.sortByUsage}
-                    setSortByUsage={overviewActions.setSortByUsage}
                     normalizeNodeUsage={overviewState.normalizeNodeUsage}
-                    setNormalizeNodeUsage={overviewActions.setNormalizeNodeUsage}
                     colorBy={overviewState.colorBy}
                     periodType={actualPeriodType}
                   />
