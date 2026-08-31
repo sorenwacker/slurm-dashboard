@@ -109,6 +109,7 @@ async def saml_acs(request: Request):
 
     # Log attributes for debugging
     import logging
+
     logger = logging.getLogger(__name__)
     logger.info(f"SAML NameID: {nameid}")
     logger.info(f"SAML Attributes: {attributes}")
@@ -117,10 +118,12 @@ async def saml_acs(request: Request):
     username = nameid  # Fallback to NameID
     if attributes:
         # Try common username attributes
-        username_attrs = attributes.get("uid") or \
-                        attributes.get("urn:oid:0.9.2342.19200300.100.1.1") or \
-                        attributes.get("username") or \
-                        attributes.get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")
+        username_attrs = (
+            attributes.get("uid")
+            or attributes.get("urn:oid:0.9.2342.19200300.100.1.1")
+            or attributes.get("username")
+            or attributes.get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")
+        )
         if username_attrs and isinstance(username_attrs, list) and len(username_attrs) > 0:
             username = username_attrs[0]
 
@@ -142,13 +145,14 @@ async def saml_acs(request: Request):
 
     # Security checks for production
     from ..core.config import get_settings
+
     settings = get_settings()
     is_https = request.url.scheme == "https"
 
     if settings.is_production() and not is_https:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="SAML authentication requires HTTPS in production environments"
+            detail="SAML authentication requires HTTPS in production environments",
         )
 
     # Cookie settings: strict in production, permissive in development
@@ -338,9 +342,11 @@ async def get_current_user_info(
     email = None
     if current_user.get("attributes"):
         # Try common SAML email attribute names
-        email_attrs = current_user["attributes"].get("email") or \
-                     current_user["attributes"].get("mail") or \
-                     current_user["attributes"].get("emailAddress")
+        email_attrs = (
+            current_user["attributes"].get("email")
+            or current_user["attributes"].get("mail")
+            or current_user["attributes"].get("emailAddress")
+        )
         if email_attrs and isinstance(email_attrs, list) and len(email_attrs) > 0:
             email = email_attrs[0]
 

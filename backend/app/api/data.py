@@ -50,11 +50,7 @@ async def ingest_data(
                 df[col] = pd.to_datetime(df[col])
 
         # Normalize column names for consistency
-        rename_map = {
-            "AllocNodes": "Nodes",
-            "AllocCPUS": "CPUs",
-            "AllocGPUS": "GPUs"
-        }
+        rename_map = {"AllocNodes": "Nodes", "AllocCPUS": "CPUs", "AllocGPUS": "GPUs"}
         df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns})
 
         # Add derived columns for efficient querying

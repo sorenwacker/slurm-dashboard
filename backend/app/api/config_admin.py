@@ -1,4 +1,5 @@
 """Configuration admin API endpoints for YAML cluster configuration management."""
+
 from pathlib import Path
 from typing import Any
 
@@ -106,6 +107,7 @@ async def update_configuration(config_data: dict[str, Any], admin: str = Depends
         if config_path.exists():
             backup_path = config_path.with_suffix(".yaml.backup")
             import shutil
+
             shutil.copy2(config_path, backup_path)
 
         # Write new configuration
@@ -127,6 +129,7 @@ async def update_configuration(config_data: dict[str, Any], admin: str = Depends
         backup_path = config_path.with_suffix(".yaml.backup")
         if backup_path.exists():
             import shutil
+
             shutil.copy2(backup_path, config_path)
             reload_cluster_config()
 
@@ -162,12 +165,14 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
 
         # Get data directory
         from ..core.config import get_settings
+
         settings = get_settings()
         output_dir = Path(settings.data_path) / cluster_name / "data"
 
         # Check if demo cluster already exists - if so, delete it first
         if output_dir.exists() and list(output_dir.glob("*.parquet")):
             import shutil
+
             # Delete existing demo cluster data
             shutil.rmtree(output_dir.parent)  # Delete the entire DemoCluster directory
 
@@ -180,14 +185,16 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
                     del existing_config["clusters"][cluster_name]
                     import os
                     import tempfile
+
                     config_dir = config_path.parent
-                    with tempfile.NamedTemporaryFile(mode='w', dir=config_dir, delete=False, suffix='.yaml') as f:
+                    with tempfile.NamedTemporaryFile(mode="w", dir=config_dir, delete=False, suffix=".yaml") as f:
                         temp_path = f.name
                         yaml.dump(existing_config, f, default_flow_style=False, sort_keys=False)
                     os.replace(temp_path, config_path)
 
             # Remove from database if exists
             from ..db.clusters import get_cluster_db
+
             cluster_db_instance = get_cluster_db()
             for cluster in cluster_db_instance.get_all_clusters():
                 if cluster["name"] == cluster_name:
@@ -196,17 +203,14 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
 
         # Define outage periods (2-3 outages during the 2-year period)
         outages = [
-            (date(2023, 6, 15), date(2023, 6, 18)),   # 3-day summer outage
-            (date(2023, 11, 20), date(2023, 11, 22)), # 2-day fall outage
-            (date(2024, 4, 10), date(2024, 4, 13))    # 3-day spring outage
+            (date(2023, 6, 15), date(2023, 6, 18)),  # 3-day summer outage
+            (date(2023, 11, 20), date(2023, 11, 22)),  # 2-day fall outage
+            (date(2024, 4, 10), date(2024, 4, 13)),  # 3-day spring outage
         ]
 
         # Create generator with demo configuration
         generator = SyntheticClusterDataGenerator(
-            cluster_name=cluster_name,
-            seed=42,
-            num_users=100,
-            simple_partitions=True
+            cluster_name=cluster_name, seed=42, num_users=100, simple_partitions=True
         )
 
         # Generate dataset
@@ -215,11 +219,7 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
         jobs_per_day = 150  # Average jobs per day
 
         df = generator.generate_dataset(
-            start_date=start_date,
-            end_date=end_date,
-            jobs_per_day=jobs_per_day,
-            seasonal_pattern=True,
-            outages=outages
+            start_date=start_date, end_date=end_date, jobs_per_day=jobs_per_day, seasonal_pattern=True, outages=outages
         )
 
         # Save data
@@ -227,7 +227,6 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
 
         # Auto-generate configuration
         from pathlib import Path
-
 
         config_path = get_config_path()
         if config_path.exists():
@@ -251,19 +250,10 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
             "node_labels": {},
             "account_labels": {},
             "partition_labels": {
-                "general": {
-                    "display_name": "General Partition",
-                    "description": "General purpose partition"
-                },
-                "cpu": {
-                    "display_name": "CPU Partition",
-                    "description": "CPU-only partition"
-                },
-                "gpu": {
-                    "display_name": "GPU Partition",
-                    "description": "GPU partition"
-                }
-            }
+                "general": {"display_name": "General Partition", "description": "General purpose partition"},
+                "cpu": {"display_name": "CPU Partition", "description": "CPU-only partition"},
+                "gpu": {"display_name": "GPU Partition", "description": "GPU partition"},
+            },
         }
 
         # Extract node and account info from generated data
@@ -288,7 +278,7 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
         for account in sorted(df["Account"].dropna().unique()):
             cluster_config["account_labels"][account] = {
                 "display_name": account,
-                "short_name": account.split("-")[-1].upper() if "-" in account else account
+                "short_name": account.split("-")[-1].upper() if "-" in account else account,
             }
 
         config_data["clusters"][cluster_name] = cluster_config
@@ -296,8 +286,9 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
         # Write configuration atomically
         import os
         import tempfile
+
         config_dir = config_path.parent
-        with tempfile.NamedTemporaryFile(mode='w', dir=config_dir, delete=False, suffix='.yaml') as f:
+        with tempfile.NamedTemporaryFile(mode="w", dir=config_dir, delete=False, suffix=".yaml") as f:
             temp_path = f.name
             yaml.dump(config_data, f, default_flow_style=False, sort_keys=False)
         os.replace(temp_path, config_path)
@@ -307,6 +298,7 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
 
         # Trigger datastore reload
         from ..datastore_singleton import get_datastore
+
         datastore = get_datastore()
         datastore.check_for_updates()
 
@@ -325,7 +317,7 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
                 name=cluster_name,
                 description="Synthetic demo cluster with 2 years of realistic job data (2023-2024)",
                 contact_email="demo@example.com",
-                location="Demo Environment"
+                location="Demo Environment",
             )
 
         return {
@@ -341,17 +333,15 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
                 "nodes": len(all_nodes),
                 "total_cpu_hours": float(df["CPU-hours"].sum()),
                 "total_gpu_hours": float(df["GPU-hours"].sum()),
-                "outages": len(outages)
-            }
+                "outages": len(outages),
+            },
         }
     except HTTPException:
         raise
     except Exception as e:
         import traceback
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error generating demo cluster: {e!s}\n{traceback.format_exc()}"
-        )
+
+        raise HTTPException(status_code=500, detail=f"Error generating demo cluster: {e!s}\n{traceback.format_exc()}")
 
 
 @router.post("/config/{cluster_name}/cleanup-invalid-nodes")
@@ -390,11 +380,11 @@ async def cleanup_invalid_nodes(cluster_name: str, admin: str = Depends(get_curr
         invalid_nodes = []
         for node_name, node_info in nodes.items():
             # Skip invalid: just numbers/ranges/brackets without letters
-            if re.match(r'^[\d\-\[\]]+$', node_name) or ']' in node_name or '[' in node_name:
+            if re.match(r"^[\d\-\[\]]+$", node_name) or "]" in node_name or "[" in node_name:
                 invalid_nodes.append(node_name)
                 continue
             # Keep only nodes starting with letter
-            if re.match(r'^[a-zA-Z][a-zA-Z0-9_-]*$', node_name):
+            if re.match(r"^[a-zA-Z][a-zA-Z0-9_-]*$", node_name):
                 valid_nodes[node_name] = node_info
             else:
                 invalid_nodes.append(node_name)
@@ -405,8 +395,9 @@ async def cleanup_invalid_nodes(cluster_name: str, admin: str = Depends(get_curr
         # Write atomically
         import os
         import tempfile
+
         config_dir = config_path.parent
-        with tempfile.NamedTemporaryFile(mode='w', dir=config_dir, delete=False, suffix='.yaml') as f:
+        with tempfile.NamedTemporaryFile(mode="w", dir=config_dir, delete=False, suffix=".yaml") as f:
             temp_path = f.name
             yaml.dump(config_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
         os.replace(temp_path, config_path)
@@ -421,13 +412,14 @@ async def cleanup_invalid_nodes(cluster_name: str, admin: str = Depends(get_curr
                 "original_count": original_count,
                 "removed_count": len(invalid_nodes),
                 "remaining_count": len(valid_nodes),
-                "sample_removed": invalid_nodes[:10] if invalid_nodes else []
-            }
+                "sample_removed": invalid_nodes[:10] if invalid_nodes else [],
+            },
         }
     except HTTPException:
         raise
     except Exception as e:
         import traceback
+
         raise HTTPException(status_code=500, detail=f"Error cleaning up nodes: {e!s}\n{traceback.format_exc()}")
 
 
@@ -471,14 +463,16 @@ async def cleanup_demo_cluster(cluster_name: str, admin: str = Depends(get_curre
                 # Write back
                 import os
                 import tempfile
+
                 config_dir = config_path.parent
-                with tempfile.NamedTemporaryFile(mode='w', dir=config_dir, delete=False, suffix='.yaml') as f:
+                with tempfile.NamedTemporaryFile(mode="w", dir=config_dir, delete=False, suffix=".yaml") as f:
                     temp_path = f.name
                     yaml.dump(config_data, f, default_flow_style=False, sort_keys=False)
                 os.replace(temp_path, config_path)
 
         # Remove from database if exists
         from ..db.clusters import get_cluster_db
+
         cluster_db = get_cluster_db()
         existing_clusters = cluster_db.get_all_clusters()
         for cluster in existing_clusters:
@@ -491,23 +485,21 @@ async def cleanup_demo_cluster(cluster_name: str, admin: str = Depends(get_curre
 
         # Trigger datastore reload
         from ..datastore_singleton import get_datastore
+
         datastore = get_datastore()
         datastore.check_for_updates()
 
-        return {
-            "status": "success",
-            "message": f"Cluster {cluster_name} cleaned up successfully"
-        }
+        return {"status": "success", "message": f"Cluster {cluster_name} cleaned up successfully"}
     except Exception as e:
         import traceback
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error cleaning up cluster: {e!s}\n{traceback.format_exc()}"
-        )
+
+        raise HTTPException(status_code=500, detail=f"Error cleaning up cluster: {e!s}\n{traceback.format_exc()}")
 
 
 @router.put("/config/{cluster_name}")
-async def update_cluster_configuration(cluster_name: str, cluster_data: dict[str, Any], admin: str = Depends(get_current_admin)):
+async def update_cluster_configuration(
+    cluster_name: str, cluster_data: dict[str, Any], admin: str = Depends(get_current_admin)
+):
     """Update configuration for a specific cluster.
 
     This endpoint allows you to update the configuration for a single cluster.
@@ -539,6 +531,7 @@ async def update_cluster_configuration(cluster_name: str, cluster_data: dict[str
         backup_path = config_path.with_suffix(".yaml.backup")
         if config_path.exists():
             import shutil
+
             shutil.copy2(config_path, backup_path)
 
         # Update the specific cluster
@@ -561,6 +554,7 @@ async def update_cluster_configuration(cluster_name: str, cluster_data: dict[str
         backup_path = config_path.with_suffix(".yaml.backup")
         if backup_path.exists():
             import shutil
+
             shutil.copy2(backup_path, config_path)
             reload_cluster_config()
 

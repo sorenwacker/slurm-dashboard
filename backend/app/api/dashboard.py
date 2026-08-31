@@ -70,6 +70,7 @@ async def get_version() -> dict:
     """Get application version."""
     try:
         from _version import __version__
+
         return {"version": __version__}
     except ImportError:
         return {"version": "unknown"}
@@ -80,7 +81,7 @@ async def get_metadata(
     hostname: str | None = Query(None, description="Filter metadata for specific hostname"),
     start_date: str | None = Query(None, description="Filter metadata from this date"),
     end_date: str | None = Query(None, description="Filter metadata until this date"),
-    current_user: dict = Depends(get_current_user_saml)
+    current_user: dict = Depends(get_current_user_saml),
 ) -> MetadataResponse:
     """Get metadata for all clusters including available filters.
 
@@ -92,6 +93,7 @@ async def get_metadata(
         hostnames = datastore.get_hostnames()
 
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info(f"[METADATA] Initial hostnames from datastore: {hostnames}")
         logger.info(f"[METADATA] Query parameter hostname: {hostname}")
@@ -114,9 +116,7 @@ async def get_metadata(
             # If date range is provided, get filter values from filtered data
             if start_date or end_date:
                 filter_values = datastore.get_filter_values_for_period(
-                    hostname=host,
-                    start_date=start_date,
-                    end_date=end_date
+                    hostname=host, start_date=start_date, end_date=end_date
                 )
                 partitions[host] = filter_values["partitions"]
                 accounts[host] = filter_values["accounts"]
@@ -166,6 +166,7 @@ async def reload_data(hostname: str | None = None, current_user: dict = Depends(
     try:
         # Clear chart cache since we're reloading data
         from .charts import clear_chart_cache
+
         clear_chart_cache()
 
         datastore = get_datastore()
@@ -182,7 +183,7 @@ async def reload_data(hostname: str | None = None, current_user: dict = Depends(
                 "status": "success",
                 "message": f"Data reload completed for {hostname}",
                 "updated": updated,
-                "hostname": hostname
+                "hostname": hostname,
             }
         # Check all clusters for updates
         updated = datastore.check_for_updates()
@@ -200,7 +201,7 @@ async def reload_data(hostname: str | None = None, current_user: dict = Depends(
             "status": "success",
             "message": "Data reload completed for all clusters",
             "updated": updated,
-            "clusters": hostnames
+            "clusters": hostnames,
         }
     except HTTPException:
         raise

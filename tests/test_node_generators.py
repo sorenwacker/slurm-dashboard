@@ -4,11 +4,13 @@ from backend.app.services.charts.node_generators import generate_node_usage
 
 def test_node_names_preserved():
     """Test that node names are preserved exactly as they appear in data."""
-    df = pd.DataFrame({
-        "NodeList": [["gpu5"], ["gpu30"], ["gpu05"], ["gpu10"]],
-        "CPUHours": [10.0, 20.0, 15.0, 25.0],
-        "GPUHours": [5.0, 10.0, 8.0, 12.0],
-    })
+    df = pd.DataFrame(
+        {
+            "NodeList": [["gpu5"], ["gpu30"], ["gpu05"], ["gpu10"]],
+            "CPUHours": [10.0, 20.0, 15.0, 25.0],
+            "GPUHours": [5.0, 10.0, 8.0, 12.0],
+        }
+    )
 
     result = generate_node_usage(df)
 
@@ -29,11 +31,13 @@ def test_node_names_preserved():
 
 def test_node_list_expansion():
     """Test that pre-expanded node lists work correctly."""
-    df = pd.DataFrame({
-        "NodeList": [["gpu05", "gpu06"], ["gpu30", "gpu31", "gpu32"]],
-        "CPUHours": [10.0, 30.0],
-        "GPUHours": [5.0, 15.0],
-    })
+    df = pd.DataFrame(
+        {
+            "NodeList": [["gpu05", "gpu06"], ["gpu30", "gpu31", "gpu32"]],
+            "CPUHours": [10.0, 30.0],
+            "GPUHours": [5.0, 15.0],
+        }
+    )
 
     result = generate_node_usage(df)
 
@@ -49,11 +53,13 @@ def test_node_list_expansion():
 
 def test_simple_node_names():
     """Test simple node names."""
-    df = pd.DataFrame({
-        "NodeList": [["node1"], ["node2"]],
-        "CPUHours": [10.0, 20.0],
-        "GPUHours": [5.0, 10.0],
-    })
+    df = pd.DataFrame(
+        {
+            "NodeList": [["node1"], ["node2"]],
+            "CPUHours": [10.0, 20.0],
+            "GPUHours": [5.0, 10.0],
+        }
+    )
 
     result = generate_node_usage(df)
 
@@ -65,10 +71,12 @@ def test_simple_node_names():
 
 def test_empty_nodelist():
     """Test handling of empty NodeList."""
-    df = pd.DataFrame({
-        "CPUHours": [10.0],
-        "GPUHours": [5.0],
-    })
+    df = pd.DataFrame(
+        {
+            "CPUHours": [10.0],
+            "GPUHours": [5.0],
+        }
+    )
 
     result = generate_node_usage(df)
 
@@ -79,11 +87,13 @@ def test_empty_nodelist():
 def test_already_expanded_nodes():
     """Test that pre-expanded node lists (from data ingestion) work correctly."""
     # This mimics what the data looks like after ingestion - already expanded
-    df = pd.DataFrame({
-        "NodeList": [["gpu06", "gpu07", "gpu08", "gpu10"], ["gpu30", "gpu31"]],
-        "CPUHours": [40.0, 20.0],
-        "GPUHours": [20.0, 10.0],
-    })
+    df = pd.DataFrame(
+        {
+            "NodeList": [["gpu06", "gpu07", "gpu08", "gpu10"], ["gpu30", "gpu31"]],
+            "CPUHours": [40.0, 20.0],
+            "GPUHours": [20.0, 10.0],
+        }
+    )
 
     result = generate_node_usage(df)
 
@@ -106,11 +116,13 @@ def test_already_expanded_nodes():
 def test_compressed_notation_in_dashboard():
     """Test dashboard handling of compressed SLURM notation from legacy data."""
     # This mimics legacy data that has unexpanded compressed notation
-    df = pd.DataFrame({
-        "NodeList": ["gpu[01-03,05]", "influ[1-2]"],
-        "CPUHours": [40.0, 20.0],
-        "GPUHours": [20.0, 10.0],
-    })
+    df = pd.DataFrame(
+        {
+            "NodeList": ["gpu[01-03,05]", "influ[1-2]"],
+            "CPUHours": [40.0, 20.0],
+            "GPUHours": [20.0, 10.0],
+        }
+    )
 
     result = generate_node_usage(df)
 

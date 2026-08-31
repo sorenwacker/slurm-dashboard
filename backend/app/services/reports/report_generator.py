@@ -122,11 +122,7 @@ def generate_report_data(
     # Aggregation by state
     by_state = []
     if "State" in df.columns:
-        state_stats = (
-            df.groupby("State")
-            .agg(jobs=("State", "size"))
-            .reset_index()
-        )
+        state_stats = df.groupby("State").agg(jobs=("State", "size")).reset_index()
         state_stats.columns = ["state", "jobs"]
         by_state = convert_numpy_to_native(state_stats.to_dict(orient="records"))
 

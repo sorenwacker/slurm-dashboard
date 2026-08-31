@@ -118,10 +118,7 @@ async def upload_data(
         with open(file_path, "wb") as f:
             f.write(contents)
 
-        logger.info(
-            f"Agent uploaded data: cluster={cluster_name}, "
-            f"file={file.filename}, size={len(contents)} bytes"
-        )
+        logger.info(f"Agent uploaded data: cluster={cluster_name}, file={file.filename}, size={len(contents)} bytes")
 
         # Trigger immediate data reload and cache invalidation
         try:

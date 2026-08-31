@@ -203,6 +203,10 @@ select = [
 ignore = [
   "PLR",     # Design related pylint codes
   "ISC001",  # Conflicts with formatter
+  "G004",    # f-strings in log calls: low-volume logs, %-style rewrite is churn
+  "PLC0415", # function-level imports are deliberate (circular imports, optional deps)
+  "B008",    # Depends(...) in argument defaults is the FastAPI idiom
+  "PLW0603", # module-level singletons use global statements by design
 ]
 pydocstyle.convention = "google"
 

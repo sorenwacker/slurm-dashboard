@@ -1,4 +1,5 @@
 """Cluster agent CLI for data collection and submission to dashboard."""
+
 import argparse
 import json
 import subprocess
@@ -13,7 +14,7 @@ from slurm_usage_history.scripts.node_inventory import collect_cluster_inventory
 
 def setup_command(args):
     """Setup agent using deploy key."""
-    api_url = args.api_url.rstrip('/')
+    api_url = args.api_url.rstrip("/")
     deploy_key = args.deploy_key
 
     print(f"Exchanging deploy key with {api_url}...")
@@ -21,9 +22,7 @@ def setup_command(args):
     try:
         # Exchange deploy key for API key
         response = requests.post(
-            f"{api_url}/api/agent/exchange-deploy-key",
-            data={"deploy_key": deploy_key},
-            timeout=30
+            f"{api_url}/api/agent/exchange-deploy-key", data={"deploy_key": deploy_key}, timeout=30
         )
 
         if response.status_code != 200:
@@ -53,7 +52,7 @@ def setup_command(args):
         config_path = Path(args.output)
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             json.dump(config, f, indent=2)
 
         config_path.chmod(0o600)
@@ -86,14 +85,14 @@ def create_config_command(args):
     config_path = Path(args.output)
     config_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(config_path, 'w') as f:
+    with open(config_path, "w") as f:
         json.dump(config, f, indent=2)
 
     config_path.chmod(0o600)
     print(f"Configuration created at: {config_path}")
     print(f"API URL: {config['api_url']}")
     print(f"Cluster: {config['cluster_name'] or '(auto-detect)'}")
-    if config['local_data_path']:
+    if config["local_data_path"]:
         print(f"Local data path: {config['local_data_path']}")
 
 
@@ -145,8 +144,11 @@ def sync_config_command(args):
 
 def format_sync_result(result):
     """One-line summary of the server's sync response."""
-    parts = [f"{section}: {counts.get('added', 0)} added, {counts.get('updated', 0)} updated"
-             for section, counts in result.items() if isinstance(counts, dict)]
+    parts = [
+        f"{section}: {counts.get('added', 0)} added, {counts.get('updated', 0)} updated"
+        for section, counts in result.items()
+        if isinstance(counts, dict)
+    ]
     return "Cluster configuration synced (" + "; ".join(parts) + ")"
 
 
@@ -218,7 +220,8 @@ def build_parser():
         help="Local path to save extracted data as backup (optional)",
     )
     setup_parser.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         default="config.json",
         help="Output configuration file path (default: config.json)",
     )
@@ -248,7 +251,8 @@ def build_parser():
         help="Local path to save extracted data as backup (optional)",
     )
     config_parser.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         default="config.json",
         help="Output configuration file path (default: config.json)",
     )
@@ -282,7 +286,8 @@ def build_parser():
         help="Extract and format but don't submit to API",
     )
     run_parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Enable verbose debug logging",
     )

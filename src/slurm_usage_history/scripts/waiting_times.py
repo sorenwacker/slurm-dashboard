@@ -91,10 +91,7 @@ class SlurmJobMonitor:
             writer = csv.writer(file)
             writer.writerow([job_id, task_index, username, waiting_time_seconds])
 
-        print(
-            f"JobID {job_id} | Task: {task_index} | {username} "
-            "| Waiting: {waiting_time_seconds} seconds"
-        )
+        print(f"JobID {job_id} | Task: {task_index} | {username} | Waiting: {{waiting_time_seconds}} seconds")
 
     def print_job_status(self, total_waiting, new_jobs, started_jobs):
         print(
@@ -103,10 +100,7 @@ class SlurmJobMonitor:
         )
 
     def start_monitoring(self):
-        print(
-            f"Monitoring pending SLURM jobs every {self.interval} seconds. "
-            f"Logging to {self.csv_file}..."
-        )
+        print(f"Monitoring pending SLURM jobs every {self.interval} seconds. Logging to {self.csv_file}...")
         try:
             while True:
                 self.update_job_status()
@@ -123,16 +117,11 @@ class SlurmJobMonitor:
             "submit_time": submission_time,
             "username": username,
         }
-        print(
-            f"Added mock job: {mock_job_id_full} "
-            f"with waiting time: {wait_time_minutes} minutes."
-        )
+        print(f"Added mock job: {mock_job_id_full} with waiting time: {wait_time_minutes} minutes.")
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Monitor SLURM jobs and log waiting times."
-    )
+    parser = argparse.ArgumentParser(description="Monitor SLURM jobs and log waiting times.")
     parser.add_argument(
         "--csv-file",
         type=str,

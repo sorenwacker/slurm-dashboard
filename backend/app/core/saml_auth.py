@@ -1,4 +1,5 @@
 """SAML authentication module for SSO."""
+
 import json
 import os
 from pathlib import Path
@@ -77,9 +78,7 @@ def is_saml_enabled() -> bool:
     return os.getenv("ENABLE_SAML", "false").lower() == "true"
 
 
-async def get_current_user_saml(
-    session_token: str | None = Cookie(None, alias="session_token")
-) -> dict:
+async def get_current_user_saml(session_token: str | None = Cookie(None, alias="session_token")) -> dict:
     """Get current user from SAML session token.
 
     Args:

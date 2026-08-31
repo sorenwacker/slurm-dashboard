@@ -7,10 +7,12 @@ from typing import Any, TypeVar
 
 import pandas as pd
 
-T = TypeVar('T')  # For generic function typing
+T = TypeVar("T")  # For generic function typing
+
 
 def timeit(func: Callable[..., T]) -> Callable[..., T]:
     """Decorator to measure execution time of a function."""
+
     @functools.wraps(func)
     def wrapper_timeit(*args: Any, **kwargs: Any) -> T:
         start_time = time.perf_counter()
@@ -18,6 +20,7 @@ def timeit(func: Callable[..., T]) -> Callable[..., T]:
         elapsed_time = time.perf_counter() - start_time
         print(f"Function '{func.__name__}' executed in {elapsed_time:.4f} seconds")
         return result
+
     return wrapper_timeit
 
 
@@ -204,7 +207,7 @@ def unpack_nodelist_string(nodelist_str: str | None) -> list[str]:
 
     # Clean up obviously malformed strings first
     # If it starts with just digits and brackets, it's incomplete - skip it
-    if re.match(r'^[\d\[\]\-,]+$', nodelist_str.strip()):
+    if re.match(r"^[\d\[\]\-,]+$", nodelist_str.strip()):
         return []
 
     # Initialize a list to collect unpacked values
@@ -221,7 +224,7 @@ def unpack_nodelist_string(nodelist_str: str | None) -> list[str]:
     if incomplete_match:
         base, num_str = incomplete_match.groups()
         # Detect padding from the number
-        padding = len(num_str) if num_str and num_str[0] == '0' and len(num_str) > 1 else 0
+        padding = len(num_str) if num_str and num_str[0] == "0" and len(num_str) > 1 else 0
         num = int(num_str)
         if padding:
             unpacked_list.append(f"{base}{num:0{padding}d}")
@@ -238,7 +241,7 @@ def unpack_nodelist_string(nodelist_str: str | None) -> list[str]:
             if "-" in r:
                 start_str, end_str = r.split("-")
                 # Detect padding from the first number in the range
-                padding = len(start_str) if start_str and start_str[0] == '0' and len(start_str) > 1 else 0
+                padding = len(start_str) if start_str and start_str[0] == "0" and len(start_str) > 1 else 0
                 start, end = int(start_str), int(end_str)
                 for num in range(start, end + 1):
                     if padding:
@@ -248,7 +251,7 @@ def unpack_nodelist_string(nodelist_str: str | None) -> list[str]:
             else:
                 # Single items - detect padding
                 try:
-                    padding = len(r) if r and r[0] == '0' and len(r) > 1 else 0
+                    padding = len(r) if r and r[0] == "0" and len(r) > 1 else 0
                     num = int(r)
                     if padding:
                         unpacked_list.append(f"{base}{num:0{padding}d}")
@@ -267,7 +270,7 @@ def unpack_nodelist_string(nodelist_str: str | None) -> list[str]:
                 base, _ = part.split("[")
                 start_str, end_str = range_match.groups()
                 # Detect padding from the first number
-                padding = len(start_str) if start_str and start_str[0] == '0' and len(start_str) > 1 else 0
+                padding = len(start_str) if start_str and start_str[0] == "0" and len(start_str) > 1 else 0
                 start, end = int(start_str), int(end_str)
                 for num in range(start, end + 1):
                     if padding:

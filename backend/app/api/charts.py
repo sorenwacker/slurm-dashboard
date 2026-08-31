@@ -3,6 +3,7 @@
 This module provides endpoints that return pre-aggregated chart data instead of raw job records,
 significantly improving performance by reducing payload size and leveraging pandas aggregation speed.
 """
+
 import hashlib
 import json
 
@@ -71,14 +72,43 @@ from ..datastore_singleton import get_datastore
 # Every column any chart reads, in every naming generation of the parquet files.
 # The datastore intersects this with what the files contain.
 CHART_COLUMNS = [
-    "User", "Account", "Partition", "QOS", "State",
-    "Submit", "Start", "End", "NodeList",
-    "CPUHours", "CPU-hours", "GPUHours", "GPU-hours", "MemGBHours",
-    "AllocCPUS", "CPUs", "AllocGPUS", "GPUs", "AllocNodes", "Nodes",
-    "ReqMemMB", "MaxRSSMB", "MaxRSS", "CPUUsedHours",
-    "WaitingTimeHours", "WaitingTime [h]", "WaitingTime", "ElapsedHours", "Elapsed [h]",
-    "SubmitDay", "SubmitYearWeek", "SubmitYearMonth", "SubmitYear",
-    "StartDay", "StartYearWeek", "StartYearMonth", "StartYear",
+    "User",
+    "Account",
+    "Partition",
+    "QOS",
+    "State",
+    "Submit",
+    "Start",
+    "End",
+    "NodeList",
+    "CPUHours",
+    "CPU-hours",
+    "GPUHours",
+    "GPU-hours",
+    "MemGBHours",
+    "AllocCPUS",
+    "CPUs",
+    "AllocGPUS",
+    "GPUs",
+    "AllocNodes",
+    "Nodes",
+    "ReqMemMB",
+    "MaxRSSMB",
+    "MaxRSS",
+    "CPUUsedHours",
+    "WaitingTimeHours",
+    "WaitingTime [h]",
+    "WaitingTime",
+    "ElapsedHours",
+    "Elapsed [h]",
+    "SubmitDay",
+    "SubmitYearWeek",
+    "SubmitYearMonth",
+    "SubmitYear",
+    "StartDay",
+    "StartYearWeek",
+    "StartYearMonth",
+    "StartYear",
 ]
 
 # Simple in-memory cache for chart data
@@ -142,7 +172,9 @@ def clear_chart_cache() -> None:
 
 
 @router.post("/charts")
-async def get_aggregated_charts(request: FilterRequest, current_user: dict = Depends(get_current_user_saml)) -> dict[str, Any]:
+async def get_aggregated_charts(
+    request: FilterRequest, current_user: dict = Depends(get_current_user_saml)
+) -> dict[str, Any]:
     """Get all aggregated chart data in a single request.
 
     This endpoint performs all aggregations on the backend using pandas,
@@ -245,7 +277,9 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
             "gpu_hours_by_account": generate_by_dimension(df, color_by, metric="GPUHours", period_type=period_type),
             # Memory charts (jobs without memory data are excluded, never counted as zero)
             "memory_usage_over_time": generate_memory_usage_over_time(df, period_type, color_by),
-            "memory_hours_by_account": generate_by_dimension(df, color_by, metric="MemGBHours", period_type=period_type),
+            "memory_hours_by_account": generate_by_dimension(
+                df, color_by, metric="MemGBHours", period_type=period_type
+            ),
             "memory_efficiency_over_time": generate_memory_efficiency_over_time(df, period_type, color_by),
             "cpu_efficiency_over_time": generate_cpu_efficiency_over_time(df, period_type, color_by),
             "memory_per_job": generate_memory_per_job(df),
@@ -266,6 +300,7 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
     except Exception as e:
         import logging
         import traceback
+
         logger = logging.getLogger(__name__)
         logger.error(f"Charts endpoint error: {e!s}")
         logger.error(f"Traceback: {traceback.format_exc()}")
@@ -301,7 +336,13 @@ def _window(request: FilterRequest, df: pd.DataFrame) -> tuple[pd.Timestamp, pd.
 def _empty_charts_response() -> dict[str, Any]:
     """Return empty chart data structure."""
     return {
-        "summary": {"total_jobs": 0, "total_cpu_hours": 0, "total_gpu_hours": 0, "total_memory_gb_hours": 0, "total_users": 0},
+        "summary": {
+            "total_jobs": 0,
+            "total_cpu_hours": 0,
+            "total_gpu_hours": 0,
+            "total_memory_gb_hours": 0,
+            "total_users": 0,
+        },
         "cpu_usage_over_time": {"x": [], "y": []},
         "gpu_usage_over_time": {"x": [], "y": []},
         "active_users_over_time": {"x": [], "y": []},
@@ -339,5 +380,3 @@ def _generate_summary(df: pd.DataFrame) -> dict[str, Any]:
         "total_memory_gb_hours": total_memory_gb_hours(df),
         "total_users": int(df["User"].nunique()) if "User" in df.columns else 0,
     }
-
-

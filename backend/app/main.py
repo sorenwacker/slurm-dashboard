@@ -22,11 +22,13 @@ async def lifespan(app: FastAPI):
     logger.info("Preloading shared datastore (this may take a moment)...")
     try:
         from .datastore_singleton import get_datastore
+
         datastore = get_datastore()
         logger.info(f"Shared datastore loaded successfully. Hostnames: {datastore.get_hostnames()}")
     except Exception as e:
         logger.error(f"Failed to preload datastore: {e}")
         import traceback
+
         logger.error(traceback.format_exc())
 
     yield
@@ -102,9 +104,15 @@ if frontend_dist:
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
         # Don't intercept API routes, docs, or SAML
-        if full_path.startswith("api") or full_path.startswith("docs") or full_path.startswith("saml") or full_path.startswith("openapi.json"):
+        if (
+            full_path.startswith("api")
+            or full_path.startswith("docs")
+            or full_path.startswith("saml")
+            or full_path.startswith("openapi.json")
+        ):
             # Let FastAPI handle these routes
             from fastapi import HTTPException
+
             raise HTTPException(status_code=404, detail="Not found")
 
         # Serve index.html for all other routes (React Router handles routing)

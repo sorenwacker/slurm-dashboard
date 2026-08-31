@@ -13,10 +13,7 @@ def main():
         sys.exit(1)
 
     # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     # Default configuration
     config = {
@@ -39,7 +36,9 @@ def main():
                 workers = int(sys.argv[idx + 1])
                 print(f"Using {workers} workers (gunicorn mode)")
                 print("Note: Use gunicorn directly for production:")
-                print(f"  gunicorn backend.app.main:app --workers {workers} --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8100")
+                print(
+                    f"  gunicorn backend.app.main:app --workers {workers} --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8100"
+                )
             except ValueError:
                 pass
 

@@ -58,8 +58,9 @@ def find_existing_data_directory(cluster_name: str) -> str | None:
     return None
 
 
-def ensure_cluster_yaml_config(cluster_name: str, description: str | None = None,
-                                contact_email: str | None = None, location: str | None = None) -> None:
+def ensure_cluster_yaml_config(
+    cluster_name: str, description: str | None = None, contact_email: str | None = None, location: str | None = None
+) -> None:
     """Ensure cluster has configuration in clusters.yaml.
 
     Creates a default configuration if it doesn't exist.
@@ -95,25 +96,18 @@ def ensure_cluster_yaml_config(cluster_name: str, description: str | None = None
     config["clusters"][cluster_name] = {
         "display_name": cluster_name,
         "description": description or f"{cluster_name} Cluster",
-        "metadata": {
-            "location": location or "Unknown",
-            "contact": contact_email or "admin@example.com"
-        },
+        "metadata": {"location": location or "Unknown", "contact": contact_email or "admin@example.com"},
         "node_labels": {},
         "account_labels": {},
-        "partition_labels": {}
+        "partition_labels": {},
     }
 
     # Ensure default settings exist
     if not config["settings"]:
-        config["settings"] = {
-            "default_node_type": "cpu",
-            "case_sensitive": False,
-            "auto_generate_labels": True
-        }
+        config["settings"] = {"default_node_type": "cpu", "case_sensitive": False, "auto_generate_labels": True}
 
     # Write back to file
-    with open(config_file, 'w') as f:
+    with open(config_file, "w") as f:
         yaml.dump(config, f, default_flow_style=False, sort_keys=False, indent=2)
 
     logger.info(f"Created YAML configuration for cluster: {cluster_name}")
@@ -135,9 +129,7 @@ async def admin_login(request: AdminLoginRequest):
         )
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": username}, expires_delta=access_token_expires
-    )
+    access_token = create_access_token(data={"sub": username}, expires_delta=access_token_expires)
 
     # For password-based auth, default to superadmin role
     return AdminLoginResponse(
@@ -177,9 +169,11 @@ async def get_admin_token_from_saml(request: Request):
     settings = get_settings()
     email = None
     if user_data.get("attributes"):
-        email_attrs = user_data["attributes"].get("email") or \
-                     user_data["attributes"].get("mail") or \
-                     user_data["attributes"].get("emailAddress")
+        email_attrs = (
+            user_data["attributes"].get("email")
+            or user_data["attributes"].get("mail")
+            or user_data["attributes"].get("emailAddress")
+        )
         if email_attrs and isinstance(email_attrs, list) and len(email_attrs) > 0:
             email = email_attrs[0]
 
@@ -205,9 +199,7 @@ async def get_admin_token_from_saml(request: Request):
     # Create admin token
     username = user_data.get("username") or email or "saml_user"
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": username}, expires_delta=access_token_expires
-    )
+    access_token = create_access_token(data={"sub": username}, expires_delta=access_token_expires)
 
     return AdminLoginResponse(
         access_token=access_token,
@@ -275,10 +267,10 @@ async def create_cluster(
     if existing_dir and existing_dir != request.name:
         # Log the case correction
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info(
-            f"Cluster name corrected from '{request.name}' to '{existing_dir}' "
-            f"to match existing data directory"
+            f"Cluster name corrected from '{request.name}' to '{existing_dir}' to match existing data directory"
         )
 
     if db.get_cluster_by_name(cluster_name):
@@ -631,7 +623,7 @@ async def update_admin_emails(
 
     # Write back to database
     try:
-        with open(db_path, 'w') as f:
+        with open(db_path, "w") as f:
             json.dump(data, f, indent=2)
     except Exception as e:
         raise HTTPException(

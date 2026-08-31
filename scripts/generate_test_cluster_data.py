@@ -66,27 +66,53 @@ class SyntheticClusterDataGenerator:
         # 30 diverse accounts across departments and research groups
         self.accounts = [
             # Computer Science
-            "cs-ml-lab", "cs-vision-lab", "cs-nlp-group", "cs-systems", "cs-graphics", "cs-robotics",
+            "cs-ml-lab",
+            "cs-vision-lab",
+            "cs-nlp-group",
+            "cs-systems",
+            "cs-graphics",
+            "cs-robotics",
             # Electrical Engineering
-            "ee-signal-proc", "ee-controls", "ee-comms", "ee-power", "ee-circuits",
+            "ee-signal-proc",
+            "ee-controls",
+            "ee-comms",
+            "ee-power",
+            "ee-circuits",
             # Physics
-            "physics-hep", "physics-astro", "physics-cmp", "physics-quantum",
+            "physics-hep",
+            "physics-astro",
+            "physics-cmp",
+            "physics-quantum",
             # Biology
-            "bio-genomics", "bio-proteomics", "bio-imaging", "bio-neuro", "bio-ecology",
+            "bio-genomics",
+            "bio-proteomics",
+            "bio-imaging",
+            "bio-neuro",
+            "bio-ecology",
             # Chemistry
-            "chem-compbio", "chem-materials", "chem-synthesis", "chem-catalysis",
+            "chem-compbio",
+            "chem-materials",
+            "chem-synthesis",
+            "chem-catalysis",
             # Mathematics & Statistics
-            "math-optimization", "math-statistics", "math-modeling",
+            "math-optimization",
+            "math-statistics",
+            "math-modeling",
             # Medical & Health
-            "med-imaging", "med-bioinformatics",
+            "med-imaging",
+            "med-bioinformatics",
             # Materials Science
-            "matsci-nano", "matsci-polymers"
+            "matsci-nano",
+            "matsci-polymers",
         ]
 
         # Account usage patterns - some accounts more active than others
         self.account_weights = {
-            "cs-ml-lab": 5.0, "cs-vision-lab": 4.0, "bio-genomics": 3.5,
-            "physics-hep": 3.0, "chem-compbio": 2.5,
+            "cs-ml-lab": 5.0,
+            "cs-vision-lab": 4.0,
+            "bio-genomics": 3.5,
+            "physics-hep": 3.0,
+            "chem-compbio": 2.5,
         }
         # Default weight for accounts not specified
         for acc in self.accounts:
@@ -97,52 +123,83 @@ class SyntheticClusterDataGenerator:
         if simple_partitions:
             # Simple 3-partition structure for demos
             self.partitions = ["general", "cpu", "gpu"]
-            self.partition_weights = {
-                "general": 3.0,
-                "cpu": 2.5,
-                "gpu": 2.0
-            }
+            self.partition_weights = {"general": 3.0, "cpu": 2.5, "gpu": 2.0}
         else:
             # More diverse partitions with realistic usage patterns
             self.partitions = [
-                "gpu", "gpu-a100", "gpu-v100",  # GPU variants
-                "cpu", "cpu-highmem",  # CPU variants
+                "gpu",
+                "gpu-a100",
+                "gpu-v100",  # GPU variants
+                "cpu",
+                "cpu-highmem",  # CPU variants
                 "bigmem",  # Memory-intensive
                 "interactive",  # Quick interactive jobs
-                "short", "medium", "long"  # Duration-based
+                "short",
+                "medium",
+                "long",  # Duration-based
             ]
 
             # Partition selection weights (some more popular)
             self.partition_weights = {
-                "gpu": 3.0, "gpu-a100": 2.0, "gpu-v100": 1.5,
-                "cpu": 4.0, "cpu-highmem": 1.0,
+                "gpu": 3.0,
+                "gpu-a100": 2.0,
+                "gpu-v100": 1.5,
+                "cpu": 4.0,
+                "cpu-highmem": 1.0,
                 "bigmem": 1.0,
                 "interactive": 2.0,
-                "short": 3.0, "medium": 2.0, "long": 1.0
+                "short": 3.0,
+                "medium": 2.0,
+                "long": 1.0,
             }
 
         # More varied QoS types
         self.qos_types = [
-            "short", "medium", "long", "verylong",
-            "interactive", "debug",
-            "normal", "high-priority", "low-priority"
+            "short",
+            "medium",
+            "long",
+            "verylong",
+            "interactive",
+            "debug",
+            "normal",
+            "high-priority",
+            "low-priority",
         ]
 
         # QoS selection weights
         self.qos_weights = {
-            "short": 3.0, "medium": 2.5, "normal": 2.0,
-            "long": 1.5, "interactive": 1.0,
-            "debug": 0.5, "verylong": 0.3,
-            "high-priority": 0.2, "low-priority": 1.0
+            "short": 3.0,
+            "medium": 2.5,
+            "normal": 2.0,
+            "long": 1.5,
+            "interactive": 1.0,
+            "debug": 0.5,
+            "verylong": 0.3,
+            "high-priority": 0.2,
+            "low-priority": 1.0,
         }
 
         self.states = [
-            "COMPLETED", "COMPLETED", "COMPLETED", "COMPLETED", "COMPLETED",  # 50% completed
-            "COMPLETED", "COMPLETED", "COMPLETED", "COMPLETED", "COMPLETED",
-            "CANCELLED", "CANCELLED", "CANCELLED",  # 30% cancelled
-            "CANCELLED", "CANCELLED", "CANCELLED",
-            "TIMEOUT", "TIMEOUT",  # 20% timeout
-            "FAILED", "OUT_OF_MEMORY"  # 10% failed/OOM
+            "COMPLETED",
+            "COMPLETED",
+            "COMPLETED",
+            "COMPLETED",
+            "COMPLETED",  # 50% completed
+            "COMPLETED",
+            "COMPLETED",
+            "COMPLETED",
+            "COMPLETED",
+            "COMPLETED",
+            "CANCELLED",
+            "CANCELLED",
+            "CANCELLED",  # 30% cancelled
+            "CANCELLED",
+            "CANCELLED",
+            "CANCELLED",
+            "TIMEOUT",
+            "TIMEOUT",  # 20% timeout
+            "FAILED",
+            "OUT_OF_MEMORY",  # 10% failed/OOM
         ]
 
         # Node lists for different partitions
@@ -150,22 +207,22 @@ class SyntheticClusterDataGenerator:
             # Simple demo cluster: 30 nodes (15 GPU, 15 CPU)
             self.node_lists = {
                 "general": [f"node{i:02d}" for i in range(1, 11)],  # 10 general nodes
-                "cpu": [f"cpu{i:02d}" for i in range(1, 16)],       # 15 CPU nodes
-                "gpu": [f"gpu{i:02d}" for i in range(1, 16)]        # 15 GPU nodes
+                "cpu": [f"cpu{i:02d}" for i in range(1, 16)],  # 15 CPU nodes
+                "gpu": [f"gpu{i:02d}" for i in range(1, 16)],  # 15 GPU nodes
             }  # Total: 30 unique nodes (10+15+15, general can overlap with others)
         else:
             # Complex cluster with ~46 nodes
             self.node_lists = {
-                "gpu": [f"gpu{i:02d}" for i in range(1, 5)],           # 4 GPU nodes
-                "gpu-a100": [f"a100-{i:02d}" for i in range(1, 3)],    # 2 A100 nodes
-                "gpu-v100": [f"v100-{i:02d}" for i in range(1, 4)],    # 3 V100 nodes
-                "cpu": [f"cpu{i:03d}" for i in range(1, 17)],          # 16 CPU nodes
-                "cpu-highmem": [f"highmem{i:02d}" for i in range(1, 4)], # 3 high-mem nodes
-                "bigmem": [f"bigmem{i:02d}" for i in range(1, 3)],     # 2 bigmem nodes
-                "interactive": [f"int{i:02d}" for i in range(1, 4)],   # 3 interactive nodes
-                "short": [f"short{i:02d}" for i in range(1, 5)],       # 4 short nodes
-                "medium": [f"med{i:02d}" for i in range(1, 4)],        # 3 medium nodes
-                "long": [f"long{i:02d}" for i in range(1, 3)]          # 2 long nodes
+                "gpu": [f"gpu{i:02d}" for i in range(1, 5)],  # 4 GPU nodes
+                "gpu-a100": [f"a100-{i:02d}" for i in range(1, 3)],  # 2 A100 nodes
+                "gpu-v100": [f"v100-{i:02d}" for i in range(1, 4)],  # 3 V100 nodes
+                "cpu": [f"cpu{i:03d}" for i in range(1, 17)],  # 16 CPU nodes
+                "cpu-highmem": [f"highmem{i:02d}" for i in range(1, 4)],  # 3 high-mem nodes
+                "bigmem": [f"bigmem{i:02d}" for i in range(1, 3)],  # 2 bigmem nodes
+                "interactive": [f"int{i:02d}" for i in range(1, 4)],  # 3 interactive nodes
+                "short": [f"short{i:02d}" for i in range(1, 5)],  # 4 short nodes
+                "medium": [f"med{i:02d}" for i in range(1, 4)],  # 3 medium nodes
+                "long": [f"long{i:02d}" for i in range(1, 3)],  # 2 long nodes
             }  # Total: 46 nodes
 
         # Track user lifecycles - when users joined the cluster
@@ -192,8 +249,7 @@ class SyntheticClusterDataGenerator:
 
         while current_date <= end_date:
             # Check if we're in an outage period
-            in_outage = any(outage_start <= current_date.date() <= outage_end
-                          for outage_start, outage_end in outages)
+            in_outage = any(outage_start <= current_date.date() <= outage_end for outage_start, outage_end in outages)
 
             if in_outage:
                 # During outages, much reduced activity
@@ -220,9 +276,7 @@ class SyntheticClusterDataGenerator:
                 minute = random.randint(0, 59)
                 second = random.randint(0, 59)
 
-                submit_time = current_date.replace(
-                    hour=hour, minute=minute, second=second
-                )
+                submit_time = current_date.replace(hour=hour, minute=minute, second=second)
                 submit_times.append(submit_time)
 
             current_date += timedelta(days=1)
@@ -312,8 +366,7 @@ class SyntheticClusterDataGenerator:
                 cpus = gpus * random.choice([4, 8, 16])
             else:
                 gpus = 0
-                cpus = random.choices([1, 2, 4, 8, 16, 32, 64],
-                                    weights=[20, 30, 25, 15, 5, 3, 2])[0]
+                cpus = random.choices([1, 2, 4, 8, 16, 32, 64], weights=[20, 30, 25, 15, 5, 3, 2])[0]
 
             available_nodes = self.node_lists[partition]
 
@@ -327,8 +380,7 @@ class SyntheticClusterDataGenerator:
             node_list = ",".join(selected_nodes)
 
         # Check if we're in or near an outage period
-        in_outage = any(outage_start <= submit_time.date() <= outage_end
-                       for outage_start, outage_end in outages)
+        in_outage = any(outage_start <= submit_time.date() <= outage_end for outage_start, outage_end in outages)
 
         # Generate waiting time (much longer during outages)
         if in_outage:
@@ -368,12 +420,16 @@ class SyntheticClusterDataGenerator:
         # Calculate derived time fields
         submit_day = submit_time.replace(hour=0, minute=0, second=0, microsecond=0)
         submit_weekday = submit_time.strftime("%A")
-        submit_year_week = (submit_time - timedelta(days=submit_time.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+        submit_year_week = (submit_time - timedelta(days=submit_time.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
         submit_year_month = submit_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         start_day = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
         start_weekday = start_time.strftime("%A")
-        start_year_week = (start_time - timedelta(days=start_time.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+        start_year_week = (start_time - timedelta(days=start_time.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
         start_year_month = start_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         # Calculate CPU and GPU hours
@@ -445,7 +501,7 @@ class SyntheticClusterDataGenerator:
             "ReqMemMB": req_mem_mb,
             "MaxRSSMB": max_rss_mb,
             "CPUUsedHours": cpu_used_hours,
-            "Cluster": self.cluster_name
+            "Cluster": self.cluster_name,
         }
 
     def initialize_user_lifecycles(self, start_date, end_date):
@@ -493,9 +549,9 @@ class SyntheticClusterDataGenerator:
         self.initialize_user_lifecycles(start_date, end_date)
 
         print(f"Generating job submission times from {start_date} to {end_date}...")
-        submit_times = self.generate_job_submit_times(start_date, end_date, jobs_per_day,
-                                                      seasonal_pattern=seasonal_pattern,
-                                                      outages=outages)
+        submit_times = self.generate_job_submit_times(
+            start_date, end_date, jobs_per_day, seasonal_pattern=seasonal_pattern, outages=outages
+        )
 
         print(f"Generating {len(submit_times)} job records...")
         jobs = []
@@ -540,45 +596,17 @@ class SyntheticClusterDataGenerator:
 
 def main():
     """Main entry point for the script."""
-    parser = argparse.ArgumentParser(
-        description="Generate synthetic SLURM cluster job data for testing"
-    )
+    parser = argparse.ArgumentParser(description="Generate synthetic SLURM cluster job data for testing")
     parser.add_argument(
-        "--cluster",
-        type=str,
-        default="TestCluster",
-        help="Name of the synthetic cluster (default: TestCluster)"
+        "--cluster", type=str, default="TestCluster", help="Name of the synthetic cluster (default: TestCluster)"
     )
+    parser.add_argument("--start-date", type=str, required=True, help="Start date for data generation (YYYY-MM-DD)")
+    parser.add_argument("--end-date", type=str, required=True, help="End date for data generation (YYYY-MM-DD)")
+    parser.add_argument("--jobs-per-day", type=int, default=100, help="Average number of jobs per day (default: 100)")
     parser.add_argument(
-        "--start-date",
-        type=str,
-        required=True,
-        help="Start date for data generation (YYYY-MM-DD)"
+        "--output-dir", type=str, default=None, help="Output directory (default: ./data/{cluster}/data)"
     )
-    parser.add_argument(
-        "--end-date",
-        type=str,
-        required=True,
-        help="End date for data generation (YYYY-MM-DD)"
-    )
-    parser.add_argument(
-        "--jobs-per-day",
-        type=int,
-        default=100,
-        help="Average number of jobs per day (default: 100)"
-    )
-    parser.add_argument(
-        "--output-dir",
-        type=str,
-        default=None,
-        help="Output directory (default: ./data/{cluster}/data)"
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Random seed for reproducibility (default: 42)"
-    )
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility (default: 42)")
 
     args = parser.parse_args()
 
@@ -611,10 +639,7 @@ def main():
     print(f"Random seed: {args.seed}")
     print()
 
-    generator = SyntheticClusterDataGenerator(
-        cluster_name=args.cluster,
-        seed=args.seed
-    )
+    generator = SyntheticClusterDataGenerator(cluster_name=args.cluster, seed=args.seed)
 
     df = generator.generate_dataset(start_date, end_date, args.jobs_per_day)
 

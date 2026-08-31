@@ -46,5 +46,6 @@ def get_datastore():
             logger.info(f"Shared datastore (Pandas) initialized with hostnames: {_datastore.get_hostnames()}")
         else:
             from fastapi import HTTPException
+
             raise HTTPException(status_code=500, detail="DataStore not available")
     return _datastore
