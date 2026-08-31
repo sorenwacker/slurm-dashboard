@@ -108,8 +108,6 @@ Issues = "https://github.com/tudelft-reit/slurm-dashboard/issues"
 # Main CLI (combines all functionality)
 slurm-dashboard = "slurm_usage_history.scripts.cluster_agent:main"
 
-# Data collection agent (legacy)
-slurm-dashboard-agent = "slurm_usage_history.scripts.get_weekly_usage:main"
 
 # Analysis scripts
 slurm-dashboard-wait-times = "slurm_usage_history.scripts.waiting_times:main"
@@ -118,7 +116,6 @@ slurm-dashboard-wait-times = "slurm_usage_history.scripts.waiting_times:main"
 slurm-dashboard-server = "slurm_usage_history.backend.cli:main [web]"
 
 # Legacy commands (deprecated, will be removed in v1.0.0)
-slurm-agent = "slurm_usage_history.scripts.get_weekly_usage:main"
 slurm-waiting-times = "slurm_usage_history.scripts.waiting_times:main"
 slurm-backend = "slurm_usage_history.backend.cli:main [web]"
 slurm-dashboard-legacy = "slurm_usage_history.app.main:main"
