@@ -1,6 +1,6 @@
 # Utilization
 
-The "Usage by Node" charts and the utilization gauges compare allocated resource-hours with the capacity of the nodes over the selected date range. This page states exactly how those numbers are computed so they can be checked.
+The "Usage by Node" charts and the gauges compare **allocated** resource-hours with the capacity of the nodes over the selected date range - they measure how much of the cluster was handed out to jobs, not how busy the hardware was. SLURM accounting records allocations; the only measured quantity available is peak memory per job (`MaxRSS`), which feeds the memory efficiency chart. The dashboard labels these values "allocation" for this reason. This page states exactly how the numbers are computed so they can be checked.
 
 ## Inputs
 
