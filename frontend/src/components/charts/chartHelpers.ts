@@ -10,7 +10,6 @@ export const SECTION_COLORS = {
   memory: '#2E8B57',
   waiting: '#DC3545',
   duration: '#0F766E',
-  nodes: '#64748B',
 } as const;
 
 export const COLORS = [
