@@ -1,4 +1,8 @@
-"""Efficiency charts: consumed resources relative to allocated resources."""
+"""Efficiency charts: consumed resources relative to allocated resources.
+
+Both charts follow the dashboard contract: without a colour dimension one line,
+with one a line per group; groups are never listed unless the dimension is selected.
+"""
 
 from typing import Any
 
@@ -9,61 +13,65 @@ from .distribution_generators import _get_time_column
 TOP_GROUPS = 15
 
 
-def _ratio(df: pd.DataFrame, used: str, allocated: str) -> pd.Series | None:
-    """Per-row pair filter: both values known and allocation positive."""
-    if used not in df.columns or allocated not in df.columns:
-        return None
+def _efficiency_series(
+    df: pd.DataFrame,
+    period_type: str,
+    color_by: str | None,
+    used: str,
+    allocated: str,
+    weight: str | None,
+    label: str,
+) -> dict[str, Any]:
+    required = [used, allocated] + ([weight] if weight else [])
+    if any(column not in df.columns for column in required):
+        return {"x": [], "series": []}
     known = df[used].notna() & df[allocated].notna() & (df[allocated] > 0)
-    return known if known.any() else None
+    if weight:
+        known &= df[weight] > 0
+    if not known.any():
+        return {"x": [], "series": []}
 
-
-def generate_cpu_efficiency_over_time(df: pd.DataFrame, period_type: str) -> dict[str, Any]:
-    """Consumed core-time over allocated core-time per period, in percent.
-
-    Only jobs reporting ``CPUUsedHours`` (sacct ``TotalCPU``) contribute; periods without them are omitted.
-    """
-    known = _ratio(df, "CPUUsedHours", "CPUHours")
-    if known is None:
-        return {"x": [], "y": []}
     df_work, time_column = _get_time_column(df[known], period_type)
     if time_column is None:
-        return {"x": [], "y": []}
-    grouped = df_work.groupby(time_column)[["CPUUsedHours", "CPUHours"]].sum().sort_index()
-    efficiency = grouped["CPUUsedHours"] / grouped["CPUHours"] * 100.0
-    return {"x": efficiency.index.tolist(), "y": [float(v) for v in efficiency.values]}
-
-
-def generate_efficiency_by_group(df: pd.DataFrame, group_by: str | None) -> dict[str, Any]:
-    """CPU and memory efficiency per group, for the groups with the most allocated CPU-hours.
-
-    ``group_by`` defaults to Account. Memory efficiency uses peak usage and is an upper bound.
-    """
-    group_column = group_by if group_by and group_by in df.columns else "Account"
-    if group_column not in df.columns:
         return {"x": [], "series": []}
-    cpu_known = _ratio(df, "CPUUsedHours", "CPUHours")
-    mem_known = _ratio(df, "MaxRSSMB", "ReqMemMB")
-    if cpu_known is None and mem_known is None:
-        return {"x": [], "series": []}
-
-    groups = (
-        df.groupby(group_column)["CPUHours"].sum().sort_values(ascending=False).head(TOP_GROUPS).index.tolist()
-        if "CPUHours" in df.columns
-        else sorted(df[group_column].dropna().unique())[:TOP_GROUPS]
+    weights = df_work[weight] if weight else 1.0
+    frame = pd.DataFrame(
+        {
+            "used": df_work[used] * weights,
+            "allocated": df_work[allocated] * weights,
+            "period": df_work[time_column],
+        }
     )
-    series = []
-    for name, known, used, allocated in (
-        ("CPU", cpu_known, "CPUUsedHours", "CPUHours"),
-        ("Memory", mem_known, "MaxRSSMB", "ReqMemMB"),
-    ):
-        if known is None:
-            continue
-        sums = df[known].groupby(df[known][group_column])[[used, allocated]].sum()
-        data = []
-        for group in groups:
-            if group in sums.index and sums.at[group, allocated] > 0:
-                data.append(float(sums.at[group, used] / sums.at[group, allocated] * 100.0))
-            else:
-                data.append(0.0)
-        series.append({"name": name, "data": data})
-    return {"x": [str(g) for g in groups], "series": series}
+
+    if color_by and color_by in df_work.columns:
+        frame["group"] = df_work[color_by]
+        top = frame.groupby("group")["allocated"].sum().sort_values(ascending=False).head(TOP_GROUPS).index
+        frame = frame[frame["group"].isin(top)]
+        sums = frame.groupby(["group", "period"])[["used", "allocated"]].sum()
+        efficiency = (sums["used"] / sums["allocated"] * 100.0).unstack("period")
+        periods = sorted(frame["period"].unique())
+        efficiency = efficiency.reindex(columns=periods)
+        series = [
+            {"name": str(group), "data": [None if pd.isna(v) else float(v) for v in efficiency.loc[group]]}
+            for group in top
+            if group in efficiency.index
+        ]
+        return {"x": periods, "series": series}
+
+    sums = frame.groupby("period")[["used", "allocated"]].sum().sort_index()
+    efficiency = sums["used"] / sums["allocated"] * 100.0
+    return {"x": efficiency.index.tolist(), "series": [{"name": label, "data": [float(v) for v in efficiency.values]}]}
+
+
+def generate_cpu_efficiency_over_time(
+    df: pd.DataFrame, period_type: str, color_by: str | None = None
+) -> dict[str, Any]:
+    """Consumed core-time (sacct ``TotalCPU``) over allocated core-time per period, in percent."""
+    return _efficiency_series(df, period_type, color_by, "CPUUsedHours", "CPUHours", None, "CPU used (%)")
+
+
+def generate_memory_efficiency_over_time(
+    df: pd.DataFrame, period_type: str, color_by: str | None = None
+) -> dict[str, Any]:
+    """Peak memory over requested memory per period, weighted by job runtime; an upper bound."""
+    return _efficiency_series(df, period_type, color_by, "MaxRSSMB", "ReqMemMB", "ElapsedHours", "Memory used (%)")

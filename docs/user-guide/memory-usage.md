@@ -18,7 +18,7 @@ SLURM's accounting database does not store memory samples. Two per-job values ar
 ## Derived Values
 
 - `MemGBHours = ReqMemMB / 1024 * ElapsedHours` - memory-hours allocated, analogous to CPU-hours. This is the quantity charted over time and per node.
-- Memory efficiency of a period = `sum(MaxRSSMB) / sum(ReqMemMB)` over the jobs in that period that have both values. A persistently low value means users request far more memory than they use.
+- Memory efficiency of a period = `sum(MaxRSSMB * ElapsedHours) / sum(ReqMemMB * ElapsedHours)` over the jobs in that period that have both values - weighted by runtime, on the same GB-hours basis as the usage charts. A persistently low value means users request far more memory than they use.
 - Node memory utilization follows the same rule as CPU and GPU utilization, with `ram.total_gb` as the capacity; see [Utilization](utilization.md). Nodes without a synced memory size are shown with absolute memory-hours only.
 
 ## Charts

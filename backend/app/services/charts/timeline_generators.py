@@ -1,4 +1,5 @@
 """Timeline chart generators for CPU, GPU, jobs, and users over time."""
+
 import logging
 from typing import Any, Literal
 
@@ -68,7 +69,9 @@ def _generate_timeline(
             df_copy = df.copy()
             df_copy[fallback_year_col] = df_copy[fallback_month_col].astype(str).str[:4]
         else:
-            logger.warning(f"Time column '{time_column}' not found in DataFrame. Available columns: {df.columns.tolist()}")
+            logger.warning(
+                f"Time column '{time_column}' not found in DataFrame. Available columns: {df.columns.tolist()}"
+            )
             return {"x": [], "y": []}
 
     # Keep only the columns this chart aggregates so the filters below copy little
@@ -79,11 +82,13 @@ def _generate_timeline(
     if normalize_weeks and period_type == "week" and time_column in df_copy.columns:
         df_copy = df_copy.copy() if df_copy is df else df_copy
         df_copy[time_column] = pd.to_datetime(df_copy[time_column])
-        df_copy[time_column] = df_copy[time_column].dt.to_period('W-MON').dt.start_time
+        df_copy[time_column] = df_copy[time_column].dt.to_period("W-MON").dt.start_time
 
     # Apply filters if needed
     if filter_nulls and value_column:
-        df_copy = df_copy[df_copy[value_column].notna()].copy() if df_copy is df else df_copy[df_copy[value_column].notna()]
+        df_copy = (
+            df_copy[df_copy[value_column].notna()].copy() if df_copy is df else df_copy[df_copy[value_column].notna()]
+        )
         if df_copy.empty:
             return {"x": [], "y": []}
 
@@ -161,10 +166,9 @@ def _generate_timeline(
 
 # Public API functions - maintain backward compatibility
 
+
 def generate_cpu_usage_over_time(
-    df: pd.DataFrame,
-    period_type: str = "month",
-    color_by: str | None = None
+    df: pd.DataFrame, period_type: str = "month", color_by: str | None = None
 ) -> dict[str, list]:
     """Aggregate CPU usage by time period, optionally grouped by a dimension.
 
@@ -189,9 +193,7 @@ def generate_cpu_usage_over_time(
 
 
 def generate_gpu_usage_over_time(
-    df: pd.DataFrame,
-    period_type: str = "month",
-    color_by: str | None = None
+    df: pd.DataFrame, period_type: str = "month", color_by: str | None = None
 ) -> dict[str, list]:
     """Aggregate GPU usage by time period, optionally grouped by a dimension.
 
@@ -216,9 +218,7 @@ def generate_gpu_usage_over_time(
 
 
 def generate_active_users_over_time(
-    df: pd.DataFrame,
-    period_type: str = "month",
-    color_by: str | None = None
+    df: pd.DataFrame, period_type: str = "month", color_by: str | None = None
 ) -> dict[str, list]:
     """Aggregate active users by time period, optionally grouped by account.
 
@@ -247,9 +247,7 @@ def generate_active_users_over_time(
 
 
 def generate_jobs_over_time(
-    df: pd.DataFrame,
-    period_type: str = "month",
-    color_by: str | None = None
+    df: pd.DataFrame, period_type: str = "month", color_by: str | None = None
 ) -> dict[str, list]:
     """Aggregate job counts by time period, optionally grouped by a dimension.
 
@@ -273,9 +271,7 @@ def generate_jobs_over_time(
 
 
 def generate_waiting_times_over_time(
-    df: pd.DataFrame,
-    period_type: str = "month",
-    color_by: str | None = None
+    df: pd.DataFrame, period_type: str = "month", color_by: str | None = None
 ) -> dict[str, list]:
     """Aggregate average waiting times by time period, optionally grouped by a dimension.
 
@@ -300,9 +296,7 @@ def generate_waiting_times_over_time(
 
 
 def generate_job_duration_over_time(
-    df: pd.DataFrame,
-    period_type: str = "month",
-    color_by: str | None = None
+    df: pd.DataFrame, period_type: str = "month", color_by: str | None = None
 ) -> dict[str, list]:
     """Aggregate average job duration by time period, optionally grouped by a dimension.
 

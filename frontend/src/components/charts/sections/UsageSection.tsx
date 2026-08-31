@@ -6,6 +6,7 @@ import StackedAreaChart from '../StackedAreaChart';
 import PieChart from '../PieChart';
 import HistogramChart from '../HistogramChart';
 import GaugeChart from '../GaugeChart';
+import TimelineChart from '../TimelineChart';
 import { COLORS } from '../chartHelpers';
 
 import { MEMORY_COVERAGE_THRESHOLD, type ProcessedNodeData } from '../../../hooks/useProcessedNodeData';
@@ -260,12 +261,12 @@ const UsageSection: React.FC<UsageSectionProps> = ({
         )}
 
         {/* Efficiency Section: consumed vs allocated; no GPU data in SLURM accounting */}
-        {((data.cpu_efficiency_over_time && data.cpu_efficiency_over_time.x.length > 0) ||
-          (data.memory_efficiency_over_time && data.memory_efficiency_over_time.x.length > 0)) && (
+        {((data.cpu_efficiency_over_time?.series?.length ?? 0) > 0 ||
+          (data.memory_efficiency_over_time?.series?.length ?? 0) > 0) && (
           <div className="subsection">
             <h2 className="subsection-header">Efficiency</h2>
             <div className="chart-row-2col">
-              {data.cpu_efficiency_over_time && data.cpu_efficiency_over_time.x.length > 0 && (
+              {(data.cpu_efficiency_over_time?.series?.length ?? 0) > 0 && (
                 <div className="card">
                   <h3>
                     CPU Efficiency
@@ -273,21 +274,18 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                       {' '}(used / allocated)
                     </span>
                   </h3>
-                  <StackedAreaChart
-                    data={data.cpu_efficiency_over_time}
+                  <TimelineChart
+                    data={{ x: data.cpu_efficiency_over_time.x, series: data.cpu_efficiency_over_time.series }}
                     xTitle="Period"
                     yTitle="Used (%)"
+                    colorMap={colorMap}
                     defaultColor="#04A5D5"
-                    colorMap={null}
-                    defaultName="CPU used (%)"
-                    chartType="area"
-                    periodType={periodType}
                     chartColors={chartColors}
                   />
                   <ChartCaption text="Consumed core-time (sacct TotalCPU) divided by allocated core-time, per period, over jobs reporting both. GPU efficiency is not available from SLURM accounting." />
                 </div>
               )}
-              {data.memory_efficiency_over_time && data.memory_efficiency_over_time.x.length > 0 && (
+              {(data.memory_efficiency_over_time?.series?.length ?? 0) > 0 && (
                 <div className="card">
                   <h3>
                     Memory Efficiency
@@ -295,34 +293,15 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                       {' '}(peak used / requested)
                     </span>
                   </h3>
-                  <StackedAreaChart
-                    data={data.memory_efficiency_over_time}
+                  <TimelineChart
+                    data={{ x: data.memory_efficiency_over_time.x, series: data.memory_efficiency_over_time.series }}
                     xTitle="Period"
                     yTitle="Used (%)"
+                    colorMap={colorMap}
                     defaultColor={MEMORY_COLOR}
-                    colorMap={null}
-                    defaultName="Memory used (%)"
-                    chartType="area"
-                    periodType={periodType}
                     chartColors={chartColors}
                   />
-                  <ChartCaption text="Sum of peak memory used divided by sum of requested memory, per period, over jobs reporting both." />
-                </div>
-              )}
-              {data.efficiency_by_group && data.efficiency_by_group.x.length > 0 && (
-                <div className="card">
-                  <h3>Efficiency by {colorBy || 'Account'}</h3>
-                  <StackedAreaChart
-                    data={data.efficiency_by_group}
-                    xTitle={colorBy || 'Account'}
-                    yTitle="Used (%)"
-                    defaultColor="#04A5D5"
-                    colorMap={null}
-                    chartType="bar"
-                    barMode="group"
-                    chartColors={chartColors}
-                  />
-                  <ChartCaption text="Consumed over allocated resources per group, for the groups with the most allocated CPU-hours. Memory uses peak usage and is an upper bound." />
+                  <ChartCaption text="Peak memory used over requested memory, weighted by job runtime, per period, over jobs reporting both. Peak-based, so an upper bound." />
                 </div>
               )}
             </div>

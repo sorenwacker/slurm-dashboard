@@ -60,8 +60,8 @@ When requested memory is known for fewer than 90 % of the jobs in the range, the
 Efficiency compares what jobs consumed with what they allocated; it does not affect the allocation charts and gauges above.
 
 - CPU efficiency of a period = `sum(CPUUsedHours) / sum(CPUHours)` over jobs reporting both. `CPUUsedHours` is sacct's `TotalCPU` (consumed core-time), a measured value.
-- Memory efficiency uses peak usage (`MaxRSS`) over requested memory and is therefore an upper bound; see [Memory Usage](memory-usage.md).
-- Efficiency by group shows both ratios per account (or the selected colour dimension), for the groups with the most allocated CPU-hours.
+- Memory efficiency of a period = `sum(MaxRSS * elapsed) / sum(ReqMem * elapsed)`, weighted by job runtime so short jobs do not dominate. It uses peak usage and is therefore an upper bound; see [Memory Usage](memory-usage.md).
+- With a colour dimension selected in the sidebar, both efficiency charts show one line per group (the groups with the most allocated resource); without one, a single cluster-wide line. Group names appear only when the dimension is selected, like in every other chart.
 - GPU efficiency cannot be computed from SLURM accounting.
 
 Jobs collected before the agent reported `CPUUsedHours` are excluded from CPU efficiency; a period with no such jobs is omitted.
