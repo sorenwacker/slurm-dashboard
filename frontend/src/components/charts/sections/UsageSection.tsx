@@ -242,20 +242,6 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                   <ChartCaption text="Memory-hours split by the colour dimension; without one, the distribution of memory-hours per period." />
                 </div>
               )}
-              {data.memory_per_job && data.memory_per_job.x.length > 0 && (
-                <div className="card">
-                  <h3>Memory per Job</h3>
-                  <HistogramChart
-                    data={data.memory_per_job}
-                    xTitle="Requested Memory (GB)"
-                    yTitle="Number of Jobs"
-                    defaultColor={MEMORY_COLOR}
-                    colorMap={null}
-                    chartColors={chartColors}
-                  />
-                  <ChartCaption text="Number of jobs per requested memory size in GB (20 most common sizes)." />
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -274,14 +260,28 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                       {' '}(used / allocated)
                     </span>
                   </h3>
-                  <TimelineChart
-                    data={{ x: data.cpu_efficiency_over_time.x, series: data.cpu_efficiency_over_time.series }}
-                    xTitle="Period"
-                    yTitle="Used (%)"
-                    colorMap={colorMap}
-                    defaultColor="#04A5D5"
-                    chartColors={chartColors}
-                  />
+                  {(data.cpu_efficiency_over_time.series?.length ?? 0) > 1 ? (
+                    <TimelineChart
+                      data={{ x: data.cpu_efficiency_over_time.x, series: data.cpu_efficiency_over_time.series }}
+                      xTitle="Period"
+                      yTitle="Used (%)"
+                      colorMap={colorMap}
+                      defaultColor="#04A5D5"
+                      chartColors={chartColors}
+                    />
+                  ) : (
+                    <StackedAreaChart
+                      data={{ x: data.cpu_efficiency_over_time.x, y: data.cpu_efficiency_over_time.series![0].data as number[] }}
+                      xTitle="Period"
+                      yTitle="Used (%)"
+                      defaultColor="#04A5D5"
+                      colorMap={null}
+                      defaultName={data.cpu_efficiency_over_time.series![0].name}
+                      chartType="area"
+                      periodType={periodType}
+                      chartColors={chartColors}
+                    />
+                  )}
                   <ChartCaption text="Consumed core-time (sacct TotalCPU) divided by allocated core-time, per period, over jobs reporting both. GPU efficiency is not available from SLURM accounting." />
                 </div>
               )}
@@ -293,14 +293,28 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                       {' '}(peak used / requested)
                     </span>
                   </h3>
-                  <TimelineChart
-                    data={{ x: data.memory_efficiency_over_time.x, series: data.memory_efficiency_over_time.series }}
-                    xTitle="Period"
-                    yTitle="Used (%)"
-                    colorMap={colorMap}
-                    defaultColor={MEMORY_COLOR}
-                    chartColors={chartColors}
-                  />
+                  {(data.memory_efficiency_over_time.series?.length ?? 0) > 1 ? (
+                    <TimelineChart
+                      data={{ x: data.memory_efficiency_over_time.x, series: data.memory_efficiency_over_time.series }}
+                      xTitle="Period"
+                      yTitle="Used (%)"
+                      colorMap={colorMap}
+                      defaultColor={MEMORY_COLOR}
+                      chartColors={chartColors}
+                    />
+                  ) : (
+                    <StackedAreaChart
+                      data={{ x: data.memory_efficiency_over_time.x, y: data.memory_efficiency_over_time.series![0].data as number[] }}
+                      xTitle="Period"
+                      yTitle="Used (%)"
+                      defaultColor={MEMORY_COLOR}
+                      colorMap={null}
+                      defaultName={data.memory_efficiency_over_time.series![0].name}
+                      chartType="area"
+                      periodType={periodType}
+                      chartColors={chartColors}
+                    />
+                  )}
                   <ChartCaption text="Peak memory used over requested memory, weighted by job runtime, per period, over jobs reporting both. Peak-based, so an upper bound." />
                 </div>
               )}
