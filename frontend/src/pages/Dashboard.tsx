@@ -13,6 +13,24 @@ import { useReportFilters } from '../hooks/useReportFilters';
 import type { ReportData } from '../components/ReportPreview';
 
 const Dashboard: React.FC = () => {
+  const [sidebarHidden, setSidebarHidden] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('sidebar_hidden') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const toggleSidebar = () => {
+    setSidebarHidden((hidden) => {
+      try {
+        localStorage.setItem('sidebar_hidden', hidden ? '0' : '1');
+      } catch {
+        // storage unavailable; the toggle still works for this page
+      }
+      return !hidden;
+    });
+  };
+
   const [activeTab, setActiveTab] = useState<'overview' | 'reports'>('overview');
 
   // Fetch current user info to check admin status
@@ -145,7 +163,16 @@ const Dashboard: React.FC = () => {
     <div className="app">
       <Header activeTab={activeTab} onTabChange={setActiveTab} userInfo={userInfo}  />
       <div className="dashboard-layout">
-        <div className="sidebar">
+        <button
+          type="button"
+          className="sidebar-toggle"
+          onClick={toggleSidebar}
+          title={sidebarHidden ? 'Show filters' : 'Hide filters'}
+          aria-label={sidebarHidden ? 'Show filters' : 'Hide filters'}
+        >
+          {sidebarHidden ? '\u203A' : '\u2039'}
+        </button>
+        <div className={sidebarHidden ? 'sidebar sidebar-hidden' : 'sidebar'}>
           {activeTab === 'overview' ? (
             <Filters
               metadata={combinedMetadata}
