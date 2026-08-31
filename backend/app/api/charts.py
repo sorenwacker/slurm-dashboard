@@ -60,14 +60,14 @@ try:
     from slurm_usage_history.app.datastore import PandasDataStore
     from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
 except ImportError:
-    DuckDBDataStore = None  # type: ignore
-    PandasDataStore = None  # type: ignore
+    DuckDBDataStore = None  # type: ignore[assignment,misc]
+    PandasDataStore = None  # type: ignore[assignment,misc]
 
 router = APIRouter()
 settings = get_settings()
 
 # Import shared datastore singleton
-from ..datastore_singleton import get_datastore
+from ..datastore_singleton import get_datastore  # noqa: E402  (after optional-import fallback)
 
 # Every column any chart reads, in every naming generation of the parquet files.
 # The datastore intersects this with what the files contain.
@@ -173,7 +173,7 @@ def clear_chart_cache() -> None:
 
 @router.post("/charts")
 async def get_aggregated_charts(
-    request: FilterRequest, current_user: dict = Depends(get_current_user_saml)
+    request: FilterRequest, _current_user: dict = Depends(get_current_user_saml)
 ) -> dict[str, Any]:
     """Get all aggregated chart data in a single request.
 
@@ -304,7 +304,7 @@ async def get_aggregated_charts(
         logger = logging.getLogger(__name__)
         logger.error(f"Charts endpoint error: {e!s}")
         logger.error(f"Traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"Error generating charts: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error generating charts: {e!s}") from e
 
 
 def _submitted_in_range(df: pd.DataFrame, start_date: str | None, end_date: str | None) -> pd.DataFrame:

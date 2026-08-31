@@ -25,7 +25,8 @@ def load_saml_settings() -> dict:
     saml_settings_path = os.getenv("SAML_SETTINGS_PATH", "saml/settings.json")
 
     if not os.path.exists(saml_settings_path):
-        raise FileNotFoundError(f"SAML settings file not found: {saml_settings_path}")
+        msg = f"SAML settings file not found: {saml_settings_path}"
+        raise FileNotFoundError(msg)
 
     with open(saml_settings_path) as f:
         saml_settings = json.load(f)
@@ -112,20 +113,19 @@ async def get_current_user_saml(session_token: str | None = Cookie(None, alias="
         )
 
     try:
-        payload = jwt.decode(session_token, secret_key, algorithms=["HS256"])
-        return payload
-    except jwt.ExpiredSignatureError:
+        return jwt.decode(session_token, secret_key, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Session expired",
             headers={"WWW-Authenticate": "Bearer"},
-        )
-    except jwt.InvalidTokenError:
+        ) from e
+    except jwt.InvalidTokenError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid session token",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
 
 
 def create_session_token(user_data: dict, expiry_hours: int = 24) -> str:
@@ -144,7 +144,8 @@ def create_session_token(user_data: dict, expiry_hours: int = 24) -> str:
 
     secret_key = os.getenv("SECRET_KEY")
     if not secret_key:
-        raise ValueError("Secret key not configured")
+        msg = "Secret key not configured"
+        raise ValueError(msg)
 
     payload = {
         **user_data,

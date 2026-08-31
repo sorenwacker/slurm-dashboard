@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exporter sent the literal string `None` as `Start`/`End` for jobs that never started, which made the dashboard reject the whole batch with 422
 
 ### Changed
+- Lint is enforced: ruff and vulture run as pre-commit hooks and as a failing CI job; the repository is at zero findings with accepted rules documented in pyproject.toml; the dead Plotly-Dash app and legacy weekly-usage agent are removed
 - API keys are stored hashed; the full key is shown once at creation, rotation, or deploy-key exchange, and the admin UI shows only its prefix afterwards. Existing plaintext keys are hashed on first use.
 - `CLUSTER_CONFIG_PATH` setting moves the writable cluster configuration out of the git checkout; `backend/config/clusters.yaml` is no longer tracked (`clusters.example.yaml` documents the structure)
 - Admin: one cluster page per cluster (`/admin/clusters/<name>`) with Overview, Nodes, Partitions, Accounts, and YAML tabs replaces the Cluster Details and Configuration pages; labels are edited in place per entry; the Auto-Generate action is removed

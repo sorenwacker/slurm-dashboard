@@ -4,14 +4,14 @@ from datetime import datetime
 from io import BytesIO
 from typing import Any
 
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.dates import AutoDateLocator, DateFormatter
 from reportlab.platypus import Image
 
 # Use non-interactive backend for server-side generation
-matplotlib.use("Agg")
+mpl.use("Agg")
 
 
 def create_timeline_chart(timeline_data: list[dict[str, Any]], title: str, y_label: str, metric_key: str) -> Image:
@@ -59,8 +59,7 @@ def create_timeline_chart(timeline_data: list[dict[str, Any]], title: str, y_lab
     plt.close(fig)
 
     # Convert to ReportLab Image
-    img = Image(buf, width=500, height=250)
-    return img
+    return Image(buf, width=500, height=250)
 
 
 def create_bar_chart(
@@ -92,7 +91,7 @@ def create_bar_chart(
 
     # Create horizontal bar chart
     y_pos = np.arange(len(labels))
-    bars = ax.barh(y_pos, values, color="#04A5D5", alpha=0.8)
+    ax.barh(y_pos, values, color="#04A5D5", alpha=0.8)
 
     ax.set_yticks(y_pos)
     ax.set_yticklabels(labels, fontsize=8)
@@ -112,8 +111,7 @@ def create_bar_chart(
     plt.close(fig)
 
     # Convert to ReportLab Image
-    img = Image(buf, width=500, height=300)
-    return img
+    return Image(buf, width=500, height=300)
 
 
 def create_pie_chart(data: list[dict[str, Any]], title: str, label_key: str, value_key: str, top_n: int = 8) -> Image:
@@ -159,7 +157,7 @@ def create_pie_chart(data: list[dict[str, Any]], title: str, label_key: str, val
         # For more partitions than base colors, use a colormap to generate distinct colors
         colors = plt.cm.tab20(np.linspace(0, 1, len(labels)))
 
-    wedges, texts, autotexts = ax.pie(
+    _wedges, _texts, autotexts = ax.pie(
         values, labels=labels, colors=colors, autopct="%1.1f%%", startangle=90, textprops={"fontsize": 8}
     )
 
@@ -180,8 +178,7 @@ def create_pie_chart(data: list[dict[str, Any]], title: str, label_key: str, val
     plt.close(fig)
 
     # Convert to ReportLab Image
-    img = Image(buf, width=400, height=300)
-    return img
+    return Image(buf, width=400, height=300)
 
 
 def create_comparison_timeline(
@@ -260,8 +257,7 @@ def create_comparison_timeline(
     plt.close(fig)
 
     # Convert to ReportLab Image
-    img = Image(buf, width=500, height=250)
-    return img
+    return Image(buf, width=500, height=250)
 
 
 def create_cumulative_chart(
@@ -320,8 +316,7 @@ def create_cumulative_chart(
     plt.close(fig)
 
     # Convert to ReportLab Image
-    img = Image(buf, width=500, height=250)
-    return img
+    return Image(buf, width=500, height=250)
 
 
 def create_stacked_bar_chart(
@@ -384,5 +379,4 @@ def create_stacked_bar_chart(
     plt.close(fig)
 
     # Convert to ReportLab Image
-    img = Image(buf, width=500, height=300)
-    return img
+    return Image(buf, width=500, height=300)

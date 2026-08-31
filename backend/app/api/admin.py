@@ -158,12 +158,12 @@ async def get_admin_token_from_saml(request: Request):
         user_data = await get_current_user_saml(session_token=session_token)
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated via SAML",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
 
     # Extract email from SAML attributes (similar to /saml/me endpoint)
     settings = get_settings()
@@ -211,7 +211,7 @@ async def get_admin_token_from_saml(request: Request):
 
 
 @router.get("/clusters", response_model=ClusterListResponse)
-async def list_clusters(admin: str = Depends(get_current_admin)):
+async def list_clusters(_admin: str = Depends(get_current_admin)):
     """List all clusters.
 
     Requires admin authentication.
@@ -248,7 +248,7 @@ async def list_clusters(admin: str = Depends(get_current_admin)):
 @router.post("/clusters", response_model=ClusterResponse, status_code=status.HTTP_201_CREATED)
 async def create_cluster(
     request: ClusterCreate,
-    admin: str = Depends(get_current_admin),
+    _admin: str = Depends(get_current_admin),
 ):
     """Create a new cluster and generate API key.
 
@@ -333,7 +333,7 @@ async def create_cluster(
 @router.get("/clusters/{cluster_id}", response_model=ClusterResponse)
 async def get_cluster(
     cluster_id: str,
-    admin: str = Depends(get_current_admin),
+    _admin: str = Depends(get_current_admin),
 ):
     """Get cluster details by ID.
 
@@ -374,7 +374,7 @@ async def get_cluster(
 async def update_cluster(
     cluster_id: str,
     request: ClusterUpdate,
-    admin: str = Depends(get_current_admin),
+    _admin: str = Depends(get_current_admin),
 ):
     """Update cluster information.
 
@@ -421,7 +421,7 @@ async def update_cluster(
 @router.delete("/clusters/{cluster_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_cluster(
     cluster_id: str,
-    admin: str = Depends(get_current_admin),
+    _admin: str = Depends(get_current_admin),
 ):
     """Delete a cluster.
 
@@ -443,7 +443,7 @@ async def delete_cluster(
 @router.post("/clusters/rotate-key", response_model=APIKeyRotateResponse)
 async def rotate_api_key(
     request: APIKeyRotateRequest,
-    admin: str = Depends(get_current_admin),
+    _admin: str = Depends(get_current_admin),
 ):
     """Rotate API key for a cluster.
 
@@ -468,7 +468,7 @@ async def rotate_api_key(
 
 
 @router.get("/admin-emails")
-async def get_admin_emails(admin: str = Depends(get_current_admin)):
+async def get_admin_emails(_admin: str = Depends(get_current_admin)):
     """Get current admin and superadmin email lists.
 
     Reads from database first, falls back to environment variables.
@@ -534,7 +534,7 @@ async def generate_deploy_key(cluster_id: str, admin: str = Depends(get_current_
 
 
 @router.get("/clusters/{cluster_id}/deploy-key-status")
-async def get_deploy_key_status(cluster_id: str, admin: str = Depends(get_current_admin)):
+async def get_deploy_key_status(cluster_id: str, _admin: str = Depends(get_current_admin)):
     """Get the status of the deploy key for a cluster.
 
     Returns information about whether the key was used, when, from what IP, and expiration.
@@ -611,7 +611,7 @@ async def update_admin_emails(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to read database: {e!s}",
-        )
+        ) from e
 
     # Ensure admin_users section exists
     if "admin_users" not in data:
@@ -629,7 +629,7 @@ async def update_admin_emails(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to write database: {e!s}",
-        )
+        ) from e
 
     logger.info(f"Admin emails updated by {admin}: {len(admin_emails)} admins, {len(superadmin_emails)} superadmins")
 

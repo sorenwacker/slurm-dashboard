@@ -152,7 +152,7 @@ async def upload_data(
 
 
 @router.get("/health")
-async def health_check(api_key: str = Depends(verify_agent_api_key)) -> dict:
+async def health_check(_api_key: str = Depends(verify_agent_api_key)) -> dict:
     """Health check endpoint for agents.
 
     Verifies that the agent can authenticate and the API is operational.

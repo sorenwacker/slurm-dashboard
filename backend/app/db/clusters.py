@@ -61,7 +61,8 @@ class ClusterDB:
         # Check if cluster name already exists
         for cluster in db["clusters"].values():
             if cluster["name"] == name:
-                raise ValueError(f"Cluster with name '{name}' already exists")
+                msg = f"Cluster with name '{name}' already exists"
+                raise ValueError(msg)
 
         cluster_id = str(uuid4())
         api_key = generate_api_key()
@@ -268,7 +269,7 @@ class ClusterDB:
         self._write_db(db)
         return deploy_key
 
-    def exchange_deploy_key(self, deploy_key: str, client_ip: str = None) -> dict | None:
+    def exchange_deploy_key(self, deploy_key: str, client_ip: str | None = None) -> dict | None:
         """Exchange a deploy key for a freshly issued API key.
 
         Keys are stored hashed, so the exchange rotates the cluster's key and

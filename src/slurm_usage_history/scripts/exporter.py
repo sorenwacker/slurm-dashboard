@@ -81,7 +81,9 @@ class SlurmDataExtractor:
     def _get_cluster_name(self) -> str:
         """Auto-detect cluster name from SLURM or hostname"""
         try:
-            result = subprocess.run(["scontrol", "show", "config"], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                ["scontrol", "show", "config"], capture_output=True, text=True, timeout=10, check=False
+            )
             for line in result.stdout.split("\n"):
                 if line.startswith("ClusterName"):
                     return line.split("=")[1].strip()
@@ -426,7 +428,8 @@ def load_config(config_path: Path) -> dict:
     logger.info(f"Loading configuration from {config_path}")
 
     if not config_path.exists():
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        msg = f"Configuration file not found: {config_path}"
+        raise FileNotFoundError(msg)
 
     with open(config_path) as f:
         config = json.load(f)
@@ -435,7 +438,8 @@ def load_config(config_path: Path) -> dict:
     required = ["api_url", "api_key"]
     for field in required:
         if field not in config:
-            raise ValueError(f"Missing required configuration field: {field}")
+            msg = f"Missing required configuration field: {field}"
+            raise ValueError(msg)
 
     return config
 

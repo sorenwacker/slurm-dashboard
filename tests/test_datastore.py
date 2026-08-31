@@ -444,9 +444,9 @@ def test_auto_refresh(temp_datadir, test_data):
     assert not result  # Should be False as auto-refresh is not running
 
     # Test invalid interval
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="positive integer"):
         ds.set_refresh_interval(-1)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="positive integer"):
         ds.set_refresh_interval("invalid")
 
 

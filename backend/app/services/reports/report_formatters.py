@@ -144,7 +144,7 @@ def format_report_as_pdf(report_data: dict[str, Any]) -> bytes:
         spaceAfter=6,
         leading=13,
     )
-    normal_style = styles["Normal"]
+    styles["Normal"]
 
     # Build story
     story = []

@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import pandas as pd
 
@@ -23,7 +23,7 @@ class Singleton(type):
     Ensures only one instance of a class exists.
     """
 
-    _instances: dict[type, Any] = {}
+    _instances: ClassVar[dict[type, Any]] = {}
     _lock: threading.Lock = threading.Lock()
 
     def __call__(cls, *args: Any, **kwargs: Any) -> Any:
@@ -461,7 +461,7 @@ class PandasDataStore(metaclass=Singleton):
         # No changes detected
         return False
 
-    @lru_cache(maxsize=10)
+    @lru_cache(maxsize=10)  # noqa: B019  (cache on a long-lived singleton is intended)
     def _filter_data(
         self,
         hostname: str | None = None,

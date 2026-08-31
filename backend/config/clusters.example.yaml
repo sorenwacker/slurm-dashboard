@@ -799,6 +799,7 @@ clusters:
       gpu:
         display_name: GPU Partition
         description: GPU partition
+
 settings:
   default_node_type: cpu
   case_sensitive: false

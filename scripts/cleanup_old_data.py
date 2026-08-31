@@ -44,7 +44,8 @@ def cleanup_old_files(data_dir: Path, keep_months: int = 6, dry_run: bool = True
 
                 if dry_run:
                     print(
-                        f"  Would delete: {parquet_file.name} ({file_size / 1024 / 1024:.2f} MB) - modified {mtime.strftime('%Y-%m-%d')}"
+                        f"  Would delete: {parquet_file.name} ({file_size / 1024 / 1024:.2f} MB) "
+                        f"- modified {mtime.strftime('%Y-%m-%d')}"
                     )
                 else:
                     print(f"  Deleting: {parquet_file.name} ({file_size / 1024 / 1024:.2f} MB)")

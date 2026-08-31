@@ -187,7 +187,7 @@ def run_command(args):
         cmd.append("--verbose")
 
     # Run the exporter
-    result = subprocess.run(cmd)
+    result = subprocess.run(cmd, check=False)
     sys.exit(result.returncode)
 
 

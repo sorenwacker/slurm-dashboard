@@ -15,7 +15,7 @@ settings = get_settings()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Application lifespan manager - handles startup and shutdown events."""
     # Startup: Preload shared datastore
     logger.info("Starting application...")
@@ -104,12 +104,7 @@ if frontend_dist:
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
         # Don't intercept API routes, docs, or SAML
-        if (
-            full_path.startswith("api")
-            or full_path.startswith("docs")
-            or full_path.startswith("saml")
-            or full_path.startswith("openapi.json")
-        ):
+        if full_path.startswith(("api", "docs", "saml", "openapi.json")):
             # Let FastAPI handle these routes
             from fastapi import HTTPException
 

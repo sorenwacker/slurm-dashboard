@@ -254,7 +254,7 @@ class ClusterConfig:
 
         # Check node_type_patterns for matching pattern
         patterns = self.config.get("settings", {}).get("node_type_patterns", {})
-        for pattern_name, pattern_config in patterns.items():
+        for _pattern_name, pattern_config in patterns.items():
             pattern = pattern_config.get("pattern", "")
             if pattern and re.match(pattern, node_name, re.IGNORECASE):
                 return {

@@ -211,11 +211,16 @@ ignore = [
 pydocstyle.convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
+# Report narrative texts are long prose strings; wrapping them harms readability
+"backend/app/services/reports/report_formatters.py" = ["E501"]
+# sys.path manipulation must precede the imports under test
+"tests/test_datastore.py" = ["E402"]
 "tests/**.py" = [
     "ANN201",  # Missing return type annotation
     "D103",    # Missing docstring
     "S101",    # Use of assert
     "INP001",  # Missing __init__.py
+    "ARG001",  # unused arguments are how pytest fixtures are requested
 ]
 
 [tool.yamlfix]

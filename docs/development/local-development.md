@@ -332,3 +332,19 @@ docker-compose -f docker-compose.dev.yml down -v
 - [Production Deployment](../deployment/saml-setup.md)
 - [Configuration Guide](../user-guide/configuration.md)
 - [API Documentation](http://localhost:8100/docs) - Interactive API docs when running locally
+
+## Quality Gates
+
+Every rule in this project has an enforcement mechanism; prose-only rules are not accepted.
+
+- `uv run ruff check` and `uv run ruff format --check .` must pass with zero findings. Accepted rules (for example `G004`, `PLC0415`) are listed with a one-line reason in `pyproject.toml`; anything not listed there fails the build.
+- `uvx vulture --min-confidence 80 src/slurm_usage_history backend/app scripts` must report nothing: dead code is removed, not documented.
+- `uv run pytest` runs the full backend suite; `npm test` (vitest) and `npx eslint src` cover the frontend.
+
+Install the pre-commit hooks once per clone:
+
+```bash
+uv run pre-commit install
+```
+
+The hooks run ruff (lint + format) and vulture on every commit. CI runs the same checks in the `lint:python` job plus the full test suites; no test job is allowed to fail.

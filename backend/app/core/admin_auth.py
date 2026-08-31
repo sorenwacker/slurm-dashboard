@@ -44,8 +44,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)) -> str:
@@ -63,8 +62,8 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
         if username is None:
             raise credentials_exception
         return username
-    except jwt.PyJWTError:
-        raise credentials_exception
+    except jwt.PyJWTError as e:
+        raise credentials_exception from e
 
 
 def authenticate_admin(username: str, password: str) -> str | None:

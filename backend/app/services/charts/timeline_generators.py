@@ -107,7 +107,8 @@ def _generate_timeline(
             return data.groupby(group_col)[value_column].nunique()
         if aggregation == "count":
             return data[group_col].value_counts()
-        raise ValueError(f"Unknown aggregation: {aggregation}")
+        msg = f"Unknown aggregation: {aggregation}"
+        raise ValueError(msg)
 
     # If no color_by, return simple time series
     if not color_by or color_by not in df_copy.columns:

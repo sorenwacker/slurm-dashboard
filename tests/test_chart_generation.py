@@ -39,7 +39,7 @@ def sample_dataframe():
 
     submit_dates = start_dates - pd.to_timedelta(np.random.exponential(1, n_rows), unit="h")
 
-    df = pd.DataFrame(
+    return pd.DataFrame(
         {
             "JobID": range(1, n_rows + 1),
             "State": np.random.choice(["COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"], n_rows),
@@ -68,8 +68,6 @@ def sample_dataframe():
         }
     )
 
-    return df
-
 
 def validate_chart_output(result, min_points=1, chart_type="bar"):
     """Validate that chart output has correct structure.
@@ -77,7 +75,8 @@ def validate_chart_output(result, min_points=1, chart_type="bar"):
     Args:
         result: Chart data dictionary
         min_points: Minimum number of data points expected
-        chart_type: 'bar' for x/y format, 'pie' for labels/values format, 'stacked' for x/series format, 'trends' for x/stats format
+        chart_type: 'bar' for x/y format, 'pie' for labels/values format,
+            'stacked' for x/series format, 'trends' for x/stats format
     """
     assert result is not None, "Chart result should not be None"
     assert isinstance(result, dict), "Chart result should be a dictionary"

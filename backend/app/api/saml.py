@@ -308,7 +308,7 @@ async def saml_logout(request: Request, redirect_to: str | None = None):
 
 
 @router.get("/status")
-async def saml_status(request: Request):
+async def saml_status(_request: Request):
     """Check SAML authentication status.
 
     Returns:

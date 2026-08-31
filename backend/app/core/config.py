@@ -63,8 +63,8 @@ class Settings(BaseSettings):
             return {}
 
         users = {}
-        for user_entry in self.admin_users.split(","):
-            user_entry = user_entry.strip()
+        for raw_user_entry in self.admin_users.split(","):
+            user_entry = raw_user_entry.strip()
             if ":" in user_entry:
                 username, password_hash = user_entry.split(":", 1)
                 users[username.strip()] = password_hash.strip()
@@ -113,15 +113,15 @@ class Settings(BaseSettings):
         if not email_roles:
             # First, add all superadmin emails from env
             if self.superadmin_emails:
-                for email in self.superadmin_emails.split(","):
-                    email = email.strip()
+                for raw_email in self.superadmin_emails.split(","):
+                    email = raw_email.strip()
                     if email:
                         email_roles[email.lower()] = AdminRole.SUPERADMIN
 
             # Then add emails from admin_emails (format: email:role)
             if self.admin_emails:
-                for entry in self.admin_emails.split(","):
-                    entry = entry.strip()
+                for raw_entry in self.admin_emails.split(","):
+                    entry = raw_entry.strip()
                     if ":" in entry:
                         email, role = entry.split(":", 1)
                         email = email.strip().lower()

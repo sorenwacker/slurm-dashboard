@@ -34,7 +34,8 @@ def get_year_date_range(year: int) -> tuple[str, str]:
 def get_quarter_date_range(year: int, quarter: int) -> tuple[str, str]:
     """Get the start and end date for a given quarter (Q1-Q4)."""
     if not 1 <= quarter <= 4:
-        raise ValueError(f"Quarter must be between 1 and 4, got {quarter}")
+        msg = f"Quarter must be between 1 and 4, got {quarter}"
+        raise ValueError(msg)
 
     # Define quarter start months
     quarter_start_months = {1: 1, 2: 4, 3: 7, 4: 10}

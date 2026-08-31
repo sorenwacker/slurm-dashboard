@@ -29,7 +29,7 @@ async def generate_report(
     year: int = Query(..., description="Year for the report"),
     month: int | None = Query(None, description="Month for monthly report (1-12)"),
     quarter: int | None = Query(None, description="Quarter for quarterly report (1-4)"),
-    current_user: dict = Depends(get_current_user_saml),
+    _current_user: dict = Depends(get_current_user_saml),
 ) -> Response:
     """
     Generate usage report for a specific period.
@@ -120,7 +120,7 @@ async def generate_report(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating report: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error generating report: {e!s}") from e
 
 
 @router.get("/preview")
@@ -130,7 +130,7 @@ async def preview_report(
     year: int = Query(..., description="Year for the report"),
     month: int | None = Query(None, description="Month for monthly report (1-12)"),
     quarter: int | None = Query(None, description="Quarter for quarterly report (1-4)"),
-    current_user: dict = Depends(get_current_user_saml),
+    _current_user: dict = Depends(get_current_user_saml),
 ) -> dict[str, Any]:
     """
     Preview report data for inline display (without downloading).
@@ -192,18 +192,16 @@ async def preview_report(
             report_type = f"Annual Report - {year}"
 
         # Generate report data
-        report_data = generate_report_data(hostname, start_date, end_date, report_type)
-
-        return report_data
+        return generate_report_data(hostname, start_date, end_date, report_type)
 
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating report preview: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error generating report preview: {e!s}") from e
 
 
 @router.get("/available-periods/{hostname}")
-async def get_available_periods(hostname: str, current_user: dict = Depends(get_current_user_saml)) -> dict[str, Any]:
+async def get_available_periods(hostname: str, _current_user: dict = Depends(get_current_user_saml)) -> dict[str, Any]:
     """
     Get available reporting periods for a cluster.
 
@@ -260,4 +258,4 @@ async def get_available_periods(hostname: str, current_user: dict = Depends(get_
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching available periods: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error fetching available periods: {e!s}") from e

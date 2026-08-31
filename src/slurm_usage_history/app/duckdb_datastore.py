@@ -11,7 +11,7 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 try:
     import duckdb
@@ -19,7 +19,7 @@ try:
     DUCKDB_AVAILABLE = True
 except ImportError as e:
     DUCKDB_AVAILABLE = False
-    duckdb = None  # type: ignore
+    duckdb = None  # type: ignore[assignment]
     logging.error(f"DuckDB not available: {e}. Install with: pip install duckdb")
 
 import pandas as pd
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class Singleton(type):
     """Metaclass to implement the Singleton pattern."""
 
-    _instances: dict[type, Any] = {}
+    _instances: ClassVar[dict[type, Any]] = {}
     _lock: threading.Lock = threading.Lock()
 
     def __call__(cls, *args: Any, **kwargs: Any) -> Any:
@@ -69,7 +69,8 @@ class DuckDBDataStore(metaclass=Singleton):
             ImportError: If DuckDB is not installed
         """
         if not DUCKDB_AVAILABLE or duckdb is None:
-            raise ImportError("DuckDB is required but not installed. Install with: pip install duckdb or uv add duckdb")
+            msg = "DuckDB is required but not installed. Install with: pip install duckdb or uv add duckdb"
+            raise ImportError(msg)
 
         logger.info("Initializing DuckDBDataStore (low-memory mode)")
         self.directory = Path(directory).expanduser() if directory else Path.cwd()
@@ -160,7 +161,7 @@ class DuckDBDataStore(metaclass=Singleton):
                 }
                 # Only filter if we have active clusters defined
                 if active_clusters:
-                    return [hostname for hostname in self.hosts.keys() if hostname in active_clusters]
+                    return [hostname for hostname in self.hosts if hostname in active_clusters]
         except Exception as e:
             logger.warning(f"Failed to filter by active clusters: {e}")
 
@@ -263,7 +264,7 @@ class DuckDBDataStore(metaclass=Singleton):
                             # Split by comma and strip whitespace
                             partitions = [p.strip() for p in val[0].split(",") if p.strip()]
                             partition_set.update(partitions)
-                        self.hosts[hostname][key] = sorted(list(partition_set))
+                        self.hosts[hostname][key] = sorted(partition_set)
                     else:
                         self.hosts[hostname][key] = [val[0] for val in unique_values]
                 except Exception as e:
@@ -284,7 +285,7 @@ class DuckDBDataStore(metaclass=Singleton):
                         ORDER BY node
                         """
                     ).fetchall()
-                    discovered_nodes = set(val[0] for val in node_names if val[0])
+                    discovered_nodes = {val[0] for val in node_names if val[0]}
                 except Exception:
                     # Fall back to string handling (some files may have VARCHAR instead of array)
                     discovered_nodes = set()
@@ -450,7 +451,7 @@ class DuckDBDataStore(metaclass=Singleton):
                         # Split by comma and strip whitespace
                         partitions = [p.strip() for p in val[0].split(",") if p.strip()]
                         partition_set.update(partitions)
-                    result[key] = sorted(list(partition_set))
+                    result[key] = sorted(partition_set)
                 else:
                     result[key] = [val[0] for val in unique_values]
             except Exception as e:
@@ -469,10 +470,10 @@ class DuckDBDataStore(metaclass=Singleton):
         users: list[str] | None = None,
         qos: list[str] | None = None,
         states: list[str] | None = None,
-        complete_periods_only: bool = False,
-        period_type: str = "month",
+        _complete_periods_only: bool = False,
+        _period_type: str = "month",
         format_accounts: bool = True,
-        account_segments: int | None = None,
+        _account_segments: int | None = None,
         time_base: str = "submit",
         columns: list[str] | None = None,
     ) -> pd.DataFrame:
@@ -633,8 +634,7 @@ class DuckDBDataStore(metaclass=Singleton):
 
         # Apply account formatting if requested and available
         if format_accounts and self.account_formatter and "Account" in df.columns:
-            segments = account_segments if account_segments is not None else 3
-            df["Account"] = df["Account"].apply(lambda x: self.account_formatter.format_account(x))
+            df["Account"] = df["Account"].apply(self.account_formatter.format_account)
 
         total_elapsed = time.time() - query_start
         if total_elapsed > 1.0:
@@ -740,8 +740,8 @@ class DuckDBDataStore(metaclass=Singleton):
             return True
 
         # Modified files
-        for file_path in current_files:
-            if file_path in old_timestamps and current_files[file_path] != old_timestamps[file_path]:
+        for file_path, timestamp in current_files.items():
+            if file_path in old_timestamps and timestamp != old_timestamps[file_path]:
                 return True
 
         return False

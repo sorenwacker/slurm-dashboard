@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @router.post("/ingest", response_model=DataIngestionResponse)
 async def ingest_data(
     request: DataIngestionRequest,
-    cluster_name: str = Depends(verify_api_key),
+    _cluster_name: str = Depends(verify_api_key),
 ) -> DataIngestionResponse:
     """Ingest job data for a specific cluster.
 
@@ -178,4 +178,4 @@ async def reload_datastore(
         raise HTTPException(
             status_code=500,
             detail=f"Error reloading datastore: {e!s}",
-        )
+        ) from e

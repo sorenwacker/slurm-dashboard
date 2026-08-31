@@ -11,7 +11,7 @@ from .report_formatters import convert_numpy_to_native
 def calculate_previous_period_dates(
     start_date: str,
     end_date: str,
-    report_type: str,
+    _report_type: str,
 ) -> tuple[str, str] | None:
     """Calculate the previous period dates based on report type."""
     try:

@@ -7,7 +7,8 @@ Slurm Usage History Dashboard. It mimics the structure and patterns found
 in real DAIC cluster data.
 
 Usage:
-    python3 generate_test_cluster_data.py --cluster TestCluster --start-date 2024-01-01 --end-date 2024-12-31 --jobs-per-day 100
+    python3 generate_test_cluster_data.py --cluster TestCluster \\
+        --start-date 2024-01-01 --end-date 2024-12-31 --jobs-per-day 100
 """
 
 import argparse
@@ -460,10 +461,7 @@ class SyntheticClusterDataGenerator:
         # Requested memory per job (GB) and peak usage as a fraction of it;
         # OUT_OF_MEMORY jobs reach their limit, most jobs use far less.
         req_mem_gb = random.choice([4, 8, 16, 32, 64, 128]) * max(1, cpus // 4)
-        if state == "OUT_OF_MEMORY":
-            used_fraction = random.uniform(0.95, 1.0)
-        else:
-            used_fraction = random.betavariate(2, 5)
+        used_fraction = random.uniform(0.95, 1.0) if state == "OUT_OF_MEMORY" else random.betavariate(2, 5)
         req_mem_mb = float(req_mem_gb * 1024)
         max_rss_mb = round(req_mem_mb * used_fraction, 1)
         cpu_used_hours = round(cpu_hours * (cpu_efficiency if state == "COMPLETED" else random.uniform(0.0, 0.5)), 2)
@@ -582,9 +580,9 @@ class SyntheticClusterDataGenerator:
         weeks = df.groupby(["_year", "_week"])
 
         print(f"\nSaving {len(weeks)} weekly files to {output_path}...")
-        for (year, week), week_df in weeks:
+        for (year, week), week_group in weeks:
             # Remove temporary grouping columns
-            week_df = week_df.drop(columns=["_year", "_week"])
+            week_df = week_group.drop(columns=["_year", "_week"])
 
             filename = f"week_{year}_W{week:02d}.parquet"
             filepath = output_path / filename

@@ -24,7 +24,7 @@ router = APIRouter()
 settings = get_settings()
 
 # Import shared datastore singleton
-from ..datastore_singleton import get_datastore
+from ..datastore_singleton import get_datastore  # noqa: E402  (after optional-import fallback)
 
 
 def convert_numpy_to_native(obj: Any) -> Any:
@@ -81,7 +81,7 @@ async def get_metadata(
     hostname: str | None = Query(None, description="Filter metadata for specific hostname"),
     start_date: str | None = Query(None, description="Filter metadata from this date"),
     end_date: str | None = Query(None, description="Filter metadata until this date"),
-    current_user: dict = Depends(get_current_user_saml),
+    _current_user: dict = Depends(get_current_user_saml),
 ) -> MetadataResponse:
     """Get metadata for all clusters including available filters.
 
@@ -150,11 +150,11 @@ async def get_metadata(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching metadata: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error fetching metadata: {e!s}") from e
 
 
 @router.post("/reload-data")
-async def reload_data(hostname: str | None = None, current_user: dict = Depends(get_current_user_saml)) -> dict:
+async def reload_data(hostname: str | None = None, _current_user: dict = Depends(get_current_user_saml)) -> dict:
     """Reload data from disk, checking for new/updated files.
 
     Args:
@@ -206,11 +206,11 @@ async def reload_data(hostname: str | None = None, current_user: dict = Depends(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reloading data: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error reloading data: {e!s}") from e
 
 
 @router.post("/filter")
-async def filter_data(request: FilterRequest, current_user: dict = Depends(get_current_user_saml)) -> dict:
+async def filter_data(request: FilterRequest, _current_user: dict = Depends(get_current_user_saml)) -> dict:
     """Filter data based on provided criteria and return aggregated results."""
     try:
         datastore = get_datastore()
@@ -245,7 +245,7 @@ async def filter_data(request: FilterRequest, current_user: dict = Depends(get_c
         records = [convert_numpy_to_native(record) for record in records]
 
         # Calculate summary statistics
-        summary = {
+        return {
             "total_jobs": len(df),
             "total_cpu_hours": float(df["CPUHours"].sum()) if "CPUHours" in df.columns else 0.0,
             "total_gpu_hours": float(df["GPUHours"].sum()) if "GPUHours" in df.columns else 0.0,
@@ -253,10 +253,8 @@ async def filter_data(request: FilterRequest, current_user: dict = Depends(get_c
             "data": records,
         }
 
-        return summary
-
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error filtering data: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error filtering data: {e!s}") from e
 
 
 @router.get("/stats/{hostname}")
@@ -264,7 +262,7 @@ async def get_cluster_stats(
     hostname: str,
     start_date: str | None = Query(None),
     end_date: str | None = Query(None),
-    current_user: dict = Depends(get_current_user_saml),
+    _current_user: dict = Depends(get_current_user_saml),
 ) -> dict:
     """Get statistics for a specific cluster."""
     try:
@@ -289,7 +287,7 @@ async def get_cluster_stats(
                 "partitions": [],
             }
 
-        stats = {
+        return {
             "hostname": hostname,
             "total_jobs": len(df),
             "total_cpu_hours": float(df["CPUHours"].sum()) if "CPUHours" in df.columns else 0.0,
@@ -298,9 +296,7 @@ async def get_cluster_stats(
             "partitions": df["Partition"].unique().tolist() if "Partition" in df.columns else [],
         }
 
-        return stats
-
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching stats: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error fetching stats: {e!s}") from e

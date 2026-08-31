@@ -11,8 +11,8 @@ try:
     from slurm_usage_history.app.datastore import PandasDataStore
     from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
 except ImportError:
-    DuckDBDataStore = None  # type: ignore
-    PandasDataStore = None  # type: ignore
+    DuckDBDataStore = None  # type: ignore[assignment,misc]
+    PandasDataStore = None  # type: ignore[assignment,misc]
 
 from .core.config import get_settings
 

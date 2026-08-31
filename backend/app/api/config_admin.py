@@ -19,7 +19,7 @@ def get_config_path() -> Path:
 
 
 @router.get("/config")
-async def get_configuration(admin: str = Depends(get_current_admin)):
+async def get_configuration(_admin: str = Depends(get_current_admin)):
     """Get current cluster configuration.
 
     Returns the complete YAML configuration including all clusters,
@@ -33,11 +33,11 @@ async def get_configuration(admin: str = Depends(get_current_admin)):
             "settings": config.config.get("settings", {}),
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error loading configuration: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error loading configuration: {e!s}") from e
 
 
 @router.get("/config/{cluster_name}")
-async def get_cluster_configuration(cluster_name: str, admin: str = Depends(get_current_admin)):
+async def get_cluster_configuration(cluster_name: str, _admin: str = Depends(get_current_admin)):
     """Get configuration for a specific cluster.
 
     Args:
@@ -57,11 +57,11 @@ async def get_cluster_configuration(cluster_name: str, admin: str = Depends(get_
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error loading cluster configuration: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error loading cluster configuration: {e!s}") from e
 
 
 @router.post("/config/reload")
-async def reload_configuration(admin: str = Depends(get_current_admin)):
+async def reload_configuration(_admin: str = Depends(get_current_admin)):
     """Reload configuration from file.
 
     Useful after manual edits to the YAML file.
@@ -79,11 +79,11 @@ async def reload_configuration(admin: str = Depends(get_current_admin)):
             "clusters": clusters,
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reloading configuration: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error reloading configuration: {e!s}") from e
 
 
 @router.put("/config")
-async def update_configuration(config_data: dict[str, Any], admin: str = Depends(get_current_admin)):
+async def update_configuration(config_data: dict[str, Any], _admin: str = Depends(get_current_admin)):
     """Update the entire cluster configuration.
 
     This endpoint allows you to update the complete YAML configuration.
@@ -133,11 +133,11 @@ async def update_configuration(config_data: dict[str, Any], admin: str = Depends
             shutil.copy2(backup_path, config_path)
             reload_cluster_config()
 
-        raise HTTPException(status_code=500, detail=f"Error updating configuration: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error updating configuration: {e!s}") from e
 
 
 @router.post("/generate-demo-cluster")
-async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
+async def generate_demo_cluster(_admin: str = Depends(get_current_admin)):
     """Generate a demo cluster with 2 years of synthetic data.
 
     Creates a DemoCluster with:
@@ -341,11 +341,12 @@ async def generate_demo_cluster(admin: str = Depends(get_current_admin)):
     except Exception as e:
         import traceback
 
-        raise HTTPException(status_code=500, detail=f"Error generating demo cluster: {e!s}\n{traceback.format_exc()}")
+        detail = f"Error generating demo cluster: {e!s}\n{traceback.format_exc()}"
+        raise HTTPException(status_code=500, detail=detail) from e
 
 
 @router.post("/config/{cluster_name}/cleanup-invalid-nodes")
-async def cleanup_invalid_nodes(cluster_name: str, admin: str = Depends(get_current_admin)):
+async def cleanup_invalid_nodes(cluster_name: str, _admin: str = Depends(get_current_admin)):
     """Clean up invalid nodes from cluster configuration.
 
     Removes nodes that are just numbers, ranges, or contain brackets (malformed SLURM notation).
@@ -420,11 +421,11 @@ async def cleanup_invalid_nodes(cluster_name: str, admin: str = Depends(get_curr
     except Exception as e:
         import traceback
 
-        raise HTTPException(status_code=500, detail=f"Error cleaning up nodes: {e!s}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error cleaning up nodes: {e!s}\n{traceback.format_exc()}") from e
 
 
 @router.delete("/config/{cluster_name}/cleanup")
-async def cleanup_demo_cluster(cluster_name: str, admin: str = Depends(get_current_admin)):
+async def cleanup_demo_cluster(cluster_name: str, _admin: str = Depends(get_current_admin)):
     """Delete a demo cluster's data and configuration.
 
     This removes:
@@ -493,12 +494,13 @@ async def cleanup_demo_cluster(cluster_name: str, admin: str = Depends(get_curre
     except Exception as e:
         import traceback
 
-        raise HTTPException(status_code=500, detail=f"Error cleaning up cluster: {e!s}\n{traceback.format_exc()}")
+        detail = f"Error cleaning up cluster: {e!s}\n{traceback.format_exc()}"
+        raise HTTPException(status_code=500, detail=detail) from e
 
 
 @router.put("/config/{cluster_name}")
 async def update_cluster_configuration(
-    cluster_name: str, cluster_data: dict[str, Any], admin: str = Depends(get_current_admin)
+    cluster_name: str, cluster_data: dict[str, Any], _admin: str = Depends(get_current_admin)
 ):
     """Update configuration for a specific cluster.
 
@@ -558,4 +560,4 @@ async def update_cluster_configuration(
             shutil.copy2(backup_path, config_path)
             reload_cluster_config()
 
-        raise HTTPException(status_code=500, detail=f"Error updating cluster configuration: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error updating cluster configuration: {e!s}") from e

@@ -1,5 +1,6 @@
 """CLI entry point for slurm-backend command."""
 
+import contextlib
 import logging
 import sys
 
@@ -37,7 +38,8 @@ def main():
                 print(f"Using {workers} workers (gunicorn mode)")
                 print("Note: Use gunicorn directly for production:")
                 print(
-                    f"  gunicorn backend.app.main:app --workers {workers} --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8100"
+                    f"  gunicorn backend.app.main:app --workers {workers} "
+                    f"--worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8100"
                 )
             except ValueError:
                 pass
@@ -46,10 +48,8 @@ def main():
     if "--port" in sys.argv:
         idx = sys.argv.index("--port")
         if idx + 1 < len(sys.argv):
-            try:
+            with contextlib.suppress(ValueError):
                 config["port"] = int(sys.argv[idx + 1])
-            except ValueError:
-                pass
 
     print(f"Starting SLURM Dashboard backend on http://{config['host']}:{config['port']}")
     print("Press CTRL+C to quit")
