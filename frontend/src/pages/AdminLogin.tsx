@@ -38,7 +38,7 @@ export function AdminLogin() {
             return;
           }
         }
-      } catch (err) {
+      } catch {
         // User is not SAML-authenticated or not an admin, show login form
         console.log('SAML auth check failed, showing login form');
       } finally {

@@ -46,7 +46,7 @@ const HistogramChart: React.FC<HistogramChartProps> = ({
   const generateTraces = () => {
     // For histogram mode with series (grouped bar charts)
     if (isHistogram && data.series && data.series.length > 0) {
-      return data.series.map((series: any, _idx: number) => ({
+      return data.series.map((series) => ({
         x: data.x,
         y: series.data,
         type: 'bar',
@@ -74,7 +74,7 @@ const HistogramChart: React.FC<HistogramChartProps> = ({
     return generateChartTraces(data, 'bar', defaultColor, colorMap);
   };
 
-  const layout: any = {
+  const layout: Record<string, unknown> = {
     ...getCommonLayout(xTitle, yTitle, data.series && data.series.length > 1, chartColors),
   };
 
@@ -83,7 +83,7 @@ const HistogramChart: React.FC<HistogramChartProps> = ({
   // Don't apply for numeric x values (like CPUs per job: 1, 2, 4, 8...)
   if (isHistogram && data.x.length > 0 && typeof data.x[0] === 'string') {
     layout.xaxis = {
-      ...layout.xaxis,
+      ...(layout.xaxis as object),
       type: 'category',
     };
   }
@@ -91,7 +91,7 @@ const HistogramChart: React.FC<HistogramChartProps> = ({
   // Add tick angle if specified
   if (tickAngle !== undefined) {
     layout.xaxis = {
-      ...layout.xaxis,
+      ...(layout.xaxis as object),
       tickangle: tickAngle,
     };
   }

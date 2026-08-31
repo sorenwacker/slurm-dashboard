@@ -73,6 +73,7 @@ export interface ClusterStats {
 export interface SeriesData {
   name: string;
   data: number[];
+  color?: string;  // set by the backend for the stacked timing charts
 }
 
 export interface NodeHardwareConfig {

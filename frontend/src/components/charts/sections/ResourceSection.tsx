@@ -70,7 +70,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
     <section className="section">
       <h2 className="section-title">{config.title}</h2>
 
-      <div className="chart-row-2col">
+      <div className="resource-top-row">
         {hasData(overTime) && (
           <div className="card">
             <h3>{config.title} Usage</h3>
@@ -116,6 +116,21 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
               />
             )}
             <ChartCaption text={config.byDimCaption} />
+          </div>
+        )}
+        {hasData(perJob) && (
+          <div className="card">
+            <h3>{config.perJobTitle}</h3>
+            <HistogramChart
+              data={perJob}
+              xTitle={config.perJobXTitle}
+              yTitle="Number of Jobs"
+              defaultColor={config.color}
+              colorMap={colorMap}
+              isHistogram={true}
+              chartColors={chartColors}
+            />
+            <ChartCaption text={config.perJobCaption} />
           </div>
         )}
       </div>
@@ -167,23 +182,8 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
         </div>
       )}
 
-      <div className={hasData(perJob) && (efficiency?.series?.length ?? 0) > 0 ? 'chart-row-2col' : undefined} style={{ marginTop: 'var(--space-md)' }}>
-        {hasData(perJob) && (
-          <div className="card">
-            <h3>{config.perJobTitle}</h3>
-            <HistogramChart
-              data={perJob}
-              xTitle={config.perJobXTitle}
-              yTitle="Number of Jobs"
-              defaultColor={config.color}
-              colorMap={colorMap}
-              isHistogram={true}
-              chartColors={chartColors}
-            />
-            <ChartCaption text={config.perJobCaption} />
-          </div>
-        )}
-        {efficiency && (efficiency.series?.length ?? 0) > 0 && config.efficiencyTitle && (
+      {efficiency && (efficiency.series?.length ?? 0) > 0 && config.efficiencyTitle && (
+        <div style={{ marginTop: 'var(--space-md)' }}>
           <div className="card">
             <h3>
               {config.efficiencyTitle}
@@ -213,8 +213,8 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
             )}
             <ChartCaption text={config.efficiencyCaption ?? ''} />
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 };

@@ -20,7 +20,7 @@ export const COLORS = [
 
 // Generate a distinct color using HSL color space
 // This creates unlimited unique colors with good visual distinction
-export const generateColorFromIndex = (index: number, _total?: number): string => {
+export const generateColorFromIndex = (index: number): string => {
   // Use golden angle approximation for better color distribution
   const goldenAngle = 137.508;
   const hue = (index * goldenAngle) % 360;
@@ -43,7 +43,6 @@ export const generateColorFromIndex = (index: number, _total?: number): string =
 export const createGlobalColorMap = (allLabels: string[]): Map<string, string> => {
   const uniqueLabels = Array.from(new Set(allLabels)).sort();
   const colorMap = new Map<string, string>();
-  const total = uniqueLabels.length;
 
   uniqueLabels.forEach((label, index) => {
     // For first 10 labels, use the predefined colors for better consistency with existing charts
@@ -51,7 +50,7 @@ export const createGlobalColorMap = (allLabels: string[]): Map<string, string> =
     if (index < COLORS.length) {
       colorMap.set(label, COLORS[index]);
     } else {
-      colorMap.set(label, generateColorFromIndex(index, total));
+      colorMap.set(label, generateColorFromIndex(index));
     }
   });
   return colorMap;
@@ -74,7 +73,7 @@ export const createMedianMeanAnnotation = (
   decimalPlaces: number = 0,
   unit: string = '',
   chartColors?: ChartColorOptions
-): any[] => {
+): Record<string, unknown>[] => {
   if (median === undefined || average === undefined) {
     return [];
   }
@@ -108,7 +107,7 @@ export const generateChartTraces = (
   defaultColor: string,
   colorMap: Map<string, string> | null,
   defaultName: string = ''
-): any[] => {
+): Record<string, unknown>[] => {
   if (!chartData || !chartData.x || chartData.x.length === 0) {
     return [];
   }
@@ -241,7 +240,7 @@ export const generateChartTraces = (
           if (colorMap.has(categoryStr)) {
             return colorMap.get(categoryStr)!;
           }
-          return generateColorFromIndex(idx, chartData.x.length);
+          return generateColorFromIndex(idx);
         });
       } else {
         // No colorMap: use single default color for all bars

@@ -34,13 +34,13 @@ const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
 
   const showLegend = data.series && data.series.length > 1;
 
-  const layout: any = {
+  const layout: Record<string, unknown> = {
     ...getCommonLayout(xTitle, yTitle, showLegend, chartColors),
   };
 
   // Add day of week to daily x-axis labels
   if (periodType === 'day') {
-    layout.xaxis.tickformat = '%a %b %-d';  // e.g., "Mon Jan 1"
+    layout.xaxis = { ...(layout.xaxis as object), tickformat: '%a %b %-d' }; // e.g., "Mon Jan 1"
   }
 
   // Add barmode for bar charts and use 'closest' hover mode to prevent tooltip cutoff

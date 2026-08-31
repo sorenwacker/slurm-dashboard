@@ -151,7 +151,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
           <p style={{ marginTop: '0.5rem', marginBottom: 0 }}>
             {(() => {
               // Extract user-friendly error message from API response
-              const axiosError = error as any;
+              const axiosError = error as { response?: { data?: { detail?: string } }; message?: string };
               if (axiosError?.response?.data?.detail) {
                 return axiosError.response.data.detail;
               }

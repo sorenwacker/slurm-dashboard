@@ -52,7 +52,7 @@ export interface UserInfo {
   username: string;
   email: string | null;
   is_admin: boolean;
-  attributes: Record<string, any>;
+  attributes: Record<string, unknown>;
 }
 
 export const authApi = {

@@ -93,9 +93,11 @@ build:frontend:
     paths:
       - frontend/dist/
     expire_in: 1 week
+  # main only: 'merge_requests' here made GitLab create merge-request pipelines
+  # containing just this job, whose 'needs' then referenced jobs that were not
+  # in that pipeline - every MR pipeline failed with zero jobs
   only:
     - main
-    - merge_requests
 
 # Build and deploy documentation to GitLab Pages
 # Documentation will be available at: https://sdrwacker.pages.ewi.tudelft.nl/slurm-usage-history

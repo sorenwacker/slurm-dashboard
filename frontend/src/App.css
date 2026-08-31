@@ -369,7 +369,9 @@ body {
   }
 
   .main-content {
-    max-width: calc(100% - var(--sidebar-width));
+    /* Cap chart width on ultra-wide monitors; sparse histograms stretch badly */
+    max-width: min(calc(100% - var(--sidebar-width)), 2100px);
+    margin-inline: auto;
     padding: var(--space-xl);
   }
 }
@@ -832,6 +834,31 @@ body {
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-lg);
     margin-bottom: var(--space-lg);
+  }
+}
+
+/* Resource section top row: usage (wide), distribution, per-job histogram */
+.resource-top-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+.resource-top-row > * {
+  min-width: 0;
+  overflow: hidden;
+}
+
+@container (min-width: 860px) {
+  .resource-top-row {
+    grid-template-columns: 3fr 2fr;
+    gap: var(--space-lg);
+  }
+}
+
+@container (min-width: 1500px) {
+  .resource-top-row {
+    grid-template-columns: 2fr 1fr 1fr;
   }
 }
 
