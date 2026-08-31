@@ -326,7 +326,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                 <div className="card gauge-card">
                   <GaugeChart
                     value={Math.round(clusterUtilization.cpu * 10) / 10}
-                    title="CPU utilization"
+                    title="CPU allocation"
                     color="#04A5D5"
                     chartColors={chartColors}
                   />
@@ -336,7 +336,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                 <div className="card gauge-card">
                   <GaugeChart
                     value={Math.round(clusterUtilization.gpu * 10) / 10}
-                    title="GPU utilization"
+                    title="GPU allocation"
                     color="#EC7300"
                     chartColors={chartColors}
                   />
@@ -379,7 +379,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                   <StackedAreaChart
                     data={processedNodeData.cpu}
                     xTitle="Node"
-                    yTitle={processedNodeData.cpu.normalized ? "Utilization (%)" : "CPU Hours"}
+                    yTitle={processedNodeData.cpu.normalized ? "Allocation (%)" : "CPU Hours"}
                     defaultColor="#04A5D5"
                     colorMap={colorMap}
                     chartType="bar"
@@ -412,7 +412,7 @@ const UsageSection: React.FC<UsageSectionProps> = ({
                   <StackedAreaChart
                     data={processedNodeData.gpu}
                     xTitle="Node"
-                    yTitle={processedNodeData.gpu.normalized ? "Utilization (%)" : "GPU Hours"}
+                    yTitle={processedNodeData.gpu.normalized ? "Allocation (%)" : "GPU Hours"}
                     defaultColor="#EC7300"
                     colorMap={colorMap}
                     chartType="bar"
