@@ -443,6 +443,13 @@ body {
   margin-bottom: var(--space-md);
   min-width: 0;
   overflow: hidden;
+  /* Card rows size their columns by the space this box actually has, not the viewport */
+  container-type: inline-size;
+}
+
+.section,
+.section-combined {
+  container-type: inline-size;
 }
 
 .subsection-header {
@@ -478,14 +485,15 @@ body {
   overflow: hidden;
 }
 
-@media (min-width: 900px) {
+/* Two columns only when the containing section is wide enough for both cards */
+@container (min-width: 860px) {
   .chart-row-2col {
     grid-template-columns: 2fr 1fr;
     gap: var(--space-lg);
   }
 }
 
-@media (min-width: 1400px) {
+@container (min-width: 1350px) {
   .chart-row-2col {
     grid-template-columns: 5fr 3fr;
   }
