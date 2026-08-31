@@ -24,6 +24,7 @@ class JobRecord(BaseModel):
     NodeList: str | None = None
     ReqMemMB: float | None = None
     MaxRSSMB: float | None = None
+    CPUUsedHours: float | None = None
 
 
 class DataIngestionRequest(BaseModel):

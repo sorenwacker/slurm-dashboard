@@ -164,6 +164,8 @@ export interface AggregatedChartsResponse {
   memory_usage_over_time: ChartData;
   memory_hours_by_account: ChartData;
   memory_efficiency_over_time: ChartData;
+  cpu_efficiency_over_time: ChartData;
+  efficiency_by_group: ChartData;
   memory_per_job: ChartData;
   node_memory_usage: ChartData;
   cluster_utilization: ClusterUtilization;

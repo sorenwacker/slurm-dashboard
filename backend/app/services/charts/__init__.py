@@ -74,3 +74,7 @@ from .memory_generators import (
     generate_memory_usage_over_time,
     total_memory_gb_hours,
 )
+from .efficiency_generators import (
+    generate_cpu_efficiency_over_time,
+    generate_efficiency_by_group,
+)

@@ -411,6 +411,7 @@ class SyntheticClusterDataGenerator:
             used_fraction = random.betavariate(2, 5)
         req_mem_mb = float(req_mem_gb * 1024)
         max_rss_mb = round(req_mem_mb * used_fraction, 1)
+        cpu_used_hours = round(cpu_hours * (cpu_efficiency if state == "COMPLETED" else random.uniform(0.0, 0.5)), 2)
 
         return {
             "User": user,
@@ -444,6 +445,7 @@ class SyntheticClusterDataGenerator:
             "MaxRSS": max_rss,
             "ReqMemMB": req_mem_mb,
             "MaxRSSMB": max_rss_mb,
+            "CPUUsedHours": cpu_used_hours,
             "Cluster": self.cluster_name
         }
 
