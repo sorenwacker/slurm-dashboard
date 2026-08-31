@@ -390,16 +390,16 @@ const Filters: React.FC<FiltersProps> = ({
       {/* Always visible: per-node chart options */}
       <div className="filter-group">
         <label>Node Charts</label>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+        <div className="node-chart-options">
+          <label>
             <input type="checkbox" checked={hideUnusedNodes} onChange={(e) => setHideUnusedNodes(e.target.checked)} />
             <span>Hide unused nodes</span>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+          <label>
             <input type="checkbox" checked={sortByUsage} onChange={(e) => setSortByUsage(e.target.checked)} />
             <span>Sort by usage</span>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+          <label>
             <input type="checkbox" checked={normalizeNodeUsage} onChange={(e) => setNormalizeNodeUsage(e.target.checked)} />
             <span>Normalize to capacity (%)</span>
           </label>

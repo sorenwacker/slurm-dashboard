@@ -1519,3 +1519,23 @@ body {
 .chart-caption-warning {
   color: #92400e;
 }
+
+/* Node chart toggles in the sidebar: compact rows, no inherited label margins */
+.node-chart-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.node-chart-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.node-chart-options input[type='checkbox'] {
+  margin: 0;
+}
