@@ -52,3 +52,31 @@ def test_distribution_generators_keyword_interface():
     df = frame().assign(User=["u1", "u2", "u1", "u2", "u3", "u3"])
     assert generate_active_users_distribution(df, "month") is not None
     assert generate_jobs_distribution(df, "month") is not None
+
+
+def test_job_duration_histogram_has_fine_short_bins():
+    from backend.app.services.charts.distribution_generators import (
+        generate_job_duration_hist,
+        generate_waiting_times_hist,
+    )
+
+    df = pd.DataFrame(
+        {
+            "ElapsedHours": [10 / 3600, 2 / 60, 7 / 60, 20 / 60, 0.75, 2.0],
+            "WaitingTimeHours": [0.1] * 6,
+        }
+    )
+    result = generate_job_duration_hist(df)
+    assert result["x"][:5] == ["< 30s", "30s - 5min", "5 - 10min", "10 - 30min", "30min - 1h"]
+    by_bin = dict(zip(result["x"], result["y"], strict=True))
+    for bin_label in ("< 30s", "30s - 5min", "5 - 10min", "10 - 30min", "30min - 1h", "1h - 4h"):
+        assert by_bin[bin_label] == pytest.approx(100 / 6)
+    # waiting times keep the coarse bins
+    assert generate_waiting_times_hist(df)["x"][0] == "< 1h"
+
+
+def test_duration_stacked_bins_match_histogram_edges():
+    from backend.app.services.charts.distribution_generators import DURATION_BINS, DURATION_COLORS
+
+    assert [b[0] for b in DURATION_BINS[:4]] == ["< 30s", "30s-5min", "5-10min", "10-30min"]
+    assert len(DURATION_BINS) == len(DURATION_COLORS)
