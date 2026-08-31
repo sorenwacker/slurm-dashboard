@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -18,18 +17,18 @@ class ClusterCreate(BaseModel):
     """Request model for creating a new cluster."""
 
     name: str = Field(..., description="Cluster name/hostname", min_length=1, max_length=100)
-    description: Optional[str] = Field(None, description="Cluster description")
-    contact_email: Optional[str] = Field(None, description="Admin contact email")
-    location: Optional[str] = Field(None, description="Physical location")
+    description: str | None = Field(None, description="Cluster description")
+    contact_email: str | None = Field(None, description="Admin contact email")
+    location: str | None = Field(None, description="Physical location")
 
 
 class ClusterUpdate(BaseModel):
     """Request model for updating a cluster."""
 
-    description: Optional[str] = None
-    contact_email: Optional[str] = None
-    location: Optional[str] = None
-    active: Optional[bool] = None
+    description: str | None = None
+    contact_email: str | None = None
+    location: str | None = None
+    active: bool | None = None
 
 
 class ClusterResponse(BaseModel):
@@ -37,24 +36,24 @@ class ClusterResponse(BaseModel):
 
     id: str
     name: str
-    description: Optional[str]
-    contact_email: Optional[str]
-    location: Optional[str]
-    api_key: Optional[str] = None  # full key, only in the response that issued it
+    description: str | None
+    contact_email: str | None
+    location: str | None
+    api_key: str | None = None  # full key, only in the response that issued it
     api_key_prefix: str = ""
     api_key_created: datetime
     active: bool
     created_at: datetime
     updated_at: datetime
-    last_submission: Optional[datetime] = None
+    last_submission: datetime | None = None
     total_jobs_submitted: int = 0
 
     # Deploy key fields
-    deploy_key_created: Optional[datetime] = None
-    deploy_key_expires_at: Optional[datetime] = None
-    deploy_key_used: Optional[bool] = None
-    deploy_key_used_at: Optional[datetime] = None
-    deploy_key_used_from_ip: Optional[str] = None
+    deploy_key_created: datetime | None = None
+    deploy_key_expires_at: datetime | None = None
+    deploy_key_used: bool | None = None
+    deploy_key_used_at: datetime | None = None
+    deploy_key_used_from_ip: str | None = None
 
 
 class ClusterListResponse(BaseModel):
@@ -92,7 +91,7 @@ class AdminLoginResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     role: AdminRole
-    email: Optional[str] = None
+    email: str | None = None
 
 
 class AdminUser(BaseModel):
@@ -101,40 +100,40 @@ class AdminUser(BaseModel):
     username: str
     email: EmailStr
     role: AdminRole
-    full_name: Optional[str] = None
+    full_name: str | None = None
     is_active: bool = True
 
 
 class ClusterIdentityUpdate(BaseModel):
     """Hand-maintained identity fields of a cluster entry in clusters.yaml."""
 
-    display_name: Optional[str] = None
-    description: Optional[str] = None
-    location: Optional[str] = None
-    owner: Optional[str] = None
-    contact: Optional[str] = None
-    url: Optional[str] = None
+    display_name: str | None = None
+    description: str | None = None
+    location: str | None = None
+    owner: str | None = None
+    contact: str | None = None
+    url: str | None = None
 
 
 class NodeLabelUpdate(BaseModel):
     """Hand-maintained fields of a node entry; hardware comes from the agent and is not editable."""
 
-    synonyms: Optional[list[str]] = None
-    description: Optional[str] = None
-    type: Optional[str] = Field(default=None, pattern="^(cpu|gpu|login|storage)$")
+    synonyms: list[str] | None = None
+    description: str | None = None
+    type: str | None = Field(default=None, pattern="^(cpu|gpu|login|storage)$")
 
 
 class PartitionLabelUpdate(BaseModel):
     """Hand-maintained fields of a partition entry."""
 
-    display_name: Optional[str] = None
-    description: Optional[str] = None
+    display_name: str | None = None
+    description: str | None = None
 
 
 class AccountLabelUpdate(BaseModel):
     """Hand-maintained fields of an account entry."""
 
-    display_name: Optional[str] = None
-    short_name: Optional[str] = None
-    faculty: Optional[str] = None
-    department: Optional[str] = None
+    display_name: str | None = None
+    short_name: str | None = None
+    faculty: str | None = None
+    department: str | None = None

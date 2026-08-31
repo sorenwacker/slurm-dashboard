@@ -9,6 +9,8 @@ repos:
       - id: check-yaml
       - id: check-toml
       - id: check-json
+        # tsconfig files are JSONC; the SAML settings file is a runtime template
+        exclude: ^(frontend/tsconfig.*\.json|saml/settings\.json)$
       - id: debug-statements
       - id: end-of-file-fixer
       - id: mixed-line-ending
@@ -17,7 +19,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+    rev: v0.15.4  # keep in sync with the ruff version in uv.lock
     hooks:
       # first, lint + autofix
       - id: ruff
@@ -25,6 +27,13 @@ repos:
         args: [--fix, --show-fixes]
       # then, format
       - id: ruff-format
+
+  - repo: https://github.com/jendrikseipp/vulture
+    rev: v2.14
+    hooks:
+      - id: vulture
+        args: [--min-confidence, '80', src/slurm_usage_history, backend/app, scripts]
+        pass_filenames: false
 
   - repo: https://github.com/lyz-code/yamlfix
     rev: 1.16.1

@@ -5,8 +5,7 @@ import math
 import pandas as pd
 import pytest
 
-from slurm_usage_history.app.duckdb_datastore import Singleton
-from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
+from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore, Singleton
 from slurm_usage_history.memory import add_memory_columns, parse_memory_to_mb, parse_reqmem_to_mb
 
 

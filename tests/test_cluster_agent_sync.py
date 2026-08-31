@@ -70,7 +70,9 @@ def test_run_command_syncs_before_exporter(agent_config, monkeypatch):
     class Result:
         returncode = 0
 
-    monkeypatch.setattr(cluster_agent.subprocess, "run", lambda cmd: order.append(("exporter", cmd)) or Result())
+    monkeypatch.setattr(
+        cluster_agent.subprocess, "run", lambda cmd, **_kwargs: order.append(("exporter", cmd)) or Result()
+    )
     args = cluster_agent.build_parser().parse_args(["run", "--config", str(agent_config), "--sync-config"])
 
     with pytest.raises(SystemExit) as exc:
@@ -91,7 +93,7 @@ def test_run_command_continues_when_sync_fails(agent_config, monkeypatch, capsys
     class Result:
         returncode = 0
 
-    monkeypatch.setattr(cluster_agent.subprocess, "run", lambda _cmd: Result())
+    monkeypatch.setattr(cluster_agent.subprocess, "run", lambda _cmd, **_kwargs: Result())
     args = cluster_agent.build_parser().parse_args(["run", "--config", str(agent_config), "--sync-config"])
 
     with pytest.raises(SystemExit) as exc:

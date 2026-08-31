@@ -4,14 +4,14 @@ from datetime import datetime
 from io import BytesIO
 from typing import Any
 
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.dates import AutoDateLocator, DateFormatter
 from reportlab.platypus import Image
 
 # Use non-interactive backend for server-side generation
-matplotlib.use('Agg')
+mpl.use("Agg")
 
 
 def create_timeline_chart(timeline_data: list[dict[str, Any]], title: str, y_label: str, metric_key: str) -> Image:
@@ -32,36 +32,39 @@ def create_timeline_chart(timeline_data: list[dict[str, Any]], title: str, y_lab
     fig, ax = plt.subplots(figsize=(7, 3.5), dpi=150)
 
     # Convert date strings to datetime objects
-    dates = [datetime.fromisoformat(item['date']) if isinstance(item['date'], str) else item['date']
-             for item in timeline_data]
+    dates = [
+        datetime.fromisoformat(item["date"]) if isinstance(item["date"], str) else item["date"]
+        for item in timeline_data
+    ]
     values = [item[metric_key] for item in timeline_data]
 
-    ax.plot(dates, values, color='#3498db', linewidth=2, marker='o', markersize=3)
-    ax.set_title(title, fontsize=12, fontweight='bold', pad=10)
-    ax.set_xlabel('Date', fontsize=9)
+    ax.plot(dates, values, color="#3498db", linewidth=2, marker="o", markersize=3)
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=10)
+    ax.set_xlabel("Date", fontsize=9)
     ax.set_ylabel(y_label, fontsize=9)
-    ax.grid(True, alpha=0.3, linestyle='--')
+    ax.grid(True, alpha=0.3, linestyle="--")
 
     # Format x-axis dates with matplotlib's date handling
     ax.xaxis.set_major_locator(AutoDateLocator())
-    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
-    ax.tick_params(axis='x', labelsize=8, rotation=45)
-    ax.tick_params(axis='y', labelsize=8)
+    ax.xaxis.set_major_formatter(DateFormatter("%Y-%m-%d"))
+    ax.tick_params(axis="x", labelsize=8, rotation=45)
+    ax.tick_params(axis="y", labelsize=8)
 
     plt.tight_layout()
 
     # Save to buffer with high quality
     buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+    plt.savefig(buf, format="png", bbox_inches="tight", dpi=150)
     buf.seek(0)
     plt.close(fig)
 
     # Convert to ReportLab Image
-    img = Image(buf, width=500, height=250)
-    return img
+    return Image(buf, width=500, height=250)
 
 
-def create_bar_chart(data: list[dict[str, Any]], title: str, x_key: str, y_key: str, y_label: str, top_n: int = 10) -> Image:
+def create_bar_chart(
+    data: list[dict[str, Any]], title: str, x_key: str, y_key: str, y_label: str, top_n: int = 10
+) -> Image:
     """Create a horizontal bar chart for PDF inclusion.
 
     Args:
@@ -88,13 +91,13 @@ def create_bar_chart(data: list[dict[str, Any]], title: str, x_key: str, y_key: 
 
     # Create horizontal bar chart
     y_pos = np.arange(len(labels))
-    bars = ax.barh(y_pos, values, color='#04A5D5', alpha=0.8)
+    ax.barh(y_pos, values, color="#04A5D5", alpha=0.8)
 
     ax.set_yticks(y_pos)
     ax.set_yticklabels(labels, fontsize=8)
     ax.set_xlabel(y_label, fontsize=9)
-    ax.set_title(title, fontsize=12, fontweight='bold', pad=10)
-    ax.grid(True, alpha=0.3, axis='x', linestyle='--')
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=10)
+    ax.grid(True, alpha=0.3, axis="x", linestyle="--")
 
     # Invert y-axis so highest value is on top
     ax.invert_yaxis()
@@ -103,13 +106,12 @@ def create_bar_chart(data: list[dict[str, Any]], title: str, x_key: str, y_key: 
 
     # Save to buffer
     buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+    plt.savefig(buf, format="png", bbox_inches="tight", dpi=150)
     buf.seek(0)
     plt.close(fig)
 
     # Convert to ReportLab Image
-    img = Image(buf, width=500, height=300)
-    return img
+    return Image(buf, width=500, height=300)
 
 
 def create_pie_chart(data: list[dict[str, Any]], title: str, label_key: str, value_key: str, top_n: int = 8) -> Image:
@@ -141,48 +143,42 @@ def create_pie_chart(data: list[dict[str, Any]], title: str, label_key: str, val
         elif i == top_n - 1:
             # Group remaining as "Other"
             other_sum = sum(item[value_key] for item in data_sorted[i:])
-            labels.append('Other')
+            labels.append("Other")
             values.append(other_sum)
             break
 
     fig, ax = plt.subplots(figsize=(5, 5), dpi=100)
 
     # Use frontend partition colors for consistency, but generate more if needed
-    base_colors = ['#6f42c1', '#28a745', '#fd7e14', '#dc3545', '#17a2b8', '#ffc107', '#6c757d', '#343a40']
+    base_colors = ["#6f42c1", "#28a745", "#fd7e14", "#dc3545", "#17a2b8", "#ffc107", "#6c757d", "#343a40"]
     if len(labels) <= len(base_colors):
-        colors = base_colors[:len(labels)]
+        colors = base_colors[: len(labels)]
     else:
         # For more partitions than base colors, use a colormap to generate distinct colors
         colors = plt.cm.tab20(np.linspace(0, 1, len(labels)))
 
-    wedges, texts, autotexts = ax.pie(
-        values,
-        labels=labels,
-        colors=colors,
-        autopct='%1.1f%%',
-        startangle=90,
-        textprops={'fontsize': 8}
+    _wedges, _texts, autotexts = ax.pie(
+        values, labels=labels, colors=colors, autopct="%1.1f%%", startangle=90, textprops={"fontsize": 8}
     )
 
     # Make percentage text bold
     for autotext in autotexts:
-        autotext.set_color('white')
-        autotext.set_fontweight('bold')
+        autotext.set_color("white")
+        autotext.set_fontweight("bold")
         autotext.set_fontsize(7)
 
-    ax.set_title(title, fontsize=12, fontweight='bold', pad=10)
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=10)
 
     plt.tight_layout()
 
     # Save to buffer
     buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+    plt.savefig(buf, format="png", bbox_inches="tight", dpi=150)
     buf.seek(0)
     plt.close(fig)
 
     # Convert to ReportLab Image
-    img = Image(buf, width=400, height=300)
-    return img
+    return Image(buf, width=400, height=300)
 
 
 def create_comparison_timeline(
@@ -191,7 +187,7 @@ def create_comparison_timeline(
     title: str,
     y_label: str,
     metric_key: str,
-    color: str = '#04A5D5'
+    color: str = "#04A5D5",
 ) -> Image:
     """Create a timeline chart with current and previous period comparison.
 
@@ -212,10 +208,12 @@ def create_comparison_timeline(
     fig, ax = plt.subplots(figsize=(7, 3.5), dpi=150)
 
     # Plot current period - convert date strings to datetime objects
-    dates = [datetime.fromisoformat(item['date']) if isinstance(item['date'], str) else item['date']
-             for item in timeline_data]
+    dates = [
+        datetime.fromisoformat(item["date"]) if isinstance(item["date"], str) else item["date"]
+        for item in timeline_data
+    ]
     values = [item[metric_key] for item in timeline_data]
-    ax.plot(dates, values, color=color, linewidth=2, marker='o', markersize=3, label='Current Period')
+    ax.plot(dates, values, color=color, linewidth=2, marker="o", markersize=3, label="Current Period")
 
     # Plot previous period if available - align dates with current period
     if previous_timeline:
@@ -223,38 +221,48 @@ def create_comparison_timeline(
         aligned_length = min(len(timeline_data), len(previous_timeline))
         aligned_dates = dates[:aligned_length]
         prev_values = [previous_timeline[i][metric_key] for i in range(aligned_length)]
-        ax.plot(aligned_dates, prev_values, color='#999999', linewidth=1.5, linestyle='--',
-                marker='s', markersize=2, alpha=0.7, label='Previous Period')
+        ax.plot(
+            aligned_dates,
+            prev_values,
+            color="#999999",
+            linewidth=1.5,
+            linestyle="--",
+            marker="s",
+            markersize=2,
+            alpha=0.7,
+            label="Previous Period",
+        )
 
-    ax.set_title(title, fontsize=12, fontweight='bold', pad=10)
-    ax.set_xlabel('Date', fontsize=9)
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=10)
+    ax.set_xlabel("Date", fontsize=9)
     ax.set_ylabel(y_label, fontsize=9)
-    ax.grid(True, alpha=0.3, linestyle='--')
+    ax.grid(True, alpha=0.3, linestyle="--")
 
     # Only show legend if there's a previous period
     if previous_timeline:
-        ax.legend(fontsize=8, loc='best')
+        ax.legend(fontsize=8, loc="best")
 
     # Format x-axis dates with matplotlib's date handling
     ax.xaxis.set_major_locator(AutoDateLocator())
-    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
-    ax.tick_params(axis='x', labelsize=8, rotation=45)
-    ax.tick_params(axis='y', labelsize=8)
+    ax.xaxis.set_major_formatter(DateFormatter("%Y-%m-%d"))
+    ax.tick_params(axis="x", labelsize=8, rotation=45)
+    ax.tick_params(axis="y", labelsize=8)
 
     plt.tight_layout()
 
     # Save to buffer
     buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+    plt.savefig(buf, format="png", bbox_inches="tight", dpi=150)
     buf.seek(0)
     plt.close(fig)
 
     # Convert to ReportLab Image
-    img = Image(buf, width=500, height=250)
-    return img
+    return Image(buf, width=500, height=250)
 
 
-def create_cumulative_chart(timeline_data: list[dict[str, Any]], title: str, y_label: str, metric_key: str, color: str = '#636EFA') -> Image:
+def create_cumulative_chart(
+    timeline_data: list[dict[str, Any]], title: str, y_label: str, metric_key: str, color: str = "#636EFA"
+) -> Image:
     """Create a cumulative area chart.
 
     Args:
@@ -271,11 +279,12 @@ def create_cumulative_chart(timeline_data: list[dict[str, Any]], title: str, y_l
         return None
 
     # Sort by date and calculate cumulative values
-    sorted_data = sorted(timeline_data, key=lambda x: x['date'])
+    sorted_data = sorted(timeline_data, key=lambda x: x["date"])
 
     # Convert date strings to datetime objects
-    dates = [datetime.fromisoformat(item['date']) if isinstance(item['date'], str) else item['date']
-             for item in sorted_data]
+    dates = [
+        datetime.fromisoformat(item["date"]) if isinstance(item["date"], str) else item["date"] for item in sorted_data
+    ]
     values = [item[metric_key] for item in sorted_data]
 
     # Calculate cumulative sum
@@ -287,28 +296,27 @@ def create_cumulative_chart(timeline_data: list[dict[str, Any]], title: str, y_l
     ax.fill_between(dates, 0, cumulative, color=color, alpha=0.3)
     ax.plot(dates, cumulative, color=color, linewidth=2)
 
-    ax.set_title(title, fontsize=12, fontweight='bold', pad=10)
-    ax.set_xlabel('Date', fontsize=9)
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=10)
+    ax.set_xlabel("Date", fontsize=9)
     ax.set_ylabel(y_label, fontsize=9)
-    ax.grid(True, alpha=0.3, linestyle='--')
+    ax.grid(True, alpha=0.3, linestyle="--")
 
     # Format x-axis dates with matplotlib's date handling
     ax.xaxis.set_major_locator(AutoDateLocator())
-    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
-    ax.tick_params(axis='x', labelsize=8, rotation=45)
-    ax.tick_params(axis='y', labelsize=8)
+    ax.xaxis.set_major_formatter(DateFormatter("%Y-%m-%d"))
+    ax.tick_params(axis="x", labelsize=8, rotation=45)
+    ax.tick_params(axis="y", labelsize=8)
 
     plt.tight_layout()
 
     # Save to buffer
     buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+    plt.savefig(buf, format="png", bbox_inches="tight", dpi=150)
     buf.seek(0)
     plt.close(fig)
 
     # Convert to ReportLab Image
-    img = Image(buf, width=500, height=250)
-    return img
+    return Image(buf, width=500, height=250)
 
 
 def create_stacked_bar_chart(
@@ -317,7 +325,7 @@ def create_stacked_bar_chart(
     x_key: str,
     y_keys: list[tuple[str, str]],  # List of (key, label) tuples
     y_label: str,
-    top_n: int = 10
+    top_n: int = 10,
 ) -> Image:
     """Create a stacked horizontal bar chart.
 
@@ -344,7 +352,7 @@ def create_stacked_bar_chart(
     y_pos = np.arange(len(labels))
 
     # Colors for stacking
-    colors = ['#636EFA', '#EF553B']
+    colors = ["#636EFA", "#EF553B"]
 
     left = np.zeros(len(labels))
     for idx, (key, label) in enumerate(y_keys):
@@ -355,9 +363,9 @@ def create_stacked_bar_chart(
     ax.set_yticks(y_pos)
     ax.set_yticklabels(labels, fontsize=8)
     ax.set_xlabel(y_label, fontsize=9)
-    ax.set_title(title, fontsize=12, fontweight='bold', pad=10)
-    ax.grid(True, alpha=0.3, axis='x', linestyle='--')
-    ax.legend(fontsize=8, loc='best')
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=10)
+    ax.grid(True, alpha=0.3, axis="x", linestyle="--")
+    ax.legend(fontsize=8, loc="best")
 
     # Invert y-axis so highest value is on top
     ax.invert_yaxis()
@@ -366,10 +374,9 @@ def create_stacked_bar_chart(
 
     # Save to buffer
     buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+    plt.savefig(buf, format="png", bbox_inches="tight", dpi=150)
     buf.seek(0)
     plt.close(fig)
 
     # Convert to ReportLab Image
-    img = Image(buf, width=500, height=300)
-    return img
+    return Image(buf, width=500, height=300)

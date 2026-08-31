@@ -1,7 +1,7 @@
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -14,8 +14,8 @@ from ..models.data_models import FilterRequest, HealthResponse, MetadataResponse
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 
 try:
-    from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
     from slurm_usage_history.app.datastore import PandasDataStore
+    from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
 except ImportError:
     DuckDBDataStore = None
     PandasDataStore = None
@@ -24,25 +24,24 @@ router = APIRouter()
 settings = get_settings()
 
 # Import shared datastore singleton
-from ..datastore_singleton import get_datastore
+from ..datastore_singleton import get_datastore  # noqa: E402  (after optional-import fallback)
 
 
 def convert_numpy_to_native(obj: Any) -> Any:
     """Convert numpy/pandas types to Python native types for JSON serialization."""
     if isinstance(obj, (np.integer, np.floating)):
         return obj.item()
-    elif isinstance(obj, np.ndarray):
+    if isinstance(obj, np.ndarray):
         return obj.tolist()
-    elif isinstance(obj, dict):
+    if isinstance(obj, dict):
         return {key: convert_numpy_to_native(value) for key, value in obj.items()}
-    elif isinstance(obj, list):
+    if isinstance(obj, list):
         return [convert_numpy_to_native(item) for item in obj]
-    elif isinstance(obj, (np.bool_, bool)):
+    if isinstance(obj, (np.bool_, bool)):
         return bool(obj)
-    elif obj is None or isinstance(obj, (str, int, float)):
+    if obj is None or isinstance(obj, (str, int, float)):
         return obj
-    else:
-        return str(obj)
+    return str(obj)
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -71,6 +70,7 @@ async def get_version() -> dict:
     """Get application version."""
     try:
         from _version import __version__
+
         return {"version": __version__}
     except ImportError:
         return {"version": "unknown"}
@@ -78,10 +78,10 @@ async def get_version() -> dict:
 
 @router.get("/metadata", response_model=MetadataResponse)
 async def get_metadata(
-    hostname: Optional[str] = Query(None, description="Filter metadata for specific hostname"),
-    start_date: Optional[str] = Query(None, description="Filter metadata from this date"),
-    end_date: Optional[str] = Query(None, description="Filter metadata until this date"),
-    current_user: dict = Depends(get_current_user_saml)
+    hostname: str | None = Query(None, description="Filter metadata for specific hostname"),
+    start_date: str | None = Query(None, description="Filter metadata from this date"),
+    end_date: str | None = Query(None, description="Filter metadata until this date"),
+    _current_user: dict = Depends(get_current_user_saml),
 ) -> MetadataResponse:
     """Get metadata for all clusters including available filters.
 
@@ -93,6 +93,7 @@ async def get_metadata(
         hostnames = datastore.get_hostnames()
 
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info(f"[METADATA] Initial hostnames from datastore: {hostnames}")
         logger.info(f"[METADATA] Query parameter hostname: {hostname}")
@@ -115,9 +116,7 @@ async def get_metadata(
             # If date range is provided, get filter values from filtered data
             if start_date or end_date:
                 filter_values = datastore.get_filter_values_for_period(
-                    hostname=host,
-                    start_date=start_date,
-                    end_date=end_date
+                    hostname=host, start_date=start_date, end_date=end_date
                 )
                 partitions[host] = filter_values["partitions"]
                 accounts[host] = filter_values["accounts"]
@@ -151,11 +150,11 @@ async def get_metadata(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching metadata: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching metadata: {e!s}") from e
 
 
 @router.post("/reload-data")
-async def reload_data(hostname: Optional[str] = None, current_user: dict = Depends(get_current_user_saml)) -> dict:
+async def reload_data(hostname: str | None = None, _current_user: dict = Depends(get_current_user_saml)) -> dict:
     """Reload data from disk, checking for new/updated files.
 
     Args:
@@ -167,6 +166,7 @@ async def reload_data(hostname: Optional[str] = None, current_user: dict = Depen
     try:
         # Clear chart cache since we're reloading data
         from .charts import clear_chart_cache
+
         clear_chart_cache()
 
         datastore = get_datastore()
@@ -183,35 +183,34 @@ async def reload_data(hostname: Optional[str] = None, current_user: dict = Depen
                 "status": "success",
                 "message": f"Data reload completed for {hostname}",
                 "updated": updated,
-                "hostname": hostname
+                "hostname": hostname,
             }
-        else:
-            # Check all clusters for updates
-            updated = datastore.check_for_updates()
+        # Check all clusters for updates
+        updated = datastore.check_for_updates()
 
-            # Re-initialize hosts to pick up any new cluster directories
-            datastore._initialize_hosts()
-            hostnames = datastore.get_hostnames()
+        # Re-initialize hosts to pick up any new cluster directories
+        datastore._initialize_hosts()
+        hostnames = datastore.get_hostnames()
 
-            # Load data for any newly discovered clusters
-            for host in hostnames:
-                if datastore.hosts[host]["data"] is None:
-                    datastore._load_host_data(host)
+        # Load data for any newly discovered clusters
+        for host in hostnames:
+            if datastore.hosts[host]["data"] is None:
+                datastore._load_host_data(host)
 
-            return {
-                "status": "success",
-                "message": "Data reload completed for all clusters",
-                "updated": updated,
-                "clusters": hostnames
-            }
+        return {
+            "status": "success",
+            "message": "Data reload completed for all clusters",
+            "updated": updated,
+            "clusters": hostnames,
+        }
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reloading data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error reloading data: {e!s}") from e
 
 
 @router.post("/filter")
-async def filter_data(request: FilterRequest, current_user: dict = Depends(get_current_user_saml)) -> dict:
+async def filter_data(request: FilterRequest, _current_user: dict = Depends(get_current_user_saml)) -> dict:
     """Filter data based on provided criteria and return aggregated results."""
     try:
         datastore = get_datastore()
@@ -246,18 +245,16 @@ async def filter_data(request: FilterRequest, current_user: dict = Depends(get_c
         records = [convert_numpy_to_native(record) for record in records]
 
         # Calculate summary statistics
-        summary = {
-            "total_jobs": int(len(df)),
+        return {
+            "total_jobs": len(df),
             "total_cpu_hours": float(df["CPUHours"].sum()) if "CPUHours" in df.columns else 0.0,
             "total_gpu_hours": float(df["GPUHours"].sum()) if "GPUHours" in df.columns else 0.0,
             "total_users": int(df["User"].nunique()) if "User" in df.columns else 0,
             "data": records,
         }
 
-        return summary
-
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error filtering data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error filtering data: {e!s}") from e
 
 
 @router.get("/stats/{hostname}")
@@ -265,7 +262,7 @@ async def get_cluster_stats(
     hostname: str,
     start_date: str | None = Query(None),
     end_date: str | None = Query(None),
-    current_user: dict = Depends(get_current_user_saml),
+    _current_user: dict = Depends(get_current_user_saml),
 ) -> dict:
     """Get statistics for a specific cluster."""
     try:
@@ -290,7 +287,7 @@ async def get_cluster_stats(
                 "partitions": [],
             }
 
-        stats = {
+        return {
             "hostname": hostname,
             "total_jobs": len(df),
             "total_cpu_hours": float(df["CPUHours"].sum()) if "CPUHours" in df.columns else 0.0,
@@ -299,9 +296,7 @@ async def get_cluster_stats(
             "partitions": df["Partition"].unique().tolist() if "Partition" in df.columns else [],
         }
 
-        return stats
-
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching stats: {e!s}") from e

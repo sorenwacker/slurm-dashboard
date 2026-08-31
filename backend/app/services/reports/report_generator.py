@@ -70,7 +70,7 @@ def generate_report_data(
 
     # Summary statistics
     summary = {
-        "total_jobs": int(len(df)),
+        "total_jobs": len(df),
         "total_cpu_hours": float(df["CPUHours"].sum()) if "CPUHours" in df.columns else 0.0,
         "total_gpu_hours": float(df["GPUHours"].sum()) if "GPUHours" in df.columns else 0.0,
         "total_users": int(df["User"].nunique()) if "User" in df.columns else 0,
@@ -122,11 +122,7 @@ def generate_report_data(
     # Aggregation by state
     by_state = []
     if "State" in df.columns:
-        state_stats = (
-            df.groupby("State")
-            .agg(jobs=("State", "size"))
-            .reset_index()
-        )
+        state_stats = df.groupby("State").agg(jobs=("State", "size")).reset_index()
         state_stats.columns = ["state", "jobs"]
         by_state = convert_numpy_to_native(state_stats.to_dict(orient="records"))
 

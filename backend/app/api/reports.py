@@ -1,4 +1,5 @@
 """Report generation endpoints for monthly and annual usage reports."""
+
 import json
 from typing import Any, Literal
 
@@ -28,7 +29,7 @@ async def generate_report(
     year: int = Query(..., description="Year for the report"),
     month: int | None = Query(None, description="Month for monthly report (1-12)"),
     quarter: int | None = Query(None, description="Quarter for quarterly report (1-4)"),
-    current_user: dict = Depends(get_current_user_saml),
+    _current_user: dict = Depends(get_current_user_saml),
 ) -> Response:
     """
     Generate usage report for a specific period.
@@ -48,6 +49,7 @@ async def generate_report(
 
         # Check if period is complete (not current/future period)
         from datetime import datetime
+
         now = datetime.now()
         current_year = now.year
         current_month = now.month
@@ -60,7 +62,10 @@ async def generate_report(
                 raise HTTPException(status_code=400, detail="Month must be between 1 and 12")
             # Prevent reports for current or future months
             if year > current_year or (year == current_year and month >= current_month):
-                raise HTTPException(status_code=400, detail=f"Cannot generate report for incomplete or future period: {year}-{month:02d}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot generate report for incomplete or future period: {year}-{month:02d}",
+                )
             start_date, end_date = get_month_date_range(year, month)
             report_type = f"Monthly Report - {year}-{month:02d}"
             filename_suffix = f"{year}_{month:02d}"
@@ -71,14 +76,18 @@ async def generate_report(
                 raise HTTPException(status_code=400, detail="Quarter must be between 1 and 4")
             # Prevent reports for current or future quarters
             if year > current_year or (year == current_year and quarter >= current_quarter):
-                raise HTTPException(status_code=400, detail=f"Cannot generate report for incomplete or future period: {year} Q{quarter}")
+                raise HTTPException(
+                    status_code=400, detail=f"Cannot generate report for incomplete or future period: {year} Q{quarter}"
+                )
             start_date, end_date = get_quarter_date_range(year, quarter)
             report_type = f"Quarterly Report - {year} Q{quarter}"
             filename_suffix = f"{year}_Q{quarter}"
         else:
             # Prevent reports for current or future years
             if year >= current_year:
-                raise HTTPException(status_code=400, detail=f"Cannot generate report for incomplete or future period: {year}")
+                raise HTTPException(
+                    status_code=400, detail=f"Cannot generate report for incomplete or future period: {year}"
+                )
             start_date, end_date = get_year_date_range(year)
             report_type = f"Annual Report - {year}"
             filename_suffix = f"{year}"
@@ -91,33 +100,27 @@ async def generate_report(
             return Response(
                 content=json.dumps(report_data, indent=2),
                 media_type="application/json",
-                headers={
-                    "Content-Disposition": f"attachment; filename=report_{hostname}_{filename_suffix}.json"
-                },
+                headers={"Content-Disposition": f"attachment; filename=report_{hostname}_{filename_suffix}.json"},
             )
-        elif format == "csv":
+        if format == "csv":
             csv_content = format_report_as_csv(report_data)
             return Response(
                 content=csv_content,
                 media_type="text/csv",
-                headers={
-                    "Content-Disposition": f"attachment; filename=report_{hostname}_{filename_suffix}.csv"
-                },
+                headers={"Content-Disposition": f"attachment; filename=report_{hostname}_{filename_suffix}.csv"},
             )
-        elif format == "pdf":
+        if format == "pdf":
             pdf_content = format_report_as_pdf(report_data)
             return Response(
                 content=pdf_content,
                 media_type="application/pdf",
-                headers={
-                    "Content-Disposition": f"attachment; filename=report_{hostname}_{filename_suffix}.pdf"
-                },
+                headers={"Content-Disposition": f"attachment; filename=report_{hostname}_{filename_suffix}.pdf"},
             )
 
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating report: {e!s}") from e
 
 
 @router.get("/preview")
@@ -127,7 +130,7 @@ async def preview_report(
     year: int = Query(..., description="Year for the report"),
     month: int | None = Query(None, description="Month for monthly report (1-12)"),
     quarter: int | None = Query(None, description="Quarter for quarterly report (1-4)"),
-    current_user: dict = Depends(get_current_user_saml),
+    _current_user: dict = Depends(get_current_user_saml),
 ) -> dict[str, Any]:
     """
     Preview report data for inline display (without downloading).
@@ -148,6 +151,7 @@ async def preview_report(
 
         # Check if period is complete (not current/future period)
         from datetime import datetime
+
         now = datetime.now()
         current_year = now.year
         current_month = now.month
@@ -160,7 +164,10 @@ async def preview_report(
                 raise HTTPException(status_code=400, detail="Month must be between 1 and 12")
             # Prevent reports for current or future months
             if year > current_year or (year == current_year and month >= current_month):
-                raise HTTPException(status_code=400, detail=f"Cannot generate report for incomplete or future period: {year}-{month:02d}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot generate report for incomplete or future period: {year}-{month:02d}",
+                )
             start_date, end_date = get_month_date_range(year, month)
             report_type = f"Monthly Report - {year}-{month:02d}"
         elif type == "quarterly":
@@ -170,29 +177,31 @@ async def preview_report(
                 raise HTTPException(status_code=400, detail="Quarter must be between 1 and 4")
             # Prevent reports for current or future quarters
             if year > current_year or (year == current_year and quarter >= current_quarter):
-                raise HTTPException(status_code=400, detail=f"Cannot generate report for incomplete or future period: {year} Q{quarter}")
+                raise HTTPException(
+                    status_code=400, detail=f"Cannot generate report for incomplete or future period: {year} Q{quarter}"
+                )
             start_date, end_date = get_quarter_date_range(year, quarter)
             report_type = f"Quarterly Report - {year} Q{quarter}"
         else:
             # Prevent reports for current or future years
             if year >= current_year:
-                raise HTTPException(status_code=400, detail=f"Cannot generate report for incomplete or future period: {year}")
+                raise HTTPException(
+                    status_code=400, detail=f"Cannot generate report for incomplete or future period: {year}"
+                )
             start_date, end_date = get_year_date_range(year)
             report_type = f"Annual Report - {year}"
 
         # Generate report data
-        report_data = generate_report_data(hostname, start_date, end_date, report_type)
-
-        return report_data
+        return generate_report_data(hostname, start_date, end_date, report_type)
 
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating report preview: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating report preview: {e!s}") from e
 
 
 @router.get("/available-periods/{hostname}")
-async def get_available_periods(hostname: str, current_user: dict = Depends(get_current_user_saml)) -> dict[str, Any]:
+async def get_available_periods(hostname: str, _current_user: dict = Depends(get_current_user_saml)) -> dict[str, Any]:
     """
     Get available reporting periods for a cluster.
 
@@ -249,4 +258,4 @@ async def get_available_periods(hostname: str, current_user: dict = Depends(get_
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching available periods: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching available periods: {e!s}") from e

@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import pandas as pd
 
@@ -22,7 +22,8 @@ class Singleton(type):
 
     Ensures only one instance of a class exists.
     """
-    _instances: dict[type, Any] = {}
+
+    _instances: ClassVar[dict[type, Any]] = {}
     _lock: threading.Lock = threading.Lock()
 
     def __call__(cls, *args: Any, **kwargs: Any) -> Any:
@@ -52,7 +53,7 @@ class PandasDataStore(metaclass=Singleton):
         self,
         directory: str | Path | None = None,
         auto_refresh_interval: int = 600,
-        account_formatter: Any | None = None
+        account_formatter: Any | None = None,
     ):
         """Initialize the PandasDataStore.
 
@@ -72,6 +73,7 @@ class PandasDataStore(metaclass=Singleton):
         if account_formatter is None:
             try:
                 from .account_formatter import formatter as default_formatter
+
                 self.account_formatter = default_formatter
             except ImportError:
                 self.account_formatter = None
@@ -197,9 +199,7 @@ class PandasDataStore(metaclass=Singleton):
 
         self._stop_refresh_flag.clear()
         self._refresh_thread = threading.Thread(
-            target=self._auto_refresh_worker,
-            daemon=True,
-            name="DataStore-AutoRefresh"
+            target=self._auto_refresh_worker, daemon=True, name="DataStore-AutoRefresh"
         )
         self._refresh_thread.start()
         logger.info(f"Started auto-refresh thread (every {self.auto_refresh_interval} seconds)")
@@ -301,7 +301,7 @@ class PandasDataStore(metaclass=Singleton):
             ("Account", "accounts"),
             ("User", "users"),
             ("QOS", "qos"),
-            ("State", "states")
+            ("State", "states"),
         ]:
             if col in transformed_data.columns:
                 self.hosts[hostname][key] = transformed_data[col].sort_values().unique().tolist()
@@ -461,7 +461,7 @@ class PandasDataStore(metaclass=Singleton):
         # No changes detected
         return False
 
-    @lru_cache(maxsize=10)
+    @lru_cache(maxsize=10)  # noqa: B019  (cache on a long-lived singleton is intended)
     def _filter_data(
         self,
         hostname: str | None = None,
@@ -668,9 +668,7 @@ class PandasDataStore(metaclass=Singleton):
 
 
 def get_datastore(
-    directory: str | Path | None = None,
-    auto_refresh_interval: int = 600,
-    account_formatter: Any | None = formatter
+    directory: str | Path | None = None, auto_refresh_interval: int = 600, account_formatter: Any | None = formatter
 ) -> PandasDataStore:
     """Get the singleton instance of PandasDataStore.
 

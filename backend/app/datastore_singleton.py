@@ -3,17 +3,16 @@
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
 
 # Add parent directory to path to import the original datastore
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 try:
-    from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
     from slurm_usage_history.app.datastore import PandasDataStore
+    from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
 except ImportError:
-    DuckDBDataStore = None  # type: ignore
-    PandasDataStore = None  # type: ignore
+    DuckDBDataStore = None  # type: ignore[assignment,misc]
+    PandasDataStore = None  # type: ignore[assignment,misc]
 
 from .core.config import get_settings
 
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 # Global datastore instance
-_datastore: Optional[DuckDBDataStore] = None
+_datastore: DuckDBDataStore | None = None
 
 
 def get_datastore():
@@ -47,5 +46,6 @@ def get_datastore():
             logger.info(f"Shared datastore (Pandas) initialized with hostnames: {_datastore.get_hostnames()}")
         else:
             from fastapi import HTTPException
+
             raise HTTPException(status_code=500, detail="DataStore not available")
     return _datastore

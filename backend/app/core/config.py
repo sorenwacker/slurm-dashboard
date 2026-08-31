@@ -1,7 +1,5 @@
-import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -35,7 +33,7 @@ class Settings(BaseSettings):
 
     # Data
     data_path: str = "data"
-    cluster_config_path: Optional[str] = None  # writable clusters.yaml; default is inside the checkout
+    cluster_config_path: str | None = None  # writable clusters.yaml; default is inside the checkout
     auto_refresh_interval: int = 600
 
     # CORS (comma-separated string)
@@ -65,8 +63,8 @@ class Settings(BaseSettings):
             return {}
 
         users = {}
-        for user_entry in self.admin_users.split(","):
-            user_entry = user_entry.strip()
+        for raw_user_entry in self.admin_users.split(","):
+            user_entry = raw_user_entry.strip()
             if ":" in user_entry:
                 username, password_hash = user_entry.split(":", 1)
                 users[username.strip()] = password_hash.strip()
@@ -79,9 +77,10 @@ class Settings(BaseSettings):
         Reads from database first, falls back to environment variables.
         Returns: {"email@example.com": "admin"|"superadmin", ...}
         """
-        from ..models.admin_models import AdminRole
-        from pathlib import Path
         import json
+        from pathlib import Path
+
+        from ..models.admin_models import AdminRole
 
         email_roles = {}
 
@@ -92,7 +91,7 @@ class Settings(BaseSettings):
 
         if db_path.exists():
             try:
-                with open(db_path, 'r') as f:
+                with open(db_path) as f:
                     data = json.load(f)
                 if "admin_users" in data:
                     db_admin_emails = data["admin_users"].get("admin_emails", [])
@@ -114,15 +113,15 @@ class Settings(BaseSettings):
         if not email_roles:
             # First, add all superadmin emails from env
             if self.superadmin_emails:
-                for email in self.superadmin_emails.split(","):
-                    email = email.strip()
+                for raw_email in self.superadmin_emails.split(","):
+                    email = raw_email.strip()
                     if email:
                         email_roles[email.lower()] = AdminRole.SUPERADMIN
 
             # Then add emails from admin_emails (format: email:role)
             if self.admin_emails:
-                for entry in self.admin_emails.split(","):
-                    entry = entry.strip()
+                for raw_entry in self.admin_emails.split(","):
+                    entry = raw_entry.strip()
                     if ":" in entry:
                         email, role = entry.split(":", 1)
                         email = email.strip().lower()
@@ -142,7 +141,7 @@ class Settings(BaseSettings):
         email_roles = self.get_admin_email_roles()
         return email.lower() in email_roles
 
-    def get_email_role(self, email: str) -> Optional[str]:
+    def get_email_role(self, email: str) -> str | None:
         """Get the role for a given email address."""
         if not email:
             return None
@@ -164,7 +163,7 @@ class Settings(BaseSettings):
             self.data_path = str(Path.cwd() / self.data_path)
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()

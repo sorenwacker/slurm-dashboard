@@ -3,7 +3,7 @@
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Set
+from typing import Any
 
 import yaml
 
@@ -26,7 +26,7 @@ class NodeDiscoveryService:
 
         self.config_path = Path(config_path)
 
-    def discover_and_update_nodes(self, cluster_name: str, node_names: Set[str]) -> int:
+    def discover_and_update_nodes(self, cluster_name: str, node_names: set[str]) -> int:
         """Discover new nodes from data and add them to cluster config.
 
         This function checks if each node exists in the cluster config either as:
@@ -52,7 +52,7 @@ class NodeDiscoveryService:
             return 0
 
         try:
-            with open(self.config_path, "r") as f:
+            with open(self.config_path) as f:
                 config = yaml.safe_load(f) or {}
         except Exception as e:
             logger.error(f"Failed to load cluster config: {e}")
@@ -198,7 +198,7 @@ class NodeDiscoveryService:
         with open(self.config_path, "w") as f:
             yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 
-    def _get_all_known_nodes(self, cluster_config: dict) -> Set[str]:
+    def _get_all_known_nodes(self, cluster_config: dict) -> set[str]:
         """Get set of all known node names (canonical + synonyms).
 
         Args:
@@ -220,7 +220,7 @@ class NodeDiscoveryService:
 
         return known
 
-    def _is_node_known(self, node_name: str, known_nodes: Set[str], case_sensitive: bool) -> bool:
+    def _is_node_known(self, node_name: str, known_nodes: set[str], case_sensitive: bool) -> bool:
         """Check if a node is already known in the config.
 
         Args:

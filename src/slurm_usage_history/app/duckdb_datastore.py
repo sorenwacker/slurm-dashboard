@@ -11,14 +11,15 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 try:
     import duckdb
+
     DUCKDB_AVAILABLE = True
 except ImportError as e:
     DUCKDB_AVAILABLE = False
-    duckdb = None  # type: ignore
+    duckdb = None  # type: ignore[assignment]
     logging.error(f"DuckDB not available: {e}. Install with: pip install duckdb")
 
 import pandas as pd
@@ -31,7 +32,7 @@ logger = logging.getLogger(__name__)
 class Singleton(type):
     """Metaclass to implement the Singleton pattern."""
 
-    _instances: dict[type, Any] = {}
+    _instances: ClassVar[dict[type, Any]] = {}
     _lock: threading.Lock = threading.Lock()
 
     def __call__(cls, *args: Any, **kwargs: Any) -> Any:
@@ -68,10 +69,8 @@ class DuckDBDataStore(metaclass=Singleton):
             ImportError: If DuckDB is not installed
         """
         if not DUCKDB_AVAILABLE or duckdb is None:
-            raise ImportError(
-                "DuckDB is required but not installed. "
-                "Install with: pip install duckdb or uv add duckdb"
-            )
+            msg = "DuckDB is required but not installed. Install with: pip install duckdb or uv add duckdb"
+            raise ImportError(msg)
 
         logger.info("Initializing DuckDBDataStore (low-memory mode)")
         self.directory = Path(directory).expanduser() if directory else Path.cwd()
@@ -144,24 +143,25 @@ class DuckDBDataStore(metaclass=Singleton):
                 Path("data/clusters.json"),
                 Path("backend/data/clusters.json"),
                 Path("/app/data/clusters.json"),
-                Path("/app/backend/data/clusters.json")
+                Path("/app/backend/data/clusters.json"),
             ]
 
             cluster_data = None
             for db_path in possible_paths:
                 if db_path.exists():
-                    with open(db_path, "r") as f:
+                    with open(db_path) as f:
                         cluster_data = json.load(f)
                     break
 
             if cluster_data and cluster_data.get("clusters"):
                 active_clusters = {
-                    cluster["name"] for cluster in cluster_data.get("clusters", {}).values()
+                    cluster["name"]
+                    for cluster in cluster_data.get("clusters", {}).values()
                     if cluster.get("active", True)
                 }
                 # Only filter if we have active clusters defined
                 if active_clusters:
-                    return [hostname for hostname in self.hosts.keys() if hostname in active_clusters]
+                    return [hostname for hostname in self.hosts if hostname in active_clusters]
         except Exception as e:
             logger.warning(f"Failed to filter by active clusters: {e}")
 
@@ -176,6 +176,7 @@ class DuckDBDataStore(metaclass=Singleton):
         and unique values for filters.
         """
         import time
+
         start_time = time.time()
         for hostname in self.get_hostnames():
             logger.info(f"Loading metadata for {hostname}...")
@@ -261,9 +262,9 @@ class DuckDBDataStore(metaclass=Singleton):
                         partition_set = set()
                         for val in unique_values:
                             # Split by comma and strip whitespace
-                            partitions = [p.strip() for p in val[0].split(',') if p.strip()]
+                            partitions = [p.strip() for p in val[0].split(",") if p.strip()]
                             partition_set.update(partitions)
-                        self.hosts[hostname][key] = sorted(list(partition_set))
+                        self.hosts[hostname][key] = sorted(partition_set)
                     else:
                         self.hosts[hostname][key] = [val[0] for val in unique_values]
                 except Exception as e:
@@ -284,7 +285,7 @@ class DuckDBDataStore(metaclass=Singleton):
                         ORDER BY node
                         """
                     ).fetchall()
-                    discovered_nodes = set(val[0] for val in node_names if val[0])
+                    discovered_nodes = {val[0] for val in node_names if val[0]}
                 except Exception:
                     # Fall back to string handling (some files may have VARCHAR instead of array)
                     discovered_nodes = set()
@@ -411,7 +412,7 @@ class DuckDBDataStore(metaclass=Singleton):
             where_clauses.append(f"Submit >= '{start_date}'")
         if end_date:
             # Make end_date inclusive by adding 1 day and using < comparison
-            end_date_exclusive = (pd.to_datetime(end_date) + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+            end_date_exclusive = (pd.to_datetime(end_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
             where_clauses.append(f"Submit < '{end_date_exclusive}'")
         where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
 
@@ -448,9 +449,9 @@ class DuckDBDataStore(metaclass=Singleton):
                     partition_set = set()
                     for val in unique_values:
                         # Split by comma and strip whitespace
-                        partitions = [p.strip() for p in val[0].split(',') if p.strip()]
+                        partitions = [p.strip() for p in val[0].split(",") if p.strip()]
                         partition_set.update(partitions)
-                    result[key] = sorted(list(partition_set))
+                    result[key] = sorted(partition_set)
                 else:
                     result[key] = [val[0] for val in unique_values]
             except Exception as e:
@@ -469,10 +470,10 @@ class DuckDBDataStore(metaclass=Singleton):
         users: list[str] | None = None,
         qos: list[str] | None = None,
         states: list[str] | None = None,
-        complete_periods_only: bool = False,
-        period_type: str = "month",
+        _complete_periods_only: bool = False,
+        _period_type: str = "month",
         format_accounts: bool = True,
-        account_segments: int | None = None,
+        _account_segments: int | None = None,
         time_base: str = "submit",
         columns: list[str] | None = None,
     ) -> pd.DataFrame:
@@ -511,10 +512,10 @@ class DuckDBDataStore(metaclass=Singleton):
         end_date_exclusive = None
         if end_date:
             # Make end_date inclusive by adding 1 day and using < comparison
-            end_date_exclusive = (pd.to_datetime(end_date) + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+            end_date_exclusive = (pd.to_datetime(end_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
         if time_base == "overlap":
             if start_date:
-                where_clauses.append(f"(\"End\" IS NULL OR \"End\" >= '{start_date}')")
+                where_clauses.append(f'("End" IS NULL OR "End" >= \'{start_date}\')')
             if end_date_exclusive:
                 where_clauses.append(f"Start < '{end_date_exclusive}'")
         else:
@@ -528,9 +529,7 @@ class DuckDBDataStore(metaclass=Singleton):
             for partition in partitions:
                 # Match if partition appears as whole word in comma-separated list
                 # Using list_contains with string_split for accurate matching
-                partition_conditions.append(
-                    f"list_contains(string_split(Partition, ','), '{partition}')"
-                )
+                partition_conditions.append(f"list_contains(string_split(Partition, ','), '{partition}')")
             where_clauses.append(f"({' OR '.join(partition_conditions)})")
         if accounts:
             account_list = "', '".join(accounts)
@@ -551,6 +550,7 @@ class DuckDBDataStore(metaclass=Singleton):
         # requested projection is intersected with what the files actually contain
         # and the variants are normalized in pandas afterwards.
         import time
+
         query_start = time.time()
 
         conn = self._get_connection()
@@ -601,13 +601,17 @@ class DuckDBDataStore(metaclass=Singleton):
             elif "WaitingTime" in df.columns:
                 df = df.rename(columns={"WaitingTime": "WaitingTimeHours"})
             elif "Submit" in df.columns and "Start" in df.columns:
-                df["WaitingTimeHours"] = (pd.to_datetime(df["Start"]) - pd.to_datetime(df["Submit"])).dt.total_seconds() / 3600.0
+                df["WaitingTimeHours"] = (
+                    pd.to_datetime(df["Start"]) - pd.to_datetime(df["Submit"])
+                ).dt.total_seconds() / 3600.0
 
         if "ElapsedHours" not in df.columns:
             if "Elapsed [h]" in df.columns:
                 df = df.rename(columns={"Elapsed [h]": "ElapsedHours"})
             elif "Start" in df.columns and "End" in df.columns:
-                df["ElapsedHours"] = (pd.to_datetime(df["End"]) - pd.to_datetime(df["Start"])).dt.total_seconds() / 3600.0
+                df["ElapsedHours"] = (
+                    pd.to_datetime(df["End"]) - pd.to_datetime(df["Start"])
+                ).dt.total_seconds() / 3600.0
 
         df = add_memory_columns(df)
 
@@ -630,10 +634,7 @@ class DuckDBDataStore(metaclass=Singleton):
 
         # Apply account formatting if requested and available
         if format_accounts and self.account_formatter and "Account" in df.columns:
-            segments = account_segments if account_segments is not None else 3
-            df["Account"] = df["Account"].apply(
-                lambda x: self.account_formatter.format_account(x)
-            )
+            df["Account"] = df["Account"].apply(self.account_formatter.format_account)
 
         total_elapsed = time.time() - query_start
         if total_elapsed > 1.0:
@@ -739,8 +740,8 @@ class DuckDBDataStore(metaclass=Singleton):
             return True
 
         # Modified files
-        for file_path in current_files:
-            if file_path in old_timestamps and current_files[file_path] != old_timestamps[file_path]:
+        for file_path, timestamp in current_files.items():
+            if file_path in old_timestamps and timestamp != old_timestamps[file_path]:
                 return True
 
         return False

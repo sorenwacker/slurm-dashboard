@@ -11,7 +11,7 @@ from .report_formatters import convert_numpy_to_native
 def calculate_previous_period_dates(
     start_date: str,
     end_date: str,
-    report_type: str,
+    _report_type: str,
 ) -> tuple[str, str] | None:
     """Calculate the previous period dates based on report type."""
     try:
@@ -66,27 +66,14 @@ def calculate_comparison_metrics(
     def calc_change_percent(current: float, previous: float) -> float:
         if previous > 0:
             return ((current - previous) / previous) * 100
-        elif current > 0:
+        if current > 0:
             return 100.0  # If previous was 0 and current is positive, 100% increase
-        else:
-            return 0.0
+        return 0.0
 
-    jobs_change = calc_change_percent(
-        current_summary["total_jobs"],
-        prev_total_jobs
-    )
-    cpu_change = calc_change_percent(
-        current_summary["total_cpu_hours"],
-        prev_total_cpu_hours
-    )
-    gpu_change = calc_change_percent(
-        current_summary["total_gpu_hours"],
-        prev_total_gpu_hours
-    )
-    users_change = calc_change_percent(
-        current_summary["total_users"],
-        prev_total_users
-    )
+    jobs_change = calc_change_percent(current_summary["total_jobs"], prev_total_jobs)
+    cpu_change = calc_change_percent(current_summary["total_cpu_hours"], prev_total_cpu_hours)
+    gpu_change = calc_change_percent(current_summary["total_gpu_hours"], prev_total_gpu_hours)
+    users_change = calc_change_percent(current_summary["total_users"], prev_total_users)
 
     # Generate previous period timeline with same aggregation as current period
     prev_timeline = []

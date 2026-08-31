@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @router.post("/ingest", response_model=DataIngestionResponse)
 async def ingest_data(
     request: DataIngestionRequest,
-    cluster_name: str = Depends(verify_api_key),
+    _cluster_name: str = Depends(verify_api_key),
 ) -> DataIngestionResponse:
     """Ingest job data for a specific cluster.
 
@@ -50,11 +50,7 @@ async def ingest_data(
                 df[col] = pd.to_datetime(df[col])
 
         # Normalize column names for consistency
-        rename_map = {
-            "AllocNodes": "Nodes",
-            "AllocCPUS": "CPUs",
-            "AllocGPUS": "GPUs"
-        }
+        rename_map = {"AllocNodes": "Nodes", "AllocCPUS": "CPUs", "AllocGPUS": "GPUs"}
         df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns})
 
         # Add derived columns for efficient querying
@@ -138,7 +134,7 @@ async def ingest_data(
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error ingesting data: {str(e)}",
+            detail=f"Error ingesting data: {e!s}",
         ) from e
 
 
@@ -181,5 +177,5 @@ async def reload_datastore(
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error reloading datastore: {str(e)}",
-        )
+            detail=f"Error reloading datastore: {e!s}",
+        ) from e

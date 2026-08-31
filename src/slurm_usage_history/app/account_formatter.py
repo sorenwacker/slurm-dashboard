@@ -20,7 +20,7 @@ class AccountFormatter:
 
         return self._format_account_cached(account)
 
-    @lru_cache(maxsize=1000)
+    @lru_cache(maxsize=1000)  # noqa: B019  (cache on a long-lived singleton is intended)
     def _format_account_cached(self, account):
         """Cached implementation of account formatting."""
         if self.max_segments == 0:  # Keep full account name

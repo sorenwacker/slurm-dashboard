@@ -118,10 +118,7 @@ async def upload_data(
         with open(file_path, "wb") as f:
             f.write(contents)
 
-        logger.info(
-            f"Agent uploaded data: cluster={cluster_name}, "
-            f"file={file.filename}, size={len(contents)} bytes"
-        )
+        logger.info(f"Agent uploaded data: cluster={cluster_name}, file={file.filename}, size={len(contents)} bytes")
 
         # Trigger immediate data reload and cache invalidation
         try:
@@ -150,12 +147,12 @@ async def upload_data(
         logger.error(f"Failed to save uploaded file: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to save file: {str(e)}",
+            detail=f"Failed to save file: {e!s}",
         ) from e
 
 
 @router.get("/health")
-async def health_check(api_key: str = Depends(verify_agent_api_key)) -> dict:
+async def health_check(_api_key: str = Depends(verify_agent_api_key)) -> dict:
     """Health check endpoint for agents.
 
     Verifies that the agent can authenticate and the API is operational.
@@ -229,7 +226,7 @@ async def list_uploaded_files(
         logger.error(f"Failed to list files for {cluster_name}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list files: {str(e)}",
+            detail=f"Failed to list files: {e!s}",
         ) from e
 
 
@@ -262,7 +259,7 @@ async def upload_cluster_config(
     except yaml.YAMLError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid YAML syntax: {str(e)}",
+            detail=f"Invalid YAML syntax: {e!s}",
         ) from e
 
     service = NodeDiscoveryService(get_cluster_config_path())
@@ -274,7 +271,7 @@ async def upload_cluster_config(
         logger.error(f"Failed to write cluster config: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to save configuration: {str(e)}",
+            detail=f"Failed to save configuration: {e!s}",
         ) from e
 
     reload_cluster_config()

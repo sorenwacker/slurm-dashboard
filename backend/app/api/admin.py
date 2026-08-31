@@ -17,11 +17,11 @@ from ..core.admin_auth import (
 from ..core.config import get_settings
 from ..db.clusters import get_cluster_db
 from ..models.admin_models import (
+    AdminLoginRequest,
+    AdminLoginResponse,
     AdminRole,
     APIKeyRotateRequest,
     APIKeyRotateResponse,
-    AdminLoginRequest,
-    AdminLoginResponse,
     ClusterCreate,
     ClusterListResponse,
     ClusterResponse,
@@ -58,8 +58,9 @@ def find_existing_data_directory(cluster_name: str) -> str | None:
     return None
 
 
-def ensure_cluster_yaml_config(cluster_name: str, description: str | None = None,
-                                contact_email: str | None = None, location: str | None = None) -> None:
+def ensure_cluster_yaml_config(
+    cluster_name: str, description: str | None = None, contact_email: str | None = None, location: str | None = None
+) -> None:
     """Ensure cluster has configuration in clusters.yaml.
 
     Creates a default configuration if it doesn't exist.
@@ -75,7 +76,7 @@ def ensure_cluster_yaml_config(cluster_name: str, description: str | None = None
 
     # Load existing config or create new
     if config_file.exists():
-        with open(config_file, 'r') as f:
+        with open(config_file) as f:
             config = yaml.safe_load(f) or {}
     else:
         config = {"clusters": {}, "settings": {}}
@@ -95,25 +96,18 @@ def ensure_cluster_yaml_config(cluster_name: str, description: str | None = None
     config["clusters"][cluster_name] = {
         "display_name": cluster_name,
         "description": description or f"{cluster_name} Cluster",
-        "metadata": {
-            "location": location or "Unknown",
-            "contact": contact_email or "admin@example.com"
-        },
+        "metadata": {"location": location or "Unknown", "contact": contact_email or "admin@example.com"},
         "node_labels": {},
         "account_labels": {},
-        "partition_labels": {}
+        "partition_labels": {},
     }
 
     # Ensure default settings exist
     if not config["settings"]:
-        config["settings"] = {
-            "default_node_type": "cpu",
-            "case_sensitive": False,
-            "auto_generate_labels": True
-        }
+        config["settings"] = {"default_node_type": "cpu", "case_sensitive": False, "auto_generate_labels": True}
 
     # Write back to file
-    with open(config_file, 'w') as f:
+    with open(config_file, "w") as f:
         yaml.dump(config, f, default_flow_style=False, sort_keys=False, indent=2)
 
     logger.info(f"Created YAML configuration for cluster: {cluster_name}")
@@ -135,9 +129,7 @@ async def admin_login(request: AdminLoginRequest):
         )
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": username}, expires_delta=access_token_expires
-    )
+    access_token = create_access_token(data={"sub": username}, expires_delta=access_token_expires)
 
     # For password-based auth, default to superadmin role
     return AdminLoginResponse(
@@ -171,15 +163,17 @@ async def get_admin_token_from_saml(request: Request):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated via SAML",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
 
     # Extract email from SAML attributes (similar to /saml/me endpoint)
     settings = get_settings()
     email = None
-    if "attributes" in user_data and user_data["attributes"]:
-        email_attrs = user_data["attributes"].get("email") or \
-                     user_data["attributes"].get("mail") or \
-                     user_data["attributes"].get("emailAddress")
+    if user_data.get("attributes"):
+        email_attrs = (
+            user_data["attributes"].get("email")
+            or user_data["attributes"].get("mail")
+            or user_data["attributes"].get("emailAddress")
+        )
         if email_attrs and isinstance(email_attrs, list) and len(email_attrs) > 0:
             email = email_attrs[0]
 
@@ -205,9 +199,7 @@ async def get_admin_token_from_saml(request: Request):
     # Create admin token
     username = user_data.get("username") or email or "saml_user"
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": username}, expires_delta=access_token_expires
-    )
+    access_token = create_access_token(data={"sub": username}, expires_delta=access_token_expires)
 
     return AdminLoginResponse(
         access_token=access_token,
@@ -219,7 +211,7 @@ async def get_admin_token_from_saml(request: Request):
 
 
 @router.get("/clusters", response_model=ClusterListResponse)
-async def list_clusters(admin: str = Depends(get_current_admin)):
+async def list_clusters(_admin: str = Depends(get_current_admin)):
     """List all clusters.
 
     Requires admin authentication.
@@ -256,7 +248,7 @@ async def list_clusters(admin: str = Depends(get_current_admin)):
 @router.post("/clusters", response_model=ClusterResponse, status_code=status.HTTP_201_CREATED)
 async def create_cluster(
     request: ClusterCreate,
-    admin: str = Depends(get_current_admin),
+    _admin: str = Depends(get_current_admin),
 ):
     """Create a new cluster and generate API key.
 
@@ -275,10 +267,10 @@ async def create_cluster(
     if existing_dir and existing_dir != request.name:
         # Log the case correction
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info(
-            f"Cluster name corrected from '{request.name}' to '{existing_dir}' "
-            f"to match existing data directory"
+            f"Cluster name corrected from '{request.name}' to '{existing_dir}' to match existing data directory"
         )
 
     if db.get_cluster_by_name(cluster_name):
@@ -341,7 +333,7 @@ async def create_cluster(
 @router.get("/clusters/{cluster_id}", response_model=ClusterResponse)
 async def get_cluster(
     cluster_id: str,
-    admin: str = Depends(get_current_admin),
+    _admin: str = Depends(get_current_admin),
 ):
     """Get cluster details by ID.
 
@@ -382,7 +374,7 @@ async def get_cluster(
 async def update_cluster(
     cluster_id: str,
     request: ClusterUpdate,
-    admin: str = Depends(get_current_admin),
+    _admin: str = Depends(get_current_admin),
 ):
     """Update cluster information.
 
@@ -429,7 +421,7 @@ async def update_cluster(
 @router.delete("/clusters/{cluster_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_cluster(
     cluster_id: str,
-    admin: str = Depends(get_current_admin),
+    _admin: str = Depends(get_current_admin),
 ):
     """Delete a cluster.
 
@@ -445,13 +437,13 @@ async def delete_cluster(
             detail="Cluster not found",
         )
 
-    return None
+    return
 
 
 @router.post("/clusters/rotate-key", response_model=APIKeyRotateResponse)
 async def rotate_api_key(
     request: APIKeyRotateRequest,
-    admin: str = Depends(get_current_admin),
+    _admin: str = Depends(get_current_admin),
 ):
     """Rotate API key for a cluster.
 
@@ -476,14 +468,14 @@ async def rotate_api_key(
 
 
 @router.get("/admin-emails")
-async def get_admin_emails(admin: str = Depends(get_current_admin)):
+async def get_admin_emails(_admin: str = Depends(get_current_admin)):
     """Get current admin and superadmin email lists.
 
     Reads from database first, falls back to environment variables.
     Requires admin authentication.
     """
-    from pathlib import Path
     import json
+    from pathlib import Path
 
     admin_emails = []
     superadmin_emails = []
@@ -492,7 +484,7 @@ async def get_admin_emails(admin: str = Depends(get_current_admin)):
     db_path = Path("data/clusters.json")
     if db_path.exists():
         try:
-            with open(db_path, 'r') as f:
+            with open(db_path) as f:
                 data = json.load(f)
             if "admin_users" in data:
                 admin_emails = data["admin_users"].get("admin_emails", [])
@@ -542,7 +534,7 @@ async def generate_deploy_key(cluster_id: str, admin: str = Depends(get_current_
 
 
 @router.get("/clusters/{cluster_id}/deploy-key-status")
-async def get_deploy_key_status(cluster_id: str, admin: str = Depends(get_current_admin)):
+async def get_deploy_key_status(cluster_id: str, _admin: str = Depends(get_current_admin)):
     """Get the status of the deploy key for a cluster.
 
     Returns information about whether the key was used, when, from what IP, and expiration.
@@ -600,8 +592,8 @@ async def update_admin_emails(
     Stores admin emails in the database.
     Requires admin authentication.
     """
-    from pathlib import Path
     import json
+    from pathlib import Path
 
     # Use cluster database file for admin emails
     db_path = Path("data/clusters.json")
@@ -613,13 +605,13 @@ async def update_admin_emails(
 
     # Read current database
     try:
-        with open(db_path, 'r') as f:
+        with open(db_path) as f:
             data = json.load(f)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to read database: {str(e)}",
-        )
+            detail=f"Failed to read database: {e!s}",
+        ) from e
 
     # Ensure admin_users section exists
     if "admin_users" not in data:
@@ -631,13 +623,13 @@ async def update_admin_emails(
 
     # Write back to database
     try:
-        with open(db_path, 'w') as f:
+        with open(db_path, "w") as f:
             json.dump(data, f, indent=2)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to write database: {str(e)}",
-        )
+            detail=f"Failed to write database: {e!s}",
+        ) from e
 
     logger.info(f"Admin emails updated by {admin}: {len(admin_emails)} admins, {len(superadmin_emails)} superadmins")
 

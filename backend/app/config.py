@@ -1,8 +1,7 @@
 """Configuration management for cluster labels and node synonyms."""
 
-import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -20,7 +19,7 @@ def default_cluster_config_path() -> Path:
 class ClusterConfig:
     """Manages cluster configuration from YAML file."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         """Initialize cluster configuration.
 
         Args:
@@ -30,10 +29,10 @@ class ClusterConfig:
             config_path = default_cluster_config_path()
 
         self.config_path = Path(config_path)
-        self.config: Dict[str, Any] = {}
-        self._node_synonym_map: Dict[str, Dict[str, str]] = {}
-        self._account_labels: Dict[str, Dict[str, Any]] = {}
-        self._partition_labels: Dict[str, Dict[str, Any]] = {}
+        self.config: dict[str, Any] = {}
+        self._node_synonym_map: dict[str, dict[str, str]] = {}
+        self._account_labels: dict[str, dict[str, Any]] = {}
+        self._partition_labels: dict[str, dict[str, Any]] = {}
 
         if self.config_path.exists():
             self.load_config()
@@ -44,7 +43,7 @@ class ClusterConfig:
     def load_config(self) -> None:
         """Load configuration from YAML file."""
         try:
-            with open(self.config_path, "r") as f:
+            with open(self.config_path) as f:
                 self.config = yaml.safe_load(f)
 
             # Build synonym maps for fast lookup
@@ -121,7 +120,7 @@ class ClusterConfig:
         # No mapping found, return original
         return node_name
 
-    def get_node_info(self, cluster: str, node_name: str) -> Dict[str, Any]:
+    def get_node_info(self, cluster: str, node_name: str) -> dict[str, Any]:
         """Get detailed information about a node.
 
         Args:
@@ -145,7 +144,7 @@ class ClusterConfig:
             "description": f"Node {normalized}",
         }
 
-    def get_account_label(self, cluster: str, account_name: str) -> Dict[str, Any]:
+    def get_account_label(self, cluster: str, account_name: str) -> dict[str, Any]:
         """Get display information for an account.
 
         Args:
@@ -169,7 +168,7 @@ class ClusterConfig:
             "short_name": account_name,
         }
 
-    def get_partition_label(self, cluster: str, partition_name: str) -> Dict[str, Any]:
+    def get_partition_label(self, cluster: str, partition_name: str) -> dict[str, Any]:
         """Get display information for a partition.
 
         Args:
@@ -205,7 +204,7 @@ class ClusterConfig:
         cluster_config = self.config.get("clusters", {}).get(cluster, {})
         return cluster_config.get("display_name", cluster)
 
-    def get_cluster_metadata(self, cluster: str) -> Dict[str, Any]:
+    def get_cluster_metadata(self, cluster: str) -> dict[str, Any]:
         """Get metadata for a cluster.
 
         Args:
@@ -217,7 +216,7 @@ class ClusterConfig:
         cluster_config = self.config.get("clusters", {}).get(cluster, {})
         return cluster_config.get("metadata", {})
 
-    def get_all_clusters(self) -> List[str]:
+    def get_all_clusters(self) -> list[str]:
         """Get list of all configured cluster names.
 
         Returns:
@@ -225,7 +224,7 @@ class ClusterConfig:
         """
         return list(self.config.get("clusters", {}).keys())
 
-    def get_node_hardware(self, cluster: str, node_name: str) -> Dict[str, int]:
+    def get_node_hardware(self, cluster: str, node_name: str) -> dict[str, int]:
         """Get hardware specifications for a node.
 
         Returns CPU cores and GPU count, using node-specific config if available,
@@ -255,7 +254,7 @@ class ClusterConfig:
 
         # Check node_type_patterns for matching pattern
         patterns = self.config.get("settings", {}).get("node_type_patterns", {})
-        for pattern_name, pattern_config in patterns.items():
+        for _pattern_name, pattern_config in patterns.items():
             pattern = pattern_config.get("pattern", "")
             if pattern and re.match(pattern, node_name, re.IGNORECASE):
                 return {
@@ -278,7 +277,7 @@ class ClusterConfig:
             "known": False,
         }
 
-    def get_all_node_capacities(self, cluster: str) -> Dict[str, Dict[str, Any]]:
+    def get_all_node_capacities(self, cluster: str) -> dict[str, dict[str, Any]]:
         """Hardware and type of every configured node of a cluster, keyed by canonical node name."""
         node_labels = self.config.get("clusters", {}).get(cluster, {}).get("node_labels", {}) or {}
         return {
@@ -291,7 +290,7 @@ class ClusterConfig:
             for node, info in node_labels.items()
         }
 
-    def get_hardware_defaults(self) -> Dict[str, Dict[str, int]]:
+    def get_hardware_defaults(self) -> dict[str, dict[str, int]]:
         """Get hardware defaults for all node types.
 
         Returns:
@@ -311,7 +310,7 @@ class ClusterConfig:
 
 
 # Global instance
-_cluster_config: Optional[ClusterConfig] = None
+_cluster_config: ClusterConfig | None = None
 
 
 def get_cluster_config() -> ClusterConfig:

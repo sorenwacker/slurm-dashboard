@@ -265,7 +265,8 @@ def generate_by_dimension(
         period_type: Time period type (day, week, month, year) - used for histogram mode
 
     Returns:
-        When group_by is None: Histogram data {"x": bins, "y": counts, "mean": value, "median": value, "type": "histogram"}
+        When group_by is None: histogram data with bins, counts, mean and median
+        (``{"x", "y", "mean", "median", "type": "histogram"}``)
         When group_by is set: Bar chart data {"x": labels, "y": values}
     """
     column_map = {
@@ -419,10 +420,7 @@ def _aggregate_value_histogram(
     if value_column not in df.columns:
         return {"x": [], "y": [], "median": 0, "average": 0}
 
-    if filter_positive:
-        df_work = df[df[value_column] > 0].copy()
-    else:
-        df_work = df.copy()
+    df_work = df[df[value_column] > 0].copy() if filter_positive else df.copy()
 
     values = df_work[value_column].dropna()
 
@@ -495,8 +493,8 @@ def _aggregate_period_distribution(
     period_type: str,
     color_by: str | None,
     agg_func,
-    metric_name: str,
-    allowed_pie_dimensions: list[str] | None = None,
+    _metric_name: str,
+    _allowed_pie_dimensions: list[str] | None = None,
 ) -> dict[str, Any]:
     """Generic function to create distribution histograms for period-based metrics."""
     if df.empty:
