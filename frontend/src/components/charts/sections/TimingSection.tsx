@@ -9,6 +9,7 @@ import PieChart from '../PieChart';
 import HistogramChart from '../HistogramChart';
 import StackedPercentageChart from '../StackedPercentageChart';
 import { COLORS } from '../chartHelpers';
+import { SECTION_COLORS } from '../chartHelpers';
 
 interface TimingSectionProps {
   data: AggregatedChartsResponse;
@@ -96,7 +97,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
                 xTitle="Period"
                 yTitle="Job Duration (hours)"
                 colorMap={colorMap}
-                defaultColor="#28a745"
+                defaultColor={SECTION_COLORS.duration}
                 statistic="median"
                 chartColors={chartColors}
               />
@@ -196,7 +197,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
                 data={data.job_duration_hist}
                 xTitle="Job Duration (hours)"
                 yTitle="Percentage of Jobs (%)"
-                defaultColor="#28a745"
+                defaultColor={SECTION_COLORS.duration}
                 colorMap={null}
                 isHistogram={false}
                 showMedianMean={true}

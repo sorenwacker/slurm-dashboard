@@ -3,6 +3,7 @@ import ChartCaption from '../ChartCaption';
 import type { AggregatedChartsResponse } from '../../../types';
 import type { ChartColors } from '../../../hooks/useDarkMode';
 import HistogramChart from '../HistogramChart';
+import { SECTION_COLORS } from '../chartHelpers';
 
 interface ResourcesSectionProps {
   data: AggregatedChartsResponse;
@@ -99,7 +100,7 @@ const ResourcesSection: React.FC<ResourcesSectionProps> = ({
               data={data.nodes_per_job}
               xTitle="Number of Nodes"
               yTitle="Number of Jobs"
-              defaultColor="#17a2b8"
+              defaultColor={SECTION_COLORS.nodes}
               colorMap={colorMap}
               isHistogram={true}
               chartColors={chartColors}

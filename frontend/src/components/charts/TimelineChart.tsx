@@ -19,7 +19,7 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
   xTitle,
   yTitle,
   colorMap,
-  defaultColor = '#28a745',
+  defaultColor = '#0F766E',
   statistic = 'median',
   chartColors,
 }) => {
