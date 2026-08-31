@@ -1566,3 +1566,38 @@ body {
 .node-chart-options input[type='checkbox'] {
   margin: 0;
 }
+
+/* Sidebar hide toggle: a slim handle on the left edge */
+.sidebar-toggle {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: sticky;
+    top: var(--header-height);
+    align-self: flex-start;
+    order: -1;
+    width: 18px;
+    height: calc(100vh - var(--header-height));
+    border: none;
+    border-right: 1px solid var(--border);
+    background: var(--white);
+    color: #6b7280;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .sidebar-toggle:hover {
+    background: #f3f4f6;
+    color: #111827;
+  }
+
+  .sidebar-hidden {
+    display: none;
+  }
+}
