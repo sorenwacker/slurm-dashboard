@@ -48,7 +48,6 @@ from ..services.charts import (
     generate_waiting_times_trends,
     total_memory_gb_hours,
     generate_cpu_efficiency_over_time,
-    generate_efficiency_by_group,
 )
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
@@ -247,9 +246,8 @@ async def get_aggregated_charts(request: FilterRequest, current_user: dict = Dep
             # Memory charts (jobs without memory data are excluded, never counted as zero)
             "memory_usage_over_time": generate_memory_usage_over_time(df, period_type, color_by),
             "memory_hours_by_account": generate_by_dimension(df, color_by, metric="MemGBHours", period_type=period_type),
-            "memory_efficiency_over_time": generate_memory_efficiency_over_time(df, period_type),
-            "cpu_efficiency_over_time": generate_cpu_efficiency_over_time(df, period_type),
-            "efficiency_by_group": generate_efficiency_by_group(df, color_by),
+            "memory_efficiency_over_time": generate_memory_efficiency_over_time(df, period_type, color_by),
+            "cpu_efficiency_over_time": generate_cpu_efficiency_over_time(df, period_type, color_by),
             "memory_per_job": generate_memory_per_job(df),
             # Node usage charts (include total_hours for client-side normalization)
             "node_cpu_usage": {**node_usage["cpu_usage"], "total_hours": total_hours},
@@ -324,9 +322,8 @@ def _empty_charts_response() -> dict[str, Any]:
         "node_gpu_usage": {"x": [], "y": []},
         "memory_usage_over_time": {"x": [], "y": []},
         "memory_hours_by_account": {"x": [], "y": []},
-        "memory_efficiency_over_time": {"x": [], "y": []},
-        "cpu_efficiency_over_time": {"x": [], "y": []},
-        "efficiency_by_group": {"x": [], "series": []},
+        "memory_efficiency_over_time": {"x": [], "series": []},
+        "cpu_efficiency_over_time": {"x": [], "series": []},
         "memory_per_job": {"x": [], "y": []},
         "node_memory_usage": {"x": [], "y": []},
         "cluster_utilization": {"cpu": None, "gpu": None, "memory": None, "memory_coverage": 0.0},

@@ -1,10 +1,11 @@
 import React from 'react';
 import Plot from './Plot';
 import type { TrendData } from '../../types';
+
 import { getColorForLabel, getCommonLayout, getCommonConfig, type ChartColorOptions } from './chartHelpers';
 
 interface TimelineChartProps {
-  data: TrendData;
+  data: Omit<TrendData, 'stats'> & Partial<Pick<TrendData, 'stats'>>;
   xTitle: string;
   yTitle: string;
   colorMap: Map<string, string> | null;
@@ -39,6 +40,8 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
         name: series.name,
       }));
     }
+
+    if (!data.stats) return [];
 
     // Single line mode with only P25-P75 range
     return [

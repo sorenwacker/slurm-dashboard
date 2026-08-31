@@ -4,7 +4,6 @@ import pandas as pd
 import yaml
 from backend.app.config import ClusterConfig
 from backend.app.services.charts.memory_generators import (
-    generate_memory_efficiency_over_time,
     generate_memory_per_job,
     generate_memory_usage_over_time,
 )
@@ -18,6 +17,7 @@ def jobs_df():
             "Account": ["a", "b", "a", "a"],
             "ReqMemMB": [16384.0, 8192.0, None, 4096.0],
             "MaxRSSMB": [4096.0, 8192.0, 100.0, None],
+            "ElapsedHours": [2.0, 1.0, 1.0, 1.0],
             "MemGBHours": [32.0, 8.0, None, 2.0],
             "NodeList": [["n1"], ["n1"], ["n2"], ["n2"]],
             "CPUHours": [1.0, 1.0, 1.0, 1.0],
@@ -36,12 +36,6 @@ def test_memory_usage_over_time_with_color_by():
     assert {s["name"]: s["data"] for s in result["series"]} == {"a": [32.0, 2.0], "b": [8.0, 0.0]}
 
 
-def test_memory_efficiency_uses_only_jobs_with_both_values():
-    result = generate_memory_efficiency_over_time(jobs_df(), "month")
-    assert result["y"] == [50.0]
-    assert len(result["x"]) == 1
-
-
 def test_memory_per_job_histogram_in_gb():
     result = generate_memory_per_job(jobs_df())
     assert result["x"] == [4, 8, 16]
@@ -51,7 +45,6 @@ def test_memory_per_job_histogram_in_gb():
 def test_generators_return_empty_without_memory_columns():
     df = jobs_df().drop(columns=["ReqMemMB", "MaxRSSMB", "MemGBHours"])
     assert generate_memory_usage_over_time(df, "month", None) == {"x": [], "y": []}
-    assert generate_memory_efficiency_over_time(df, "month") == {"x": [], "y": []}
     assert generate_memory_per_job(df) == {"x": [], "y": []}
 
 

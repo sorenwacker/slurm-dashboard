@@ -1,4 +1,5 @@
 """Helper functions for chart generation."""
+
 import pandas as pd
 
 

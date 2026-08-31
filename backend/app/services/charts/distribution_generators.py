@@ -1,4 +1,5 @@
 """Distribution chart generators for histograms, pie charts, and stacked charts."""
+
 from typing import Any
 
 import numpy as np
@@ -17,7 +18,7 @@ TIME_COLUMN_MAP = {
 }
 
 # Histogram bin edges for time-based distributions (in hours)
-HISTOGRAM_BIN_EDGES = [0, 1, 4, 12, 24, 72, 168, float('inf')]
+HISTOGRAM_BIN_EDGES = [0, 1, 4, 12, 24, 72, 168, float("inf")]
 HISTOGRAM_BIN_LABELS = ["< 1h", "1h - 4h", "4h - 12h", "12h - 24h", "1d - 3d", "3d - 7d", "> 7d"]
 
 # Job duration stacked chart bins (7 bins with green gradient)
@@ -28,7 +29,7 @@ DURATION_BINS = [
     ("12h-24h", 12, 24),
     ("1d-3d", 24, 72),
     ("3d-7d", 72, 168),
-    ("> 7d", 168, float('inf')),
+    ("> 7d", 168, float("inf")),
 ]
 DURATION_COLORS = [
     "#d4edda",  # Very light green
@@ -47,7 +48,7 @@ WAITING_TIME_BINS = [
     ("1h-4h", 1, 4),
     ("4h-12h", 4, 12),
     ("12h-24h", 12, 24),
-    ("> 24h", 24, float('inf')),
+    ("> 24h", 24, float("inf")),
 ]
 WAITING_TIME_COLORS = [
     "#ffe5e5",  # Very light red
@@ -62,6 +63,7 @@ WAITING_TIME_COLORS = [
 # =============================================================================
 # Generic helper functions
 # =============================================================================
+
 
 def _get_time_column(df: pd.DataFrame, period_type: str) -> tuple[pd.DataFrame, str | None]:
     """Get the appropriate time column for the period type, handling year extraction.
@@ -122,15 +124,11 @@ def _generate_stacked_distribution(
     df_work = df_work.copy()
 
     # Categorize values into bins
-    bin_edges = [b[1] for b in bins] + [float('inf')]
+    bin_edges = [b[1] for b in bins] + [float("inf")]
     bin_labels = [b[0] for b in bins]
 
     df_work[bin_column_name] = pd.cut(
-        df_work[value_column],
-        bins=bin_edges,
-        labels=bin_labels,
-        right=False,
-        include_lowest=True
+        df_work[value_column], bins=bin_edges, labels=bin_labels, right=False, include_lowest=True
     )
 
     # Count per time period and bin
@@ -148,11 +146,13 @@ def _generate_stacked_distribution(
 
     for i, (bin_label, _, _) in enumerate(bins):
         if bin_label in grouped_pct.columns:
-            series.append({
-                "name": bin_label,
-                "data": grouped_pct[bin_label].tolist(),
-                "color": colors[i],
-            })
+            series.append(
+                {
+                    "name": bin_label,
+                    "data": grouped_pct[bin_label].tolist(),
+                    "color": colors[i],
+                }
+            )
 
     if reverse_series:
         series.reverse()
@@ -229,14 +229,18 @@ def _generate_trends(
 
     # Single line mode: all statistics per period in one pass
     grouped = df_work.groupby(time_column)[value_column]
-    stats_table = pd.DataFrame(
-        {
-            "mean": grouped.mean(),
-            "median": grouped.median(),
-            "max": grouped.max(),
-            **{f"p{q}": grouped.quantile(q / 100.0) for q in (25, 50, 75, 90, 95, 99)},
-        }
-    ).reindex(all_periods).fillna(0.0)
+    stats_table = (
+        pd.DataFrame(
+            {
+                "mean": grouped.mean(),
+                "median": grouped.median(),
+                "max": grouped.max(),
+                **{f"p{q}": grouped.quantile(q / 100.0) for q in (25, 50, 75, 90, 95, 99)},
+            }
+        )
+        .reindex(all_periods)
+        .fillna(0.0)
+    )
     return {
         "x": all_periods,
         "stats": {column: [float(v) for v in stats_table[column]] for column in stats_table.columns},
@@ -247,7 +251,10 @@ def _generate_trends(
 # Public API functions
 # =============================================================================
 
-def generate_by_dimension(df: pd.DataFrame, group_by: str | None, metric: str = "count", top_n: int = 10, period_type: str = "month") -> dict[str, list]:
+
+def generate_by_dimension(
+    df: pd.DataFrame, group_by: str | None, metric: str = "count", top_n: int = 10, period_type: str = "month"
+) -> dict[str, list]:
     """Generic aggregation function that groups by a dimension.
 
     Args:
@@ -290,7 +297,7 @@ def generate_by_dimension(df: pd.DataFrame, group_by: str | None, metric: str = 
 
             n_bins = 20
             counts, bin_edges = np.histogram(usage_per_period, bins=n_bins)
-            bin_centers = [(bin_edges[i] + bin_edges[i+1]) / 2 for i in range(len(bin_edges)-1)]
+            bin_centers = [(bin_edges[i] + bin_edges[i + 1]) / 2 for i in range(len(bin_edges) - 1)]
 
             return {
                 "x": bin_centers,
@@ -314,8 +321,8 @@ def generate_by_dimension(df: pd.DataFrame, group_by: str | None, metric: str = 
 
         n_bins = min(30, max(10, int(np.ceil(np.sqrt(len(jobs_per_user))))))
         counts, bin_edges = np.histogram(jobs_per_user, bins=n_bins)
-        bin_labels = [f"{int(bin_edges[i])}-{int(bin_edges[i+1])}" for i in range(len(bin_edges)-1)]
-        bin_centers = [(bin_edges[i] + bin_edges[i+1]) / 2 for i in range(len(bin_edges)-1)]
+        bin_labels = [f"{int(bin_edges[i])}-{int(bin_edges[i + 1])}" for i in range(len(bin_edges) - 1)]
+        bin_centers = [(bin_edges[i] + bin_edges[i + 1]) / 2 for i in range(len(bin_edges) - 1)]
 
         return {
             "x": bin_centers,
@@ -489,7 +496,7 @@ def _aggregate_period_distribution(
     color_by: str | None,
     agg_func,
     metric_name: str,
-    allowed_pie_dimensions: list[str] | None = None
+    allowed_pie_dimensions: list[str] | None = None,
 ) -> dict[str, Any]:
     """Generic function to create distribution histograms for period-based metrics."""
     if df.empty:
@@ -521,7 +528,7 @@ def _aggregate_period_distribution(
     num_bins = min(20, max(5, len(values)))
 
     counts, bin_edges = np.histogram(values, bins=num_bins)
-    bin_centers = [(bin_edges[i] + bin_edges[i+1]) / 2 for i in range(len(bin_edges)-1)]
+    bin_centers = [(bin_edges[i] + bin_edges[i + 1]) / 2 for i in range(len(bin_edges) - 1)]
 
     avg_value = float(values.mean())
     median_value = float(np.median(values))
@@ -535,7 +542,9 @@ def _aggregate_period_distribution(
     }
 
 
-def generate_active_users_distribution(df: pd.DataFrame, period_type: str = "month", color_by: str | None = None) -> dict[str, Any]:
+def generate_active_users_distribution(
+    df: pd.DataFrame, period_type: str = "month", color_by: str | None = None
+) -> dict[str, Any]:
     """Aggregate active users distribution.
 
     Shows histogram of how many unique users were active per period.
@@ -611,11 +620,13 @@ def generate_active_users_distribution(df: pd.DataFrame, period_type: str = "mon
         color_by=None,
         agg_func=agg_unique_users,
         metric_name="Active users",
-        allowed_pie_dimensions=[]
+        allowed_pie_dimensions=[],
     )
 
 
-def generate_jobs_distribution(df: pd.DataFrame, period_type: str = "month", color_by: str | None = None, top_n: int = 15) -> dict[str, Any]:
+def generate_jobs_distribution(
+    df: pd.DataFrame, period_type: str = "month", color_by: str | None = None, top_n: int = 15
+) -> dict[str, Any]:
     """Aggregate jobs distribution.
 
     When color_by is set to a valid dimension:
@@ -673,7 +684,7 @@ def generate_jobs_distribution(df: pd.DataFrame, period_type: str = "month", col
         color_by=None,  # Always histogram when no meaningful grouping
         agg_func=agg_job_count,
         metric_name="Jobs",
-        allowed_pie_dimensions=None
+        allowed_pie_dimensions=None,
     )
 
 
@@ -705,7 +716,9 @@ def generate_waiting_times_stacked(df: pd.DataFrame, period_type: str = "month")
     )
 
 
-def generate_waiting_times_trends(df: pd.DataFrame, period_type: str = "month", color_by: str | None = None, stat: str = "median") -> dict[str, Any]:
+def generate_waiting_times_trends(
+    df: pd.DataFrame, period_type: str = "month", color_by: str | None = None, stat: str = "median"
+) -> dict[str, Any]:
     """Aggregate waiting time statistics (mean, median, max, percentiles) by time period."""
     return _generate_trends(
         df=df,
@@ -718,7 +731,9 @@ def generate_waiting_times_trends(df: pd.DataFrame, period_type: str = "month", 
     )
 
 
-def generate_job_duration_trends(df: pd.DataFrame, period_type: str = "month", color_by: str | None = None, stat: str = "median") -> dict[str, Any]:
+def generate_job_duration_trends(
+    df: pd.DataFrame, period_type: str = "month", color_by: str | None = None, stat: str = "median"
+) -> dict[str, Any]:
     """Aggregate job duration statistics (mean, median, max, percentiles) by time period."""
     return _generate_trends(
         df=df,
@@ -882,9 +897,11 @@ def generate_user_activity_frequency(
                 pass
             else:
                 # Count user-periods per group (sum of active periods across all users in group)
-                group_activity = df.groupby(color_by).apply(
-                    lambda g: g.groupby("User")[time_column].nunique().sum()
-                ).sort_values(ascending=False)
+                group_activity = (
+                    df.groupby(color_by)
+                    .apply(lambda g: g.groupby("User")[time_column].nunique().sum())
+                    .sort_values(ascending=False)
+                )
 
                 top_items = group_activity.head(top_n)
                 others_label = "Others ({} " + color_by.lower() + "s)"
@@ -924,12 +941,12 @@ def generate_user_activity_frequency(
         # Medium range: use 5-period bins
         bins = list(range(1, max_periods + 6, 5))
         bins[-1] = max_periods + 1  # Ensure last bin captures all
-        bin_labels = [f"{bins[i]}-{bins[i+1]-1}" for i in range(len(bins)-1)]
+        bin_labels = [f"{bins[i]}-{bins[i + 1] - 1}" for i in range(len(bins) - 1)]
     else:
         # Large range: use 10-period bins
         bins = list(range(1, max_periods + 11, 10))
         bins[-1] = max_periods + 1
-        bin_labels = [f"{bins[i]}-{bins[i+1]-1}" for i in range(len(bins)-1)]
+        bin_labels = [f"{bins[i]}-{bins[i + 1] - 1}" for i in range(len(bins) - 1)]
 
     # Create histogram
     counts, _ = np.histogram(user_period_counts.values, bins=bins)
