@@ -103,7 +103,7 @@ export function AdminLogin() {
           {error && (
             <div className="login-error">
               <div className="login-error-content">
-                
+
                 <div className="login-error-text">{error}</div>
                 <button
                   onClick={() => setError('')}

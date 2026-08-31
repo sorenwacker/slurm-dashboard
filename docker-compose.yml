@@ -5,7 +5,7 @@ services:
       dockerfile: docker/Dockerfile.backend
     container_name: slurm-usage-backend
     ports:
-      - "8100:8100"
+      - 8100:8100
     environment:
       - API_KEYS=${API_KEYS}
       - DATA_PATH=/data
@@ -24,7 +24,7 @@ services:
         - VITE_API_URL=http://localhost:8100
     container_name: slurm-usage-frontend
     ports:
-      - "3100:3100"
+      - 3100:3100
     depends_on:
       - backend
     restart: unless-stopped

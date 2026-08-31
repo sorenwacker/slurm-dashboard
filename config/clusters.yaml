@@ -567,6 +567,7 @@ clusters:
       tnw-imphys,general:
         display_name: Tnw-imphys,general Partition
         description: tnw-imphys,general partition
+
 settings:
   default_node_type: cpu
   case_sensitive: false
@@ -586,46 +587,46 @@ settings:
   node_type_patterns:
     # GPU cluster nodes - 48 cores, 4 GPUs (observed max: 29 cores, 3.9 GPUs)
     gpu:
-      pattern: "^gpu\\d+"
+      pattern: ^gpu\d+
       cpu_cores: 48
       gpu_count: 4
     # INSY nodes - 48 cores, 4 GPUs (observed max: 39 cores, 3.7 GPUs)
     insy:
-      pattern: "^insy\\d+"
+      pattern: ^insy\d+
       cpu_cores: 48
       gpu_count: 4
     # Influenza cluster nodes - 96 cores, 8 GPUs (observed max: 92 cores, 7.7 GPUs)
     influ:
-      pattern: "^influ\\d+"
+      pattern: ^influ\d+
       cpu_cores: 96
       gpu_count: 8
     # Corsair nodes - 32 cores, 12 GPUs (observed max: 26 cores, 10.4 GPUs)
     cor:
-      pattern: "^cor\\d+"
+      pattern: ^cor\d+
       cpu_cores: 32
       gpu_count: 12
     # AWI nodes with GPUs (awi01-02 have Tesla V100)
     awi_gpu:
-      pattern: "^awi0[12]$"
+      pattern: ^awi0[12]$
       cpu_cores: 48
       gpu_count: 3
     # AWI nodes - 48 cores, no GPU (observed max: 44 cores)
     awi:
-      pattern: "^awi\\d+"
+      pattern: ^awi\d+
       cpu_cores: 48
       gpu_count: 0
     # 3DGI nodes - 48 cores, no GPU (observed max: 43 cores)
     3dgi:
-      pattern: "^3dgi\\d+"
+      pattern: ^3dgi\d+
       cpu_cores: 48
       gpu_count: 0
     # GRS nodes - 16 cores, no GPU (observed max: 16 cores)
     grs:
-      pattern: "^grs\\d+"
+      pattern: ^grs\d+
       cpu_cores: 16
       gpu_count: 0
     # 100plus node - 32 cores, no GPU (observed max: 27 cores)
     100plus:
-      pattern: "^100plus$"
+      pattern: ^100plus$
       cpu_cores: 32
       gpu_count: 0

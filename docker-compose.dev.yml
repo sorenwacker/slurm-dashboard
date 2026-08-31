@@ -6,7 +6,7 @@ services:
       dockerfile: docker/Dockerfile.saml-idp
     container_name: slurm-saml-idp
     ports:
-      - "8180:8080"
+      - 8180:8080
     volumes:
       - ./docker/saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php
       - ./docker/saml-idp/saml20-sp-remote.php:/var/www/simplesamlphp/metadata/saml20-sp-remote.php
@@ -20,7 +20,7 @@ services:
       dockerfile: docker/Dockerfile.backend.dev
     container_name: slurm-backend-dev
     ports:
-      - "8100:8100"
+      - 8100:8100
     environment:
       - ENVIRONMENT=development
       - DATA_PATH=/data
@@ -46,7 +46,8 @@ services:
       - saml-idp
     networks:
       - slurm-network
-    command: ["python3", "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8100", "--reload"]
+    command: [python3, -m, uvicorn, backend.app.main:app, --host, 0.0.0.0, --port, '8100',
+      --reload]
 
   # Frontend development server
   frontend:
@@ -55,7 +56,7 @@ services:
       dockerfile: ../docker/Dockerfile.frontend.dev
     container_name: slurm-frontend-dev
     ports:
-      - "5173:3100"
+      - 5173:3100
     environment:
       - VITE_API_URL=http://localhost:8100
     volumes:
