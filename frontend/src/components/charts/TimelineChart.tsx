@@ -30,7 +30,7 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
   const generateTraces = () => {
     // Multi-line mode when grouped (series data present)
     if (data.series && data.series.length > 0) {
-      return data.series.map((series: any, _idx: number) => ({
+      return data.series.map((series) => ({
         x: data.x,
         y: series.data,
         type: 'scatter',

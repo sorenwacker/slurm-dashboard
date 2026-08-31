@@ -40,7 +40,7 @@ const STORAGE_KEY = 'slurm-dashboard-theme';
 // Global state for synchronization across components
 let globalMode: ThemeMode = 'system';
 let globalSystemDark = false;
-let listeners: Set<() => void> = new Set();
+const listeners: Set<() => void> = new Set();
 
 const getSystemPreference = (): boolean => {
   if (typeof window !== 'undefined') {

@@ -29,12 +29,12 @@ const StackedPercentageChart: React.FC<StackedPercentageChartProps> = ({
       </h3>
       <div className="chart-container">
         <Plot
-          data={data.series?.map((series: any) => ({
+          data={data.series?.map((series) => ({
             x: data.x,
             y: series.data,
             name: series.name,
             type: 'bar',
-            marker: { color: adjustColorForDarkMode(series.color, isDark) },
+            marker: { color: adjustColorForDarkMode(series.color ?? '#888888', isDark) },
             hovertemplate: `<b>${series.name}</b><br>%{y:.1f}%<br>Period: %{x}<extra></extra>`,
           })) || []}
           layout={{

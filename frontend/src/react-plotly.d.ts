@@ -3,21 +3,21 @@ declare module 'react-plotly.js' {
   import { PlotParams } from 'plotly.js';
 
   export interface PlotProps extends Partial<PlotParams> {
-    data: any[];
-    layout?: any;
-    config?: any;
-    frames?: any[];
+    data: Record<string, unknown>[];
+    layout?: Record<string, unknown>;
+    config?: Record<string, unknown>;
+    frames?: Record<string, unknown>[];
     useResizeHandler?: boolean;
     style?: React.CSSProperties;
     className?: string;
     divId?: string;
-    onInitialized?: (figure: any, graphDiv: HTMLElement) => void;
-    onUpdate?: (figure: any, graphDiv: HTMLElement) => void;
-    onPurge?: (figure: any, graphDiv: HTMLElement) => void;
-    onError?: (err: any) => void;
-    onClickAnnotation?: (...args: any[]) => void;
-    onLegendClick?: (...args: any[]) => void;
-    onLegendDoubleClick?: (...args: any[]) => void;
+    onInitialized?: (figure: unknown, graphDiv: HTMLElement) => void;
+    onUpdate?: (figure: unknown, graphDiv: HTMLElement) => void;
+    onPurge?: (figure: unknown, graphDiv: HTMLElement) => void;
+    onError?: (err: unknown) => void;
+    onClickAnnotation?: (...args: unknown[]) => void;
+    onLegendClick?: (...args: unknown[]) => void;
+    onLegendDoubleClick?: (...args: unknown[]) => void;
   }
 
   export default class Plot extends Component<PlotProps> {}

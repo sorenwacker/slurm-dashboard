@@ -5,10 +5,10 @@
 /**
  * Align previous period dates with current period for overlay comparison
  */
-export const alignPreviousPeriodDates = (
-  currentTimeline: Array<{date: string}>,
-  previousTimeline: Array<{date: string; [key: string]: any}>
-) => {
+export const alignPreviousPeriodDates = <T extends { date: string }>(
+  currentTimeline: Array<{ date: string }>,
+  previousTimeline: T[]
+): T[] => {
   if (!currentTimeline.length || !previousTimeline.length) return previousTimeline;
 
   // Take up to the same number of data points as current period
