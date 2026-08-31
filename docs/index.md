@@ -26,9 +26,13 @@ pip install slurm-dashboard[all]
 
 ### Collect Data
 
-On SLURM cluster:
+On the SLURM cluster:
 ```bash
-slurm-dashboard-agent --output /data/slurm-usage/$(hostname)
+# One-time setup with a deploy key from the admin panel
+slurm-dashboard setup --api-url https://your-dashboard.example.com --deploy-key deploy_xxx
+
+# Collect and upload job data (last 7 days by default)
+slurm-dashboard run --config config.json
 ```
 
 ### Start Dashboard

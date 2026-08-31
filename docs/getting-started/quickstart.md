@@ -12,8 +12,9 @@ source .venv/bin/activate
 # Install from GitLab
 pip install "slurm-dashboard[all] @ git+https://gitlab.ewi.tudelft.nl/sdrwacker/slurm-usage-history.git"
 
-# Collect data (on cluster)
-slurm-dashboard-agent --output /data/slurm-usage/$(hostname)
+# Collect data (on cluster; deploy key comes from the admin panel)
+slurm-dashboard setup --api-url http://localhost:8100 --deploy-key deploy_xxx
+slurm-dashboard run --config config.json
 
 # Start dashboard (on server) - frontend included
 export DATA_PATH=/data/slurm-usage
@@ -76,14 +77,11 @@ source .venv/bin/activate
 On your SLURM cluster head node:
 
 ```bash
-# Create data directory
-mkdir -p /data/slurm-usage
+# One-time setup with a deploy key from the admin panel
+slurm-dashboard setup --api-url https://your-dashboard.example.com --deploy-key deploy_xxx
 
-# Run agent (collects last 7 days by default)
-slurm-dashboard-agent --output /data/slurm-usage/$(hostname)
-
-# Verify data was created
-ls -lh /data/slurm-usage/$(hostname)/weekly-data/
+# Collect and upload job data (last 7 days by default)
+slurm-dashboard run --config config.json
 ```
 
 **Automate with cron:**
@@ -92,9 +90,11 @@ ls -lh /data/slurm-usage/$(hostname)/weekly-data/
 # Edit crontab
 crontab -e
 
-# Add weekly collection (every Monday at 2 AM)
-0 2 * * 1 slurm-dashboard-agent --output /data/slurm-usage/$(hostname) 2>&1 | logger -t slurm-dashboard-agent
+# Add daily collection at 2 AM, keeping the cluster configuration synced
+0 2 * * * $HOME/.local/bin/slurm-dashboard run --config $HOME/config.json --sync-config >> $HOME/agent.log 2>&1
 ```
+
+See the [Cluster Setup Guide](../user-guide/cluster-setup.md) for details.
 
 ### 3. Configure Environment
 
@@ -185,10 +185,10 @@ See [INSTALL.md](../getting-started/installation.md) for detailed production set
 
 ```bash
 # Collect last 7 days
-slurm-dashboard-agent --output /data/slurm-usage/CLUSTER
+slurm-dashboard run --config config.json
 
 # Collect specific date range
-slurm-dashboard-agent --start 2024-01-01 --end 2024-12-31 --output /data/slurm-usage/CLUSTER
+slurm-dashboard run --config config.json --start-date 2024-01-01 --end-date 2024-12-31
 
 # Analyze waiting times
 slurm-dashboard-wait-times --input /data/slurm-usage/CLUSTER

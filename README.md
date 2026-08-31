@@ -36,11 +36,14 @@ pip install slurm-dashboard[all]
 ### 2. Collect Data (on SLURM cluster)
 
 ```bash
-# Collect job data from SLURM and save to shared storage
-slurm-dashboard-agent --output /shared/slurm-data/$(hostname)
+# One-time setup with a deploy key from the admin panel
+slurm-dashboard setup --api-url https://your-dashboard.example.com --deploy-key deploy_xxx
+
+# Collect and upload job data (last 7 days by default)
+slurm-dashboard run --config config.json
 ```
 
-This extracts job data from SLURM using `sacct` and saves it as Parquet files.
+This extracts job data from SLURM using `sacct` and submits it to the dashboard API; no shared filesystem is needed.
 
 ### 3. Start Dashboard (on dashboard server)
 
