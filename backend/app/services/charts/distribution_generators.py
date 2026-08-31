@@ -21,9 +21,30 @@ TIME_COLUMN_MAP = {
 HISTOGRAM_BIN_EDGES = [0, 1, 4, 12, 24, 72, 168, float("inf")]
 HISTOGRAM_BIN_LABELS = ["< 1h", "1h - 4h", "4h - 12h", "12h - 24h", "1d - 3d", "3d - 7d", "> 7d"]
 
-# Job duration stacked chart bins (7 bins with green gradient)
+# Durations get finer bins at the short end: most jobs run for minutes, and a
+# single "< 1h" bin would hide them all
+DURATION_HISTOGRAM_BIN_EDGES = [0, 30 / 3600, 5 / 60, 10 / 60, 0.5, 1, 4, 12, 24, 72, 168, float("inf")]
+DURATION_HISTOGRAM_BIN_LABELS = [
+    "< 30s",
+    "30s - 5min",
+    "5 - 10min",
+    "10 - 30min",
+    "30min - 1h",
+    "1h - 4h",
+    "4h - 12h",
+    "12h - 24h",
+    "1d - 3d",
+    "3d - 7d",
+    "> 7d",
+]
+
+# Job duration stacked chart bins (teal gradient, same edges as the histogram)
 DURATION_BINS = [
-    ("< 1h", 0, 1),
+    ("< 30s", 0, 30 / 3600),
+    ("30s-5min", 30 / 3600, 5 / 60),
+    ("5-10min", 5 / 60, 10 / 60),
+    ("10-30min", 10 / 60, 0.5),
+    ("30min-1h", 0.5, 1),
     ("1h-4h", 1, 4),
     ("4h-12h", 4, 12),
     ("12h-24h", 12, 24),
@@ -32,13 +53,17 @@ DURATION_BINS = [
     ("> 7d", 168, float("inf")),
 ]
 DURATION_COLORS = [
-    "#d7f4f1",  # Very light teal
-    "#b2e6e0",
-    "#84d3cb",
-    "#54bcb1",
-    "#2ba396",
-    "#178a7e",
-    "#0f766e",  # Dark teal
+    "#e7f9f7",  # Very light teal
+    "#d0f1ed",
+    "#b4e6e0",
+    "#95d9d1",
+    "#73cabf",
+    "#52b9ac",
+    "#37a598",
+    "#249082",
+    "#177c6f",
+    "#10695e",
+    "#0a564d",  # Dark teal
 ]
 
 # Waiting time stacked chart bins (6 bins with red gradient)
@@ -411,6 +436,8 @@ def _aggregate_value_histogram(
     color_by: str | None = None,
     filter_positive: bool = False,
     top_n: int = 15,
+    bin_edges: list[float] = HISTOGRAM_BIN_EDGES,
+    bin_labels: list[str] = HISTOGRAM_BIN_LABELS,
 ) -> dict[str, Any]:
     """Generic function to create histograms or pie charts for numeric value distributions.
 
@@ -432,13 +459,13 @@ def _aggregate_value_histogram(
 
     # Histogram mode when no grouping
     if not color_by or color_by == "None":
-        counts, _ = np.histogram(values, bins=HISTOGRAM_BIN_EDGES)
+        counts, _ = np.histogram(values, bins=bin_edges)
         total = counts.sum()
         percentages = [(count / total * 100) if total > 0 else 0 for count in counts]
 
         return {
             "type": "histogram",
-            "x": HISTOGRAM_BIN_LABELS,
+            "x": bin_labels,
             "y": percentages,
             "median": median_val,
             "average": mean_val,
@@ -485,7 +512,14 @@ def generate_waiting_times_hist(df: pd.DataFrame, color_by: str | None = None) -
 
 def generate_job_duration_hist(df: pd.DataFrame, color_by: str | None = None) -> dict[str, Any]:
     """Aggregate job durations into histogram bins with numeric x-axis."""
-    return _aggregate_value_histogram(df, "ElapsedHours", color_by, filter_positive=True)
+    return _aggregate_value_histogram(
+        df,
+        "ElapsedHours",
+        color_by,
+        filter_positive=True,
+        bin_edges=DURATION_HISTOGRAM_BIN_EDGES,
+        bin_labels=DURATION_HISTOGRAM_BIN_LABELS,
+    )
 
 
 def _aggregate_period_distribution(
