@@ -16,6 +16,7 @@ const ResourcesSection: React.FC<ResourcesSectionProps> = ({
   chartColors,
 }) => {
   const hasResources =
+    (data.memory_per_job && data.memory_per_job.x.length > 0) ||
     (data.cpus_per_job && data.cpus_per_job.x.length > 0) ||
     (data.gpus_per_job && data.gpus_per_job.x.length > 0) ||
     (data.nodes_per_job && data.nodes_per_job.x.length > 0);
@@ -25,7 +26,7 @@ const ResourcesSection: React.FC<ResourcesSectionProps> = ({
   return (
     <section className="section">
       <h2 className="section-title">Allocated Resources</h2>
-      <div className="chart-row-3col">
+      <div className="chart-row-4col">
         {data.cpus_per_job && data.cpus_per_job.x.length > 0 && (
           <div className="card">
             <h3>
@@ -64,6 +65,26 @@ const ResourcesSection: React.FC<ResourcesSectionProps> = ({
               chartColors={chartColors}
             />
             <ChartCaption text="Number of jobs per allocated GPU count; jobs without GPUs are not shown." />
+          </div>
+        )}
+        {data.memory_per_job && data.memory_per_job.x.length > 0 && (
+          <div className="card">
+            <h3>
+              Memory per Job{' '}
+              <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>
+                (all jobs)
+              </span>
+            </h3>
+            <HistogramChart
+              data={data.memory_per_job}
+              xTitle="Requested Memory (GB)"
+              yTitle="Number of Jobs"
+              defaultColor="#2E8B57"
+              colorMap={colorMap}
+              isHistogram={true}
+              chartColors={chartColors}
+            />
+            <ChartCaption text="Number of jobs per requested memory size in GB (20 most common sizes)." />
           </div>
         )}
         {data.nodes_per_job && data.nodes_per_job.x.length > 0 && (

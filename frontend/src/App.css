@@ -681,6 +681,8 @@ body {
 @media (min-width: 1200px) {
   .stats-grid {
     gap: var(--space-lg);
+    /* five summary cards fit one row on wide screens */
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 
