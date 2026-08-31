@@ -32,7 +32,9 @@ repos:
     rev: v2.14
     hooks:
       - id: vulture
-        args: [--min-confidence, '80', src/slurm_usage_history, backend/app, scripts]
+        # ignore-names: keyword-interface parameters implementations accept but do not use
+        args: [--min-confidence, '80', --ignore-names, 'metric_name,allowed_pie_dimensions',
+          src/slurm_usage_history, backend/app, scripts]
         pass_filenames: false
 
   - repo: https://github.com/lyz-code/yamlfix

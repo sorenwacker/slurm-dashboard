@@ -40,3 +40,15 @@ def test_timeline_series_are_pivoted_per_period():
     assert series["a"] == [2, 1]
     assert series["b"] == [2, 0]
     assert all(isinstance(v, int) for v in series["a"])
+
+
+def test_distribution_generators_keyword_interface():
+    """These call _aggregate_period_distribution with keyword arguments; renames break at runtime."""
+    from backend.app.services.charts.distribution_generators import (
+        generate_active_users_distribution,
+        generate_jobs_distribution,
+    )
+
+    df = frame().assign(User=["u1", "u2", "u1", "u2", "u3", "u3"])
+    assert generate_active_users_distribution(df, "month") is not None
+    assert generate_jobs_distribution(df, "month") is not None

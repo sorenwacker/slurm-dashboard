@@ -159,3 +159,42 @@ def test_duckdb_filter_column_projection(tmp_path):
 
     unrestricted = store.filter("host", format_accounts=False)
     assert "AveCPU" in unrestricted.columns
+
+
+def test_duckdb_filter_accepts_the_full_datastore_interface(tmp_path):
+    """Keyword arguments of the datastore interface must never be renamed (callers use them)."""
+    data_dir = tmp_path / "host" / "data"
+    data_dir.mkdir(parents=True)
+    pd.DataFrame(
+        {
+            "JobID": ["1"],
+            "User": ["u"],
+            "Account": ["a"],
+            "Partition": ["p"],
+            "QOS": ["q"],
+            "State": ["COMPLETED"],
+            "Submit": pd.to_datetime(["2026-08-01"]),
+            "Start": pd.to_datetime(["2026-08-01"]),
+            "End": pd.to_datetime(["2026-08-02"]),
+            "NodeList": ["n1"],
+            "CPUHours": [1.0],
+            "GPUHours": [0.0],
+        }
+    ).to_parquet(data_dir / "jobs.parquet")
+    df = DuckDBDataStore(str(tmp_path)).filter(
+        hostname="host",
+        start_date="2026-08-01",
+        end_date="2026-08-02",
+        partitions=None,
+        accounts=None,
+        users=None,
+        qos=None,
+        states=None,
+        complete_periods_only=False,
+        period_type="month",
+        format_accounts=False,
+        account_segments=None,
+        time_base="overlap",
+        columns=None,
+    )
+    assert len(df) == 1

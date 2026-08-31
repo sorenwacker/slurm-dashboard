@@ -493,8 +493,8 @@ def _aggregate_period_distribution(
     period_type: str,
     color_by: str | None,
     agg_func,
-    _metric_name: str,
-    _allowed_pie_dimensions: list[str] | None = None,
+    metric_name: str,  # noqa: ARG001  (part of the aggregation interface)
+    allowed_pie_dimensions: list[str] | None = None,  # noqa: ARG001  (part of the aggregation interface)
 ) -> dict[str, Any]:
     """Generic function to create distribution histograms for period-based metrics."""
     if df.empty:

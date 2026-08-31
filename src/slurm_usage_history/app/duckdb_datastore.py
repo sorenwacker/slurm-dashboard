@@ -470,10 +470,10 @@ class DuckDBDataStore(metaclass=Singleton):
         users: list[str] | None = None,
         qos: list[str] | None = None,
         states: list[str] | None = None,
-        _complete_periods_only: bool = False,
-        _period_type: str = "month",
+        complete_periods_only: bool = False,  # noqa: ARG002  (interface compatibility with PandasDataStore)
+        period_type: str = "month",  # noqa: ARG002  (interface compatibility with PandasDataStore)
         format_accounts: bool = True,
-        _account_segments: int | None = None,
+        account_segments: int | None = None,  # noqa: ARG002  (interface compatibility with PandasDataStore)
         time_base: str = "submit",
         columns: list[str] | None = None,
     ) -> pd.DataFrame:
