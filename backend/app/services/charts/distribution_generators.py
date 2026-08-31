@@ -963,3 +963,40 @@ def generate_user_activity_frequency(
         "total_users": total_users,
         "period_label": period_label,
     }
+
+
+DISPLAY_FLOOR_HOURS = 1 / 60  # log axes cannot show zero; floor at one minute
+
+
+def generate_wait_duration_scatter(df: pd.DataFrame, color_by: str | None, max_points: int = 5000) -> dict[str, Any]:
+    """Waiting time versus duration per job, sampled for display.
+
+    Returns one series per colour group (or a single one) with x=duration hours and
+    y=waiting hours, both floored at one minute so log axes can show them. Above
+    ``max_points`` jobs a deterministic random sample is taken, proportional per group.
+    """
+    empty = {"series": [], "sampled": False, "total_jobs": 0}
+    if "WaitingTimeHours" not in df.columns or "ElapsedHours" not in df.columns:
+        return empty
+    known = df[df["WaitingTimeHours"].notna() & df["ElapsedHours"].notna()]
+    if known.empty:
+        return empty
+
+    total = len(known)
+    sampled = total > max_points
+    if sampled:
+        known = known.sample(n=max_points, random_state=42)
+
+    def series_for(rows: pd.DataFrame, name: str) -> dict[str, Any]:
+        return {
+            "name": name,
+            "x": [float(v) for v in rows["ElapsedHours"].clip(lower=DISPLAY_FLOOR_HOURS)],
+            "y": [float(v) for v in rows["WaitingTimeHours"].clip(lower=DISPLAY_FLOOR_HOURS)],
+        }
+
+    if color_by and color_by in known.columns:
+        groups = known.groupby(color_by, sort=True)
+        series = [series_for(rows, str(name)) for name, rows in groups]
+    else:
+        series = [series_for(known, "Jobs")]
+    return {"series": series, "sampled": sampled, "total_jobs": total}

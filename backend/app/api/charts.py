@@ -44,6 +44,7 @@ from ..services.charts import (
     generate_node_usage,
     generate_nodes_per_job,
     generate_user_activity_frequency,
+    generate_wait_duration_scatter,
     generate_waiting_times_hist,
     generate_waiting_times_over_time,
     generate_waiting_times_stacked,
@@ -267,6 +268,7 @@ async def get_aggregated_charts(
             "job_duration_over_time": generate_job_duration_over_time(df, period_type, None),
             # Timing trends (always ungrouped - ignore color_by)
             "waiting_times_trends": generate_waiting_times_trends(df, period_type, None),
+            "wait_duration_scatter": generate_wait_duration_scatter(df, color_by),
             "job_duration_trends": generate_job_duration_trends(df, period_type, None),
             # Resource allocation
             "cpus_per_job": generate_cpus_per_job(df),
@@ -367,6 +369,7 @@ def _empty_charts_response() -> dict[str, Any]:
         "cpu_efficiency_over_time": {"x": [], "series": []},
         "memory_per_job": {"x": [], "y": []},
         "node_memory_usage": {"x": [], "y": []},
+        "wait_duration_scatter": {"series": [], "sampled": False, "total_jobs": 0},
         "cluster_utilization": {"cpu": None, "gpu": None, "memory": None, "memory_coverage": 0.0},
     }
 
