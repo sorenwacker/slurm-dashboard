@@ -20,6 +20,8 @@ def _is_editable() -> bool:
             return False
 
     if sys.version_info >= (3, 13):
+        if dist.origin is None:
+            return False
         editable = dist.origin.dir_info.editable
     else:
         direct_url = dist.read_text("direct_url.json")

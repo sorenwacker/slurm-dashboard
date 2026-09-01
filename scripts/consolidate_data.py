@@ -33,7 +33,7 @@ def consolidate_cluster_data(data_dir: Path):
     logger.info(f"Found {len(timestamped_files)} timestamped files to consolidate")
 
     # Load all timestamped files grouped by year
-    year_data = {}
+    year_data: dict[int, list[pd.DataFrame]] = {}
 
     for f in timestamped_files:
         logger.info(f"Loading {f.name}")

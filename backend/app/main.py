@@ -80,22 +80,23 @@ for path in possible_paths:
         break
 
 if frontend_dist:
+    dist_dir = frontend_dist
     # Mount static assets (JS, CSS, images)
-    app.mount("/assets", StaticFiles(directory=frontend_dist / "assets"), name="assets")
+    app.mount("/assets", StaticFiles(directory=dist_dir / "assets"), name="assets")
 
     # Serve root images
     @app.get("/vite.svg")
     async def vite_svg():
-        return FileResponse(frontend_dist / "vite.svg")
+        return FileResponse(dist_dir / "vite.svg")
 
     @app.get("/REIT_logo.png")
     async def reit_logo():
-        return FileResponse(frontend_dist / "REIT_logo.png")
+        return FileResponse(dist_dir / "REIT_logo.png")
 
     # Serve index.html at root
     @app.get("/")
     async def serve_root():
-        index_path = frontend_dist / "index.html"
+        index_path = dist_dir / "index.html"
         if index_path.exists():
             return FileResponse(index_path)
         return {"message": "Frontend not found"}
@@ -111,7 +112,7 @@ if frontend_dist:
             raise HTTPException(status_code=404, detail="Not found")
 
         # Serve index.html for all other routes (React Router handles routing)
-        index_path = frontend_dist / "index.html"
+        index_path = dist_dir / "index.html"
         if index_path.exists():
             return FileResponse(index_path)
 

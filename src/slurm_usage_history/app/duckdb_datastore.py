@@ -418,7 +418,7 @@ class DuckDBDataStore(metaclass=Singleton):
 
         conn = self._get_connection()
 
-        result = {
+        result: dict[str, list[Any]] = {
             "partitions": [],
             "accounts": [],
             "users": [],

@@ -138,7 +138,10 @@ async def saml_acs(request: Request):
     session_token = create_session_token(user_data)
 
     # Get relay state (redirect URL)
-    relay_state = request_data.get("post_data", {}).get("RelayState", "/")
+    post_data = request_data.get("post_data", {}) if isinstance(request_data, dict) else {}
+    relay_state = post_data.get("RelayState", "/") if isinstance(post_data, dict) else "/"
+    if not isinstance(relay_state, str):
+        relay_state = "/"
 
     # Create response with cookie
     response = RedirectResponse(url=relay_state, status_code=status.HTTP_302_FOUND)
@@ -160,20 +163,15 @@ async def saml_acs(request: Request):
     # In production: samesite=lax for security (requires same-site requests)
     cookie_secure = is_https  # Only set secure flag on HTTPS
 
-    cookie_kwargs = {
-        "key": "session_token",
-        "value": session_token,
-        "path": "/",
-        "httponly": True,
-        "secure": cookie_secure,
-        "max_age": 86400,  # 24 hours
-    }
-
-    # Only set samesite in production (browsers handle localhost:* as same-site)
-    if settings.is_production():
-        cookie_kwargs["samesite"] = "lax"
-
-    response.set_cookie(**cookie_kwargs)
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        path="/",
+        httponly=True,
+        secure=cookie_secure,
+        max_age=86400,  # 24 hours
+        samesite="lax",
+    )
 
     return response
 

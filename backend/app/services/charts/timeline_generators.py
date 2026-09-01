@@ -126,6 +126,9 @@ def _generate_timeline(
         grouped = df_copy.groupby([time_column, color_by])[value_column].nunique().reset_index(name="_agg_value")
         agg_col = "_agg_value"
     else:
+        if value_column is None:
+            msg = f"value_column is required for aggregation {aggregation!r}"
+            raise ValueError(msg)
         agg_func = "sum" if aggregation == "sum" else "mean"
         grouped = df_copy.groupby([time_column, color_by])[value_column].agg(agg_func).reset_index()
         agg_col = value_column

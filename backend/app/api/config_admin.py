@@ -239,7 +239,7 @@ async def generate_demo_cluster(_admin: str = Depends(get_current_admin)):
             config_data["clusters"] = {}
 
         # Create cluster configuration
-        cluster_config = {
+        cluster_config: dict[str, Any] = {
             "display_name": "Demo Cluster",
             "description": "Synthetic demo cluster with 2 years of realistic job data",
             "metadata": {
