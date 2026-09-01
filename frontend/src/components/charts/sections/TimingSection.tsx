@@ -215,7 +215,8 @@ const TimingSection: React.FC<TimingSectionProps> = ({
       </div>
 
       {data.wait_duration_scatter && data.wait_duration_scatter.series.length > 0 && (
-        <div className="card" style={{ marginTop: 'var(--space-md)' }}>
+        <div className="efficiency-row" style={{ marginTop: 'var(--space-md)' }}>
+        <div className="card">
           <h3>
             Waiting Time vs Job Duration
             <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>
@@ -233,6 +234,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
             chartColors={chartColors}
           />
           <ChartCaption text={`One point per job, log axes, values under one minute shown as one minute${dim ? `, coloured by ${dim}` : ''}. Above 5,000 jobs a fixed random sample is drawn.`} />
+        </div>
         </div>
       )}
     </section>

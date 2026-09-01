@@ -139,24 +139,6 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
 
       {nodeChart && nodeChart.x.length > 0 && (
         <div className={showGauge ? 'node-row-with-gauge' : undefined} style={{ marginTop: 'var(--space-md)' }}>
-          {showGauge && (
-            <div className="card gauge-card">
-              <GaugeChart
-                value={Math.round((gaugeValue as number) * 10) / 10}
-                title={config.gaugeTitle}
-                color={config.color}
-                chartColors={chartColors}
-              />
-              <ChartCaption
-                text="Capacity-weighted over nodes with known capacity that SLURM reports or that ran jobs in the range."
-                warning={
-                  config.gaugeKey === 'memory' && utilization.memory_coverage < MEMORY_COVERAGE_THRESHOLD
-                    ? `Requested memory is known for only ${Math.round(utilization.memory_coverage * 100)}% of jobs in this range.`
-                    : undefined
-                }
-              />
-            </div>
-          )}
           <div className="card">
             <h3>
               {config.nodeTitle}{' '}
@@ -181,6 +163,24 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
               </p>
             )}
           </div>
+          {showGauge && (
+            <div className="card gauge-card">
+              <GaugeChart
+                value={Math.round((gaugeValue as number) * 10) / 10}
+                title={config.gaugeTitle}
+                color={config.color}
+                chartColors={chartColors}
+              />
+              <ChartCaption
+                text="Capacity-weighted over nodes with known capacity that SLURM reports or that ran jobs in the range."
+                warning={
+                  config.gaugeKey === 'memory' && utilization.memory_coverage < MEMORY_COVERAGE_THRESHOLD
+                    ? `Requested memory is known for only ${Math.round(utilization.memory_coverage * 100)}% of jobs in this range.`
+                    : undefined
+                }
+              />
+            </div>
+          )}
         </div>
       )}
 

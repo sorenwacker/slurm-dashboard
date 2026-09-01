@@ -397,15 +397,8 @@ body {
   gap: var(--space-xl);
 }
 
-@container (min-width: 1700px) {
-  .users-jobs-container {
-    flex-direction: row;
-  }
-
-  .users-jobs-container .subsection {
-    flex: 1;
-  }
-}
+/* Users and Jobs stack like every other section so their timelines share the
+   same half-width column as the resource timelines */
 
 .subsection {
   margin-bottom: var(--space-md);
@@ -905,7 +898,8 @@ body {
 
 @container (min-width: 1000px) {
   .node-row-with-gauge {
-    grid-template-columns: 300px 1fr;
+    /* node chart first so its left edge stays on the shared timeline column */
+    grid-template-columns: 1fr 300px;
     align-items: start;
   }
 }
