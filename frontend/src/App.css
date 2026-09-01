@@ -369,9 +369,7 @@ body {
   }
 
   .main-content {
-    /* Cap chart width on ultra-wide monitors; sparse histograms stretch badly */
-    max-width: min(calc(100% - var(--sidebar-width)), 2100px);
-    margin-inline: auto;
+    max-width: calc(100% - var(--sidebar-width));
     padding: var(--space-xl);
   }
 }
@@ -399,7 +397,7 @@ body {
   gap: var(--space-xl);
 }
 
-@media (min-width: 2000px) {
+@container (min-width: 1700px) {
   .users-jobs-container {
     flex-direction: row;
   }
@@ -827,6 +825,11 @@ body {
   .chart-row-3col {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  /* With two columns the third card wraps; span the full row instead of leaving a hole */
+  .chart-row-3col > :nth-child(3) {
+    grid-column: 1 / -1;
+  }
 }
 
 @container (min-width: 1100px) {
@@ -834,6 +837,10 @@ body {
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-lg);
     margin-bottom: var(--space-lg);
+  }
+
+  .chart-row-3col > :nth-child(3) {
+    grid-column: auto;
   }
 }
 
