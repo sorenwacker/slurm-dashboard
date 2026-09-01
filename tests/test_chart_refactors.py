@@ -55,24 +55,14 @@ def test_distribution_generators_keyword_interface():
 
 
 def test_job_duration_histogram_has_fine_short_bins():
-    from backend.app.services.charts.distribution_generators import (
-        generate_job_duration_hist,
-        generate_waiting_times_hist,
-    )
+    from backend.app.services.charts.distribution_generators import generate_job_duration_hist
 
-    df = pd.DataFrame(
-        {
-            "ElapsedHours": [10 / 3600, 2 / 60, 7 / 60, 20 / 60, 0.75, 2.0],
-            "WaitingTimeHours": [0.1] * 6,
-        }
-    )
+    df = pd.DataFrame({"ElapsedHours": [10 / 3600, 2 / 60, 7 / 60, 20 / 60, 0.75, 2.0]})
     result = generate_job_duration_hist(df)
     assert result["x"][:5] == ["< 30s", "30s - 5min", "5 - 10min", "10 - 30min", "30min - 1h"]
     by_bin = dict(zip(result["x"], result["y"], strict=True))
     for bin_label in ("< 30s", "30s - 5min", "5 - 10min", "10 - 30min", "30min - 1h", "1h - 4h"):
         assert by_bin[bin_label] == pytest.approx(100 / 6)
-    # waiting times keep the coarse bins
-    assert generate_waiting_times_hist(df)["x"][0] == "< 1h"
 
 
 def test_duration_stacked_bins_match_histogram_edges():
@@ -80,3 +70,33 @@ def test_duration_stacked_bins_match_histogram_edges():
 
     assert [b[0] for b in DURATION_BINS[:4]] == ["< 30s", "30s-5min", "5-10min", "10-30min"]
     assert len(DURATION_BINS) == len(DURATION_COLORS)
+
+
+def test_waiting_time_histogram_has_fine_short_bins():
+    from backend.app.services.charts.distribution_generators import (
+        generate_waiting_times_hist,
+    )
+
+    df = pd.DataFrame(
+        {
+            "WaitingTimeHours": [10 / 3600, 2 / 60, 7 / 60, 20 / 60, 0.75, 2.0],
+            "User": ["u1"] * 6,
+        }
+    )
+    result = generate_waiting_times_hist(df)
+    assert result["x"][:5] == ["< 30s", "30s - 5min", "5 - 10min", "10 - 30min", "30min - 1h"]
+    counts = dict(zip(result["x"], result["y"], strict=True))
+    for bin_label in ("< 30s", "30s - 5min", "5 - 10min", "10 - 30min", "30min - 1h", "1h - 4h"):
+        assert counts[bin_label] > 0
+
+
+def test_waiting_stacked_bins_match_histogram_edges():
+    from backend.app.services.charts.distribution_generators import (
+        TIME_HISTOGRAM_BIN_EDGES,
+        WAITING_TIME_BINS,
+        WAITING_TIME_COLORS,
+    )
+
+    assert [b[0] for b in WAITING_TIME_BINS[:4]] == ["< 30s", "30s-5min", "5-10min", "10-30min"]
+    assert [b[1] for b in WAITING_TIME_BINS] == TIME_HISTOGRAM_BIN_EDGES[:-1]
+    assert len(WAITING_TIME_BINS) == len(WAITING_TIME_COLORS)
