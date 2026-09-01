@@ -10,6 +10,7 @@ import HistogramChart from '../HistogramChart';
 import StackedPercentageChart from '../StackedPercentageChart';
 import { COLORS } from '../chartHelpers';
 import { SECTION_COLORS } from '../chartHelpers';
+import { dimensionLabel } from '../captionHelpers';
 import ScatterChart from '../ScatterChart';
 
 interface TimingSectionProps {
@@ -29,6 +30,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
   isDark,
   timingStats,
 }) => {
+  const dim = dimensionLabel(colorBy);
   return (
     <section className="section">
       <h2 className="section-title">Timing</h2>
@@ -167,7 +169,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
                 chartColors={chartColors}
               />
             )}
-            <ChartCaption text="Waiting time split by the colour dimension; without one, the distribution of waiting times across jobs." />
+            <ChartCaption text={dim ? `Total waiting hours per ${dim}.` : 'Distribution of waiting times across jobs.'} />
           </div>
         )}
         {data.job_duration_hist && (
@@ -207,7 +209,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
                 chartColors={chartColors}
               />
             )}
-            <ChartCaption text="Job duration split by the colour dimension; without one, the distribution of durations across jobs." />
+            <ChartCaption text={dim ? `Total job-duration hours per ${dim}.` : 'Distribution of durations across jobs.'} />
           </div>
         )}
       </div>
@@ -230,7 +232,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
             colorMap={colorMap}
             chartColors={chartColors}
           />
-          <ChartCaption text="One point per job, log axes, values under one minute shown as one minute. Split by the colour dimension when one is selected; above 5,000 jobs a fixed random sample is drawn." />
+          <ChartCaption text={`One point per job, log axes, values under one minute shown as one minute${dim ? `, coloured by ${dim}` : ''}. Above 5,000 jobs a fixed random sample is drawn.`} />
         </div>
       )}
     </section>
