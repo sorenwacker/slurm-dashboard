@@ -1,9 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminClient } from '../api/adminClient';
 import './AdminUsers.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8100';
+
+const getAuthHeaders = (): HeadersInit => {
+  const token = localStorage.getItem('admin_token');
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  // Add Bearer token if admin_token exists (username/password login)
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  // If no token, rely on cookie-based SAML authentication
+
+  return headers;
+};
 
 export function AdminUsers() {
   const [adminEmails, setAdminEmails] = useState<string[]>([]);
@@ -16,31 +31,8 @@ export function AdminUsers() {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
-  const getAuthHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('admin_token');
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
 
-    // Add Bearer token if admin_token exists (username/password login)
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    // If no token, rely on cookie-based SAML authentication
-
-    return headers;
-  };
-
-  useEffect(() => {
-    if (!adminClient.isAuthenticated()) {
-      navigate('/admin/login');
-      return;
-    }
-
-    loadEmails();
-  }, [navigate]);
-
-  const loadEmails = async () => {
+  const loadEmails = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/admin-emails`, {
         headers: getAuthHeaders(),
@@ -56,7 +48,17 @@ export function AdminUsers() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!adminClient.isAuthenticated()) {
+      navigate('/admin/login');
+      return;
+    }
+
+    loadEmails();
+  }, [navigate, loadEmails]);
+
 
   const handleSave = async () => {
     setSaving(true);
