@@ -183,7 +183,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
       )}
 
       {efficiency && (efficiency.series?.length ?? 0) > 0 && config.efficiencyTitle && (
-        <div style={{ marginTop: 'var(--space-md)' }}>
+        <div className="efficiency-row" style={{ marginTop: 'var(--space-md)' }}>
           <div className="card">
             <h3>
               {config.efficiencyTitle}

@@ -454,16 +454,11 @@ body {
 }
 
 /* Two columns only when the containing section is wide enough for both cards */
+/* Timelines always take exactly half the section so period axes align across sections */
 @container (min-width: 860px) {
   .chart-row-2col {
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: var(--space-lg);
-  }
-}
-
-@container (min-width: 1350px) {
-  .chart-row-2col {
-    grid-template-columns: 5fr 3fr;
   }
 }
 
@@ -834,7 +829,7 @@ body {
 
 @container (min-width: 1100px) {
   .chart-row-3col {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 2fr 1fr 1fr;
     gap: var(--space-lg);
     margin-bottom: var(--space-lg);
   }
@@ -858,7 +853,7 @@ body {
 
 @container (min-width: 860px) {
   .resource-top-row {
-    grid-template-columns: 3fr 2fr;
+    grid-template-columns: 1fr 1fr;
     gap: var(--space-lg);
   }
 
@@ -875,6 +870,24 @@ body {
 
   .resource-top-row > :nth-child(3) {
     grid-column: auto;
+  }
+}
+
+/* Trailing efficiency card: same half width as the other timelines */
+.efficiency-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+
+.efficiency-row > * {
+  min-width: 0;
+  overflow: hidden;
+}
+
+@container (min-width: 860px) {
+  .efficiency-row {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
