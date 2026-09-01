@@ -339,6 +339,7 @@ Every rule in this project has an enforcement mechanism; prose-only rules are no
 
 - `uv run ruff check` and `uv run ruff format --check .` must pass with zero findings. Accepted rules (for example `G004`, `PLC0415`) are listed with a one-line reason in `pyproject.toml`; anything not listed there fails the build.
 - `uvx vulture --min-confidence 80 src/slurm_usage_history backend/app scripts` must report nothing: dead code is removed, not documented.
+- `uv run mypy src/slurm_usage_history backend/app scripts` must pass. The gate runs at mypy's default strictness (configured in `pyproject.toml` under `[tool.mypy]`); `--strict` is the target and its remaining errors are tracked work.
 - `uv run pytest` runs the full backend suite; `npm test` (vitest) and `npx eslint src` cover the frontend.
 
 Install the pre-commit hooks once per clone:
@@ -347,4 +348,4 @@ Install the pre-commit hooks once per clone:
 uv run pre-commit install
 ```
 
-The hooks run ruff (lint + format) and vulture on every commit. CI runs the same checks in the `lint:python` job plus the full test suites; no test job is allowed to fail.
+The hooks run ruff (lint + format), vulture, and mypy on every commit. CI runs the same checks in the `lint:python` job plus the full test suites; no test job is allowed to fail.

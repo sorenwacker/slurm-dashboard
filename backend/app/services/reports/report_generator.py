@@ -101,7 +101,7 @@ def generate_report_data(
 
     # User data is intentionally not aggregated to protect privacy
     # Only aggregate-level metrics (total_users count) are included
-    by_user = []
+    by_user: list[Any] = []
 
     # Aggregation by partition
     by_partition = []

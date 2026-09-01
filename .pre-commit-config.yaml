@@ -37,6 +37,15 @@ repos:
           src/slurm_usage_history, backend/app, scripts]
         pass_filenames: false
 
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: uv run mypy src/slurm_usage_history backend/app scripts
+        language: system
+        types: [python]
+        pass_filenames: false
+
   - repo: https://github.com/lyz-code/yamlfix
     rev: 1.16.1
     hooks:

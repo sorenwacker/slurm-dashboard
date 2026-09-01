@@ -17,8 +17,8 @@ try:
     from slurm_usage_history.app.datastore import PandasDataStore
     from slurm_usage_history.app.duckdb_datastore import DuckDBDataStore
 except ImportError:
-    DuckDBDataStore = None
-    PandasDataStore = None
+    DuckDBDataStore = None  # type: ignore[assignment,misc]  # optional import fallback
+    PandasDataStore = None  # type: ignore[assignment,misc]  # optional import fallback
 
 router = APIRouter()
 settings = get_settings()

@@ -11,7 +11,7 @@ import pandas as pd
 try:
     from .account_formatter import formatter
 except ImportError:
-    formatter = None
+    formatter = None  # type: ignore[assignment]  # optional formatter, absent in minimal installs
 from ..tools import timeit
 
 logger = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ class PandasDataStore(metaclass=Singleton):
 
                 self.account_formatter = default_formatter
             except ImportError:
-                self.account_formatter = None
+                self.account_formatter = None  # type: ignore[assignment]  # optional formatter, absent in minimal installs
         else:
             self.account_formatter = account_formatter
 
@@ -490,6 +490,9 @@ class PandasDataStore(metaclass=Singleton):
 
         Uses caching to improve performance for repeated similar queries.
         """
+        if hostname is None:
+            msg = "hostname is required"
+            raise ValueError(msg)
         df_filtered = self.hosts[hostname]["data"]
 
         if start_date:

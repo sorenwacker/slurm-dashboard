@@ -32,7 +32,7 @@ def create_timeline_chart(timeline_data: list[dict[str, Any]], title: str, y_lab
     fig, ax = plt.subplots(figsize=(7, 3.5), dpi=150)
 
     # Convert date strings to datetime objects
-    dates = [
+    dates: list[Any] = [
         datetime.fromisoformat(item["date"]) if isinstance(item["date"], str) else item["date"]
         for item in timeline_data
     ]
@@ -151,13 +151,14 @@ def create_pie_chart(data: list[dict[str, Any]], title: str, label_key: str, val
 
     # Use frontend partition colors for consistency, but generate more if needed
     base_colors = ["#6f42c1", "#28a745", "#fd7e14", "#dc3545", "#17a2b8", "#ffc107", "#6c757d", "#343a40"]
+    colors: list[Any]
     if len(labels) <= len(base_colors):
         colors = base_colors[: len(labels)]
     else:
         # For more partitions than base colors, use a colormap to generate distinct colors
-        colors = plt.cm.tab20(np.linspace(0, 1, len(labels)))
+        colors = list(plt.get_cmap("tab20")(np.linspace(0, 1, len(labels))))
 
-    _wedges, _texts, autotexts = ax.pie(
+    _wedges, _texts, autotexts = ax.pie(  # type: ignore[misc]  # returns 3 items when autopct is set
         values, labels=labels, colors=colors, autopct="%1.1f%%", startangle=90, textprops={"fontsize": 8}
     )
 
@@ -208,7 +209,7 @@ def create_comparison_timeline(
     fig, ax = plt.subplots(figsize=(7, 3.5), dpi=150)
 
     # Plot current period - convert date strings to datetime objects
-    dates = [
+    dates: list[Any] = [
         datetime.fromisoformat(item["date"]) if isinstance(item["date"], str) else item["date"]
         for item in timeline_data
     ]
@@ -282,7 +283,7 @@ def create_cumulative_chart(
     sorted_data = sorted(timeline_data, key=lambda x: x["date"])
 
     # Convert date strings to datetime objects
-    dates = [
+    dates: list[Any] = [
         datetime.fromisoformat(item["date"]) if isinstance(item["date"], str) else item["date"] for item in sorted_data
     ]
     values = [item[metric_key] for item in sorted_data]

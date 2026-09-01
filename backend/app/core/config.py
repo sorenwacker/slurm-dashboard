@@ -4,6 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from ..models.admin_models import AdminRole
+
 load_dotenv()
 
 
@@ -71,18 +73,16 @@ class Settings(BaseSettings):
 
         return users
 
-    def get_admin_email_roles(self) -> dict[str, str]:
+    def get_admin_email_roles(self) -> dict[str, AdminRole]:
         """Parse admin emails with roles from configuration.
 
         Reads from database first, falls back to environment variables.
-        Returns: {"email@example.com": "admin"|"superadmin", ...}
+        Returns: mapping of lowercase email to AdminRole.
         """
         import json
         from pathlib import Path
 
-        from ..models.admin_models import AdminRole
-
-        email_roles = {}
+        email_roles: dict[str, AdminRole] = {}
 
         # Try reading from database first
         db_path = Path("data/clusters.json")

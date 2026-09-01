@@ -209,7 +209,7 @@ def _generate_trends(
 
 def generate_by_dimension(
     df: pd.DataFrame, group_by: str | None, metric: str = "count", top_n: int = 10, period_type: str = "month"
-) -> dict[str, list]:
+) -> dict[str, Any]:
     """Generic aggregation function that groups by a dimension.
 
     Args:
@@ -306,7 +306,7 @@ def generate_by_dimension(
     top_items = all_grouped.head(top_n)
 
     # Calculate "Others" if there are more items
-    others_value = 0
+    others_value = 0.0
     if len(all_grouped) > top_n:
         others_value = float(all_grouped.iloc[top_n:].sum())
 
@@ -415,7 +415,7 @@ def _aggregate_value_histogram(
     top_items = all_grouped.head(top_n)
 
     # Calculate "Others" if there are more items
-    others_value = 0
+    others_value = 0.0
     if len(all_grouped) > top_n:
         others_value = float(all_grouped.iloc[top_n:].sum())
 

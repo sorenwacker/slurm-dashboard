@@ -19,7 +19,7 @@ def default_cluster_config_path() -> Path:
 class ClusterConfig:
     """Manages cluster configuration from YAML file."""
 
-    def __init__(self, config_path: str | None = None):
+    def __init__(self, config_path: str | Path | None = None):
         """Initialize cluster configuration.
 
         Args:
