@@ -18,13 +18,12 @@ TIME_COLUMN_MAP = {
 }
 
 # Histogram bin edges for time-based distributions (in hours)
-HISTOGRAM_BIN_EDGES = [0, 1, 4, 12, 24, 72, 168, float("inf")]
-HISTOGRAM_BIN_LABELS = ["< 1h", "1h - 4h", "4h - 12h", "12h - 24h", "1d - 3d", "3d - 7d", "> 7d"]
+
 
 # Durations get finer bins at the short end: most jobs run for minutes, and a
 # single "< 1h" bin would hide them all
-DURATION_HISTOGRAM_BIN_EDGES = [0, 30 / 3600, 5 / 60, 10 / 60, 0.5, 1, 4, 12, 24, 72, 168, float("inf")]
-DURATION_HISTOGRAM_BIN_LABELS = [
+TIME_HISTOGRAM_BIN_EDGES = [0, 30 / 3600, 5 / 60, 10 / 60, 0.5, 1, 4, 12, 24, 72, 168, float("inf")]
+TIME_HISTOGRAM_BIN_LABELS = [
     "< 30s",
     "30s - 5min",
     "5 - 10min",
@@ -66,22 +65,32 @@ DURATION_COLORS = [
     "#0a564d",  # Dark teal
 ]
 
-# Waiting time stacked chart bins (6 bins with red gradient)
+# Waiting time stacked chart bins (red gradient, same edges as the histogram)
 WAITING_TIME_BINS = [
-    ("< 30min", 0, 0.5),
+    ("< 30s", 0, 30 / 3600),
+    ("30s-5min", 30 / 3600, 5 / 60),
+    ("5-10min", 5 / 60, 10 / 60),
+    ("10-30min", 10 / 60, 0.5),
     ("30min-1h", 0.5, 1),
     ("1h-4h", 1, 4),
     ("4h-12h", 4, 12),
     ("12h-24h", 12, 24),
-    ("> 24h", 24, float("inf")),
+    ("1d-3d", 24, 72),
+    ("3d-7d", 72, 168),
+    ("> 7d", 168, float("inf")),
 ]
 WAITING_TIME_COLORS = [
-    "#ffe5e5",  # Very light red
-    "#ffb3b3",
-    "#ff8080",
-    "#ff4d4d",
-    "#ff1a1a",
-    "#cc0000",  # Dark red
+    "#fdeaea",  # Very light red
+    "#fbd2d2",
+    "#f7b6b6",
+    "#f29797",
+    "#ec7575",
+    "#e45454",
+    "#d93a3a",
+    "#c92626",
+    "#b31818",
+    "#990f0f",
+    "#7d0808",  # Dark red
 ]
 
 
@@ -436,8 +445,8 @@ def _aggregate_value_histogram(
     color_by: str | None = None,
     filter_positive: bool = False,
     top_n: int = 15,
-    bin_edges: list[float] = HISTOGRAM_BIN_EDGES,
-    bin_labels: list[str] = HISTOGRAM_BIN_LABELS,
+    bin_edges: list[float] = TIME_HISTOGRAM_BIN_EDGES,
+    bin_labels: list[str] = TIME_HISTOGRAM_BIN_LABELS,
 ) -> dict[str, Any]:
     """Generic function to create histograms or pie charts for numeric value distributions.
 
@@ -512,14 +521,7 @@ def generate_waiting_times_hist(df: pd.DataFrame, color_by: str | None = None) -
 
 def generate_job_duration_hist(df: pd.DataFrame, color_by: str | None = None) -> dict[str, Any]:
     """Aggregate job durations into histogram bins with numeric x-axis."""
-    return _aggregate_value_histogram(
-        df,
-        "ElapsedHours",
-        color_by,
-        filter_positive=True,
-        bin_edges=DURATION_HISTOGRAM_BIN_EDGES,
-        bin_labels=DURATION_HISTOGRAM_BIN_LABELS,
-    )
+    return _aggregate_value_histogram(df, "ElapsedHours", color_by, filter_positive=True)
 
 
 def _aggregate_period_distribution(

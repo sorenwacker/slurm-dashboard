@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exporter sent the literal string `None` as `Start`/`End` for jobs that never started, which made the dashboard reject the whole batch with 422
 
 ### Changed
+- Waiting-time bins match the job-duration grid (11 bins from < 30s to > 7d) in both the histogram and the stacked timeline, so waits of jobs that start near-immediately are separated from real queueing
 - Dashboard grouped by resource: each of CPU, GPU, and Memory has one section with usage over time, distribution, per-node chart with its gauge, per-job histogram, and efficiency; node-chart options moved to the sidebar; Nodes per Job joined the Jobs group
 - Lint is enforced: ruff and vulture run as pre-commit hooks and as a failing CI job; the repository is at zero findings with accepted rules documented in pyproject.toml; the dead Plotly-Dash app and legacy weekly-usage agent are removed
 - API keys are stored hashed; the full key is shown once at creation, rotation, or deploy-key exchange, and the admin UI shows only its prefix afterwards. Existing plaintext keys are hashed on first use.
