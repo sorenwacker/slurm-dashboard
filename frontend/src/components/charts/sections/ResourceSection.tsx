@@ -10,6 +10,7 @@ import HistogramChart from '../HistogramChart';
 import GaugeChart from '../GaugeChart';
 import TimelineChart from '../TimelineChart';
 import { COLORS } from '../chartHelpers';
+import { dimensionLabel } from '../captionHelpers';
 
 export interface ResourceSectionConfig {
   title: string;            // section heading, e.g. "CPU"
@@ -21,15 +22,15 @@ export interface ResourceSectionConfig {
   efficiencyKey?: 'cpu_efficiency_over_time' | 'memory_efficiency_over_time';
   gaugeKey: 'cpu' | 'gpu' | 'memory';
   totalLabel: (data: AggregatedChartsResponse) => string;
-  overTimeCaption: string;
-  byDimCaption: string;
+  overTimeCaption: (dim: string | null) => string;
+  byDimCaption: (dim: string | null) => string;
   perJobTitle: string;
   perJobXTitle: string;
   perJobCaption: string;
   nodeTitle: string;
-  nodeCaption: string;
+  nodeCaption: (dim: string | null) => string;
   efficiencyTitle?: string;
-  efficiencyCaption?: string;
+  efficiencyCaption?: (dim: string | null) => string;
   gaugeTitle: string;
 }
 
@@ -61,6 +62,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
   const byDim = data[config.byDimKey];
   const perJob = data[config.perJobKey];
   const efficiency = config.efficiencyKey ? data[config.efficiencyKey] : undefined;
+  const dim = dimensionLabel(colorBy);
   const gaugeValue = utilization[config.gaugeKey];
   const showGauge = gaugeValue !== null && nodeChart?.normalized;
 
@@ -85,7 +87,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
               periodType={periodType}
               chartColors={chartColors}
             />
-            <ChartCaption text={config.overTimeCaption} />
+            <ChartCaption text={config.overTimeCaption(dim)} />
           </div>
         )}
         {hasData(byDim) && (
@@ -115,7 +117,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
                 chartColors={chartColors}
               />
             )}
-            <ChartCaption text={config.byDimCaption} />
+            <ChartCaption text={config.byDimCaption(dim)} />
           </div>
         )}
         {hasData(perJob) && (
@@ -137,6 +139,30 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
 
       {nodeChart && nodeChart.x.length > 0 && (
         <div className={showGauge ? 'node-row-with-gauge' : undefined} style={{ marginTop: 'var(--space-md)' }}>
+          <div className="card">
+            <h3>
+              {config.nodeTitle}{' '}
+              {nodeChart.normalized && (
+                <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>(% of capacity)</span>
+              )}
+            </h3>
+            <StackedAreaChart
+              data={nodeChart}
+              xTitle="Node"
+              yTitle={nodeChart.normalized ? 'Allocation (%)' : config.unit}
+              defaultColor={config.color}
+              colorMap={colorMap}
+              chartType="bar"
+              barMode="stack"
+              chartColors={chartColors}
+            />
+            <ChartCaption text={config.nodeCaption(dim)} />
+            {nodeChart.unknownCapacity.length > 0 && (
+              <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
+                {nodeChart.unknownCapacity.length} nodes without known capacity are not shown: {nodeChart.unknownCapacity.join(', ')}
+              </p>
+            )}
+          </div>
           {showGauge && (
             <div className="card gauge-card">
               <GaugeChart
@@ -155,30 +181,6 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
               />
             </div>
           )}
-          <div className="card">
-            <h3>
-              {config.nodeTitle}{' '}
-              {nodeChart.normalized && (
-                <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>(% of capacity)</span>
-              )}
-            </h3>
-            <StackedAreaChart
-              data={nodeChart}
-              xTitle="Node"
-              yTitle={nodeChart.normalized ? 'Allocation (%)' : config.unit}
-              defaultColor={config.color}
-              colorMap={colorMap}
-              chartType="bar"
-              barMode="stack"
-              chartColors={chartColors}
-            />
-            <ChartCaption text={config.nodeCaption} />
-            {nodeChart.unknownCapacity.length > 0 && (
-              <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
-                {nodeChart.unknownCapacity.length} nodes without known capacity are not shown: {nodeChart.unknownCapacity.join(', ')}
-              </p>
-            )}
-          </div>
         </div>
       )}
 
@@ -211,7 +213,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
                 chartColors={chartColors}
               />
             )}
-            <ChartCaption text={config.efficiencyCaption ?? ''} />
+            <ChartCaption text={config.efficiencyCaption ? config.efficiencyCaption(dim) : ''} />
           </div>
         </div>
       )}

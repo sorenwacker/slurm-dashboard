@@ -6,6 +6,7 @@ import StackedAreaChart from '../StackedAreaChart';
 import PieChart from '../PieChart';
 import HistogramChart from '../HistogramChart';
 import { COLORS, SECTION_COLORS } from '../chartHelpers';
+import { dimensionLabel, stackedBy } from '../captionHelpers';
 
 interface UsersJobsSectionProps {
   data: AggregatedChartsResponse;
@@ -22,6 +23,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
   periodType,
   chartColors,
 }) => {
+  const dim = dimensionLabel(colorBy);
   return (
     <section className="section-combined">
       <div className="users-jobs-container">
@@ -43,7 +45,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
                   periodType={periodType}
                   chartColors={chartColors}
                 />
-                <ChartCaption text="Distinct users with at least one job starting in the period." />
+                <ChartCaption text={stackedBy('Distinct users with at least one job starting in the period.', dim)} />
               </div>
             )}
             {data.user_activity_frequency && (
@@ -111,7 +113,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
                   periodType={periodType}
                   chartColors={chartColors}
                 />
-                <ChartCaption text="Jobs submitted per period, stacked by the selected colour dimension." />
+                <ChartCaption text={stackedBy('Jobs submitted per period.', dim)} />
               </div>
             )}
             {data.jobs_distribution && (
@@ -153,7 +155,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
                     chartColors={chartColors}
                   />
                 )}
-                <ChartCaption text="Jobs per user, or per colour dimension when one is selected." />
+                <ChartCaption text={dim ? `Share of all jobs per ${dim}.` : 'Distribution of jobs per user.'} />
               </div>
             )}
             {data.nodes_per_job && data.nodes_per_job.x.length > 0 && (
