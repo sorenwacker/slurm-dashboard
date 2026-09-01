@@ -48,7 +48,7 @@ const ScatterChart: React.FC<ScatterChartProps> = ({ series, xTitle, yTitle, def
         data={traces}
         layout={layout}
         useResizeHandler={true}
-        style={{ width: '100%', height: '420px' }}
+        style={{ width: '100%', height: '400px' }}
         config={getCommonConfig()}
       />
     </div>
