@@ -9,6 +9,7 @@ backend.pid
 *.log
 
 .*
+!.gitattributes
 !.github
 
 # Byte-compiled / optimized / DLL files
