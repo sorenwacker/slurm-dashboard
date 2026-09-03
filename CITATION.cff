@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: SLURM Dashboard
+type: software
+authors:
+  - family-names: Wacker
+    given-names: Sören
+    affiliation: Delft University of Technology, Research and Education IT
+    email: s.wacker@tudelft.nl
+version: 0.7.0
+date-released: "2026-09-03"
+repository-code: https://github.com/sorenwacker/slurm-usage-history
+url: https://sdrwacker.pages.ewi.tudelft.nl/slurm-usage-history
+license: GPL-3.0-or-later
+abstract: Web dashboard for SLURM cluster usage analytics. An agent collects job accounting data with sacct and uploads it; the dashboard queries it with DuckDB and shows usage, efficiency, waiting times, and per-node utilization with monthly, quarterly, and annual reports.
+keywords:
+  - slurm
+  - hpc
+  - cluster-monitoring
+  - duckdb
+  - dashboard

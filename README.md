@@ -1,11 +1,14 @@
 # SLURM Dashboard
 
-Web dashboard for SLURM cluster usage analytics powered by DuckDB.
+Web dashboard for SLURM cluster usage analytics powered by DuckDB. It answers who used a cluster, how much CPU, GPU, and memory they consumed, how long jobs waited, and how efficiently allocated resources were used, per cluster, partition, account, and node, with monthly, quarterly, and annual reports.
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Release](https://img.shields.io/github/v/release/sorenwacker/slurm-usage-history?display_name=tag)](https://github.com/sorenwacker/slurm-usage-history/releases)
+[![PyPI](https://img.shields.io/pypi/v/slurm-dashboard)](https://pypi.org/project/slurm-dashboard/)
+[![Tests](https://github.com/sorenwacker/slurm-usage-history/actions/workflows/tests.yml/badge.svg)](https://github.com/sorenwacker/slurm-usage-history/actions/workflows/tests.yml)
+[![Python 3.10 to 3.12](https://img.shields.io/pypi/pyversions/slurm-dashboard)](https://pypi.org/project/slurm-dashboard/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**[Documentation](https://sdrwacker.pages.ewi.tudelft.nl/slurm-usage-history)** | **[GitHub](https://github.com/tudelft-reit/slurm-dashboard)**
+**[Documentation](https://sdrwacker.pages.ewi.tudelft.nl/slurm-usage-history)** | **[Changelog](docs/development/changelog.md)** | **[GitHub](https://github.com/sorenwacker/slurm-usage-history)** | **[Security policy](SECURITY.md)**
 
 ![SLURM Dashboard Screenshot](docs/images/SLURM-Dashboard.png)
 
@@ -95,7 +98,7 @@ Deploy keys are single-use, expire after 7 days, and provide IP tracking for sec
 ### Setup
 
 ```bash
-git clone https://github.com/tudelft-reit/slurm-dashboard.git
+git clone https://github.com/sorenwacker/slurm-usage-history.git
 cd slurm-dashboard
 uv pip install -e ".[all,dev]"
 ./build_frontend.sh
@@ -144,4 +147,4 @@ docker-compose down
 
 ## License & Contact
 
-GPL-3.0-or-later | [Issues](https://github.com/tudelft-reit/slurm-dashboard/issues) | s.wacker@tudelft.nl | TU Delft REIT
+GPL-3.0-or-later | [Issues](https://github.com/sorenwacker/slurm-usage-history/issues) | [Contributing](CONTRIBUTING.md) | [Cite](CITATION.cff) | s.wacker@tudelft.nl | TU Delft REIT
