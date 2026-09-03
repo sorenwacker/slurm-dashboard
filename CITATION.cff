@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: Wacker
     given-names: Sören
-    affiliation: Delft University of Technology, Research Engineering and Infrastructure Team (REIT)
+    affiliation: Delft University of Technology Research Engineering and Infrastructure Team REIT Core Facility (RRID:SCR_028838)
     email: s.wacker@tudelft.nl
 version: 0.7.0
 date-released: "2026-09-03"
