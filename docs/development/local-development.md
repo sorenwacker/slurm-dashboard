@@ -355,3 +355,4 @@ The hooks run ruff (lint + format), vulture, and mypy on every commit. CI runs t
 Request values never become SQL text or filesystem paths. Each rule has a test that fails when it is broken.
 
 - DuckDB queries bind request values (dates, partitions, accounts, users, QOS, states) as prepared-statement parameters. The `hostname` is looked up in the datastore's known hosts before it is used in a `read_parquet` path; an unknown hostname returns an empty result instead of touching the filesystem. Gate: `tests/test_duckdb_injection.py`.
+- Admin tokens are signed with `ADMIN_SECRET_KEY`, which has no default in code; an unset or placeholder value is replaced by a random key at startup. A token is accepted only when its subject is a configured admin. Gate: `tests/test_admin_auth.py`.

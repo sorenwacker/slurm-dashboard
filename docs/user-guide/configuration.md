@@ -22,9 +22,11 @@ Located at: `/opt/slurm-usage-history/.env` (on server) or `backend/.env` (devel
 # Fallback admin account (username:bcrypt_hash format)
 ADMIN_USERS=admin:$2b$12$tCIgrmuyRCjOPJdAyds0kehbikagSkZqTKkavZTl9teDfT9aNps2.
 
-# Secret key for JWT tokens (generate with: python -c "import secrets; print(secrets.token_urlsafe(64))")
+# Secret key for admin JWT tokens (generate with: python -c "import secrets; print(secrets.token_urlsafe(64))")
 ADMIN_SECRET_KEY=your-random-secret-key-here
 ```
+
+`ADMIN_SECRET_KEY` has no built-in default. When it is unset, empty, or still the placeholder from older example files, the server generates a random key at startup and logs a warning; admin sessions then end on every restart. Set it in production. An admin token is only accepted when its subject is a configured admin: a username from `ADMIN_USERS` or an email from the admin email lists.
 
 #### SAML-based Access
 ```bash

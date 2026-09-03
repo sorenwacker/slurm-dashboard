@@ -106,6 +106,10 @@ cat > .env << 'EOF'
 # Required: Path to SLURM data
 DATA_PATH=/data/slurm-usage
 
+# Required in production: admin session signing key
+# (python -c "import secrets; print(secrets.token_urlsafe(64))")
+ADMIN_SECRET_KEY=your-random-secret-key-here
+
 # Optional: API configuration
 API_PREFIX=/api
 AUTO_REFRESH_INTERVAL=600
@@ -230,6 +234,7 @@ Create `.env` file in project root:
 ```bash
 # Required
 DATA_PATH=/data/slurm-usage
+ADMIN_SECRET_KEY=<random string; without it admin sessions end on every restart>
 
 # Optional
 API_PREFIX=/api

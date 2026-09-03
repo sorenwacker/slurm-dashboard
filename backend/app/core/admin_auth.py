@@ -1,5 +1,6 @@
 """Admin authentication and authorization."""
 
+import logging
 import secrets
 from datetime import datetime, timedelta
 
@@ -11,12 +12,25 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from .config import get_settings
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 # JWT token security
 security = HTTPBearer()
 
+# Value older example files shipped; treated as unset so it can never sign a token
+PLACEHOLDER_SECRET_KEY = "change-this-to-a-random-secret-key-in-production"
+
+
+def resolve_signing_key(configured: str | None) -> str:
+    """The configured ADMIN_SECRET_KEY, or a random per-process key when it is unset or the placeholder."""
+    if configured and configured != PLACEHOLDER_SECRET_KEY:
+        return configured
+    logger.warning("ADMIN_SECRET_KEY is not set; using a random key, so admin sessions end when the server restarts")
+    return secrets.token_urlsafe(48)
+
+
 # JWT Configuration
-SECRET_KEY = settings.admin_secret_key
+SECRET_KEY = resolve_signing_key(settings.admin_secret_key)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
@@ -59,11 +73,16 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
         token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
-        if username is None:
+        if not isinstance(username, str) or not is_configured_admin(username):
             raise credentials_exception
         return username
     except jwt.PyJWTError as e:
         raise credentials_exception from e
+
+
+def is_configured_admin(subject: str) -> bool:
+    """Whether a token subject names a password admin or an admin email."""
+    return subject in settings.get_admin_users() or settings.is_admin_email(subject)
 
 
 def authenticate_admin(username: str, password: str) -> str | None:
