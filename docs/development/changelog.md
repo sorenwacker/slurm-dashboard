@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `POST /api/data/ingest` used the body `hostname` as a directory without checking it against the API key's cluster, so any cluster key could write another cluster's data or files outside `DATA_PATH`. The target directory is now the key's cluster; a different hostname is rejected with `403`
 
 ### Fixed
+- Admin pages and the report view referenced seven CSS custom properties (`--white`, `--border-radius`, `--box-shadow`, `--border-color`, `--bg-color`, `--text-color`, `--card-bg`) that were never declared, so cards had no background or shadow, corners were square, and button labels inherited the page text color. They now use the declared design tokens; a test fails on any undeclared `var(--name)`
 - Memory efficiency is weighted by job runtime; unweighted per-job ratios were dominated by sub-6-minute jobs (72% of DAIC jobs) and sat far below the actual occupancy
 - Node utilization: jobs overlapping the window are counted for the overlapping hours only, multi-node jobs are split across their nodes instead of counted once per node, gauges are capacity-weighted over all configured nodes, and nodes without synced capacity are no longer normalized against default values (see docs/user-guide/utilization.md)
 - Dashboard date filters are kept inside the cluster's data range: the initial start date is the first data point when the cluster has less than six weeks of data, and typed dates outside the range snap to the nearest bound

@@ -1558,6 +1558,16 @@ body {
   }
 }
 
+/* Printable report page: always light, whatever the theme */
+.report-page {
+  --report-card-bg: #f8fafc;
+  --report-border: #e2e8f0;
+  --report-text: #0f172a;
+  --report-muted: #475569;
+  background: #ffffff;
+  color: var(--report-text);
+}
+
 /* Figure captions under charts */
 .chart-caption {
   margin: 0.5rem 0 0;
@@ -1608,16 +1618,16 @@ body {
     height: calc(100vh - var(--header-height));
     border: none;
     border-right: 1px solid var(--border);
-    background: var(--white);
-    color: #6b7280;
+    background: var(--bg-secondary);
+    color: var(--text-muted);
     font-size: 1.1rem;
     cursor: pointer;
     padding: 0;
   }
 
   .sidebar-toggle:hover {
-    background: #f3f4f6;
-    color: #111827;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
   }
 
   .sidebar-hidden {

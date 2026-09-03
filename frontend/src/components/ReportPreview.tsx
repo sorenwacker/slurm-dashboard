@@ -165,21 +165,20 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
       )}
 
       {reportData && (
-        <div style={{
+        <div className="report-page" style={{
           maxWidth: '210mm',
           margin: '0 auto',
-          background: 'white',
           padding: '20mm',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           borderRadius: '4px',
         }}>
           {/* Report Header */}
           <div style={{
-            background: 'var(--card-bg)',
+            background: 'var(--report-card-bg)',
             padding: '1.5rem',
             borderRadius: '8px',
             marginBottom: '1.5rem',
-            border: '1px solid var(--border-color)',
+            border: '1px solid var(--report-border)',
           }}>
             <h2 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000000' }}>
               {reportData.report_type}

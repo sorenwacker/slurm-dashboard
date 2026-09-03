@@ -48,10 +48,10 @@ const ReportTimelines: React.FC<ReportTimelinesProps> = ({
     <div style={{ marginTop: '3rem' }}>
       {/* Daily Active Users Timeline */}
       <div className="page-break-avoid" style={{
-        background: 'var(--card-bg)',
+        background: 'var(--report-card-bg)',
         padding: '1rem',
         borderRadius: '8px',
-        border: '1px solid var(--border-color)',
+        border: '1px solid var(--report-border)',
         marginBottom: '1.5rem',
       }}>
         <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
@@ -117,10 +117,10 @@ const ReportTimelines: React.FC<ReportTimelinesProps> = ({
 
       {/* Daily Jobs Timeline */}
       <div className="page-break-avoid" style={{
-        background: 'var(--card-bg)',
+        background: 'var(--report-card-bg)',
         padding: '1rem',
         borderRadius: '8px',
-        border: '1px solid var(--border-color)',
+        border: '1px solid var(--report-border)',
         marginBottom: '1.5rem',
       }}>
         <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
@@ -186,10 +186,10 @@ const ReportTimelines: React.FC<ReportTimelinesProps> = ({
 
       {/* CPU Consumption Timeline */}
       <div className="page-break-avoid" style={{
-        background: 'var(--card-bg)',
+        background: 'var(--report-card-bg)',
         padding: '1rem',
         borderRadius: '8px',
-        border: '1px solid var(--border-color)',
+        border: '1px solid var(--report-border)',
         marginBottom: '1.5rem',
       }}>
         <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
@@ -256,10 +256,10 @@ const ReportTimelines: React.FC<ReportTimelinesProps> = ({
       {/* GPU Consumption Timeline */}
       {totalGpuHours > 0 && (
         <div className="page-break-avoid" style={{
-          background: 'var(--card-bg)',
+          background: 'var(--report-card-bg)',
           padding: '1rem',
           borderRadius: '8px',
-          border: '1px solid var(--border-color)',
+          border: '1px solid var(--report-border)',
         }}>
           <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
             {timeUnit} GPU Consumption

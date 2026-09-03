@@ -177,10 +177,10 @@ const ReportSummaryCards: React.FC<ReportSummaryCardsProps> = ({ reportData, rep
       {/* Avg Job Duration */}
       {reportData.summary.avg_job_duration_hours !== undefined && reportData.summary.avg_job_duration_hours > 0 && (
         <div style={{
-          background: 'var(--card-bg)',
+          background: 'var(--report-card-bg)',
           padding: '1.5rem',
           borderRadius: '8px',
-          border: '1px solid var(--border-color)',
+          border: '1px solid var(--report-border)',
         }}>
           <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#000' }}>
             Avg Job Duration: <span style={{ color: COLORS.duration }}>{formatHours(reportData.summary.avg_job_duration_hours)}h</span> - Median: {formatHours(reportData.summary.median_job_duration_hours || 0)}h
@@ -191,10 +191,10 @@ const ReportSummaryCards: React.FC<ReportSummaryCardsProps> = ({ reportData, rep
       {/* Avg Waiting Time */}
       {reportData.summary.avg_waiting_time_hours !== undefined && reportData.summary.avg_waiting_time_hours > 0 && (
         <div style={{
-          background: 'var(--card-bg)',
+          background: 'var(--report-card-bg)',
           padding: '1.5rem',
           borderRadius: '8px',
-          border: '1px solid var(--border-color)',
+          border: '1px solid var(--report-border)',
         }}>
           <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#000' }}>
             Avg Waiting Time: <span style={{ color: COLORS.waiting }}>{formatHours(reportData.summary.avg_waiting_time_hours)}h</span> - Median: {formatHours(reportData.summary.median_waiting_time_hours || 0)}h

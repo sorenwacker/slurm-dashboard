@@ -52,10 +52,10 @@ const ReportDistributions: React.FC<ReportDistributionsProps> = ({
     <>
       {/* Cumulative CPU Hours */}
       <div className="page-break-avoid" style={{
-        background: 'var(--card-bg)',
+        background: 'var(--report-card-bg)',
         padding: '1rem',
         borderRadius: '8px',
-        border: '1px solid var(--border-color)',
+        border: '1px solid var(--report-border)',
         marginTop: '2rem',
       }}>
         <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
@@ -119,10 +119,10 @@ const ReportDistributions: React.FC<ReportDistributionsProps> = ({
       {/* Cumulative GPU Hours */}
       {totalGpuHours > 0 && (
         <div className="page-break-avoid" style={{
-          background: 'var(--card-bg)',
+          background: 'var(--report-card-bg)',
           padding: '1rem',
           borderRadius: '8px',
-          border: '1px solid var(--border-color)',
+          border: '1px solid var(--report-border)',
           marginTop: '2rem',
         }}>
           <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
@@ -187,10 +187,10 @@ const ReportDistributions: React.FC<ReportDistributionsProps> = ({
       {/* Job Performance Statistics */}
       {jobDurationStats && jobDurationStats.mean > 0 && (
         <div className="page-break-avoid" style={{
-          background: 'var(--card-bg)',
+          background: 'var(--report-card-bg)',
           padding: '1rem',
           borderRadius: '8px',
-          border: '1px solid var(--border-color)',
+          border: '1px solid var(--report-border)',
           marginTop: '2rem',
         }}>
           <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
@@ -251,10 +251,10 @@ const ReportDistributions: React.FC<ReportDistributionsProps> = ({
       {/* Waiting Time Statistics */}
       {waitingTimeStats && waitingTimeStats.mean > 0 && (
         <div className="page-break-avoid" style={{
-          background: 'var(--card-bg)',
+          background: 'var(--report-card-bg)',
           padding: '1rem',
           borderRadius: '8px',
-          border: '1px solid var(--border-color)',
+          border: '1px solid var(--report-border)',
           marginTop: '2rem',
         }}>
           <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>

@@ -46,10 +46,10 @@ const ReportBreakdowns: React.FC<ReportBreakdownsProps> = ({
         {/* CPU Hours by Account */}
         {byAccount.length > 0 && (
           <div className="page-break-avoid" style={{
-            background: 'var(--card-bg)',
+            background: 'var(--report-card-bg)',
             padding: '1rem',
             borderRadius: '8px',
-            border: '1px solid var(--border-color)',
+            border: '1px solid var(--report-border)',
           }}>
             <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
               Top 10 Accounts by CPU Usage
@@ -93,10 +93,10 @@ const ReportBreakdowns: React.FC<ReportBreakdownsProps> = ({
         {/* GPU Hours by Account */}
         {byAccount.length > 0 && totalGpuHours > 0 && (
           <div className="page-break-avoid" style={{
-            background: 'var(--card-bg)',
+            background: 'var(--report-card-bg)',
             padding: '1rem',
             borderRadius: '8px',
-            border: '1px solid var(--border-color)',
+            border: '1px solid var(--report-border)',
           }}>
             <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
               Top 10 Accounts by GPU Usage
@@ -140,10 +140,10 @@ const ReportBreakdowns: React.FC<ReportBreakdownsProps> = ({
         {/* Complete Account Usage Table - moved here to group with account charts */}
         {byAccount.length > 0 && (
           <div className="page-break-avoid" style={{
-            background: 'var(--card-bg)',
+            background: 'var(--report-card-bg)',
             padding: '1.5rem',
             borderRadius: '8px',
-            border: '1px solid var(--border-color)',
+            border: '1px solid var(--report-border)',
             marginTop: '1.5rem',
           }}>
             <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
@@ -184,10 +184,10 @@ const ReportBreakdowns: React.FC<ReportBreakdownsProps> = ({
         {/* Jobs by State */}
         {byState.length > 0 && (
           <div className="page-break-avoid" style={{
-            background: 'var(--card-bg)',
+            background: 'var(--report-card-bg)',
             padding: '1rem',
             borderRadius: '8px',
-            border: '1px solid var(--border-color)',
+            border: '1px solid var(--report-border)',
           }}>
             <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
               Job Completion Status
@@ -232,10 +232,10 @@ const ReportBreakdowns: React.FC<ReportBreakdownsProps> = ({
       {/* Jobs by Partition (Pie Chart) - moved here to group with partition table */}
       {byPartition.length > 0 && (
         <div className="page-break-avoid" style={{
-          background: 'var(--card-bg)',
+          background: 'var(--report-card-bg)',
           padding: '1rem',
           borderRadius: '8px',
-          border: '1px solid var(--border-color)',
+          border: '1px solid var(--report-border)',
         }}>
           <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
             Job Distribution by Partition
@@ -273,10 +273,10 @@ const ReportBreakdowns: React.FC<ReportBreakdownsProps> = ({
       {/* Partition Resource Usage - moved here to follow partition chart */}
       {byPartition && byPartition.length > 0 && (
         <div className="page-break-avoid" style={{
-          background: 'var(--card-bg)',
+          background: 'var(--report-card-bg)',
           padding: '1.5rem',
           borderRadius: '8px',
-          border: '1px solid var(--border-color)',
+          border: '1px solid var(--report-border)',
           marginBottom: '2rem',
         }}>
           <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>

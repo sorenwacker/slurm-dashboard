@@ -67,11 +67,11 @@ const ReportControls: React.FC<ReportControlsProps> = ({
           style={{
             padding: '0.5rem',
             borderRadius: '4px',
-            border: '1px solid var(--border-color)',
+            border: '1px solid var(--border)',
             fontSize: '1rem',
             width: '100%',
-            background: 'var(--bg-color)',
-            color: 'var(--text-color)',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-primary)',
           }}
         >
           <option value="">Select cluster...</option>
@@ -86,11 +86,11 @@ const ReportControls: React.FC<ReportControlsProps> = ({
       {/* Report Configuration - only shown when cluster is selected */}
       {reportHostname && (
         <>
-          <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
+          <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--border)' }} />
 
           {/* Report Type */}
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-color)' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-primary)' }}>
               Report Type
             </label>
             <select
@@ -100,9 +100,9 @@ const ReportControls: React.FC<ReportControlsProps> = ({
                 width: '100%',
                 padding: '0.5rem',
                 borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-color)',
-                color: 'var(--text-color)',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
               }}
             >
               <option value="monthly">Monthly Report</option>
@@ -113,7 +113,7 @@ const ReportControls: React.FC<ReportControlsProps> = ({
 
           {/* Year */}
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-color)' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-primary)' }}>
               Year
             </label>
             <select
@@ -123,9 +123,9 @@ const ReportControls: React.FC<ReportControlsProps> = ({
                 width: '100%',
                 padding: '0.5rem',
                 borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-color)',
-                color: 'var(--text-color)',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
               }}
             >
               {availableYears.map((year) => (
@@ -139,7 +139,7 @@ const ReportControls: React.FC<ReportControlsProps> = ({
           {/* Month (only for monthly reports) */}
           {reportType === 'monthly' && (
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-color)' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-primary)' }}>
                 Month
               </label>
               <select
@@ -149,9 +149,9 @@ const ReportControls: React.FC<ReportControlsProps> = ({
                   width: '100%',
                   padding: '0.5rem',
                   borderRadius: '4px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-color)',
-                  color: 'var(--text-color)',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
                 }}
               >
                 {months.map((month) => (
@@ -166,7 +166,7 @@ const ReportControls: React.FC<ReportControlsProps> = ({
           {/* Quarter (only for quarterly reports) */}
           {reportType === 'quarterly' && (
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-color)' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-primary)' }}>
                 Quarter
               </label>
               <select
@@ -176,9 +176,9 @@ const ReportControls: React.FC<ReportControlsProps> = ({
                   width: '100%',
                   padding: '0.5rem',
                   borderRadius: '4px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-color)',
-                  color: 'var(--text-color)',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
                 }}
               >
                 <option value={1}>Q1 (Jan - Mar)</option>
@@ -191,7 +191,7 @@ const ReportControls: React.FC<ReportControlsProps> = ({
 
           {/* Download Format */}
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-color)' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-primary)' }}>
               Download Format
             </label>
             <select
@@ -201,9 +201,9 @@ const ReportControls: React.FC<ReportControlsProps> = ({
                 width: '100%',
                 padding: '0.5rem',
                 borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-color)',
-                color: 'var(--text-color)',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
               }}
             >
               <option value="json">JSON</option>
