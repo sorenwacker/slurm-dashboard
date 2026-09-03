@@ -1,16 +1,19 @@
 """API endpoints for agent data uploads."""
 
+import io
 import logging
 import os
 from pathlib import Path
 from typing import Annotated
 
+import pyarrow.parquet as pq
 import yaml
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 
 from ..config import get_cluster_config, reload_cluster_config
 from ..core.agent_auth import verify_agent_api_key
 from ..core.config import get_settings
+from ..core.safe_paths import path_within, single_path_component
 from ..services.node_discovery import NodeDiscoveryService
 
 logger = logging.getLogger(__name__)
@@ -100,25 +103,33 @@ async def upload_data(
     """
     settings = get_settings()
 
-    # Validate file extension
-    if not file.filename or not file.filename.endswith(".parquet"):
+    # The client filename is untrusted: it must be a plain name ending in .parquet
+    filename = single_path_component(file.filename, "filename")
+    if not filename.endswith(".parquet"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be a .parquet file",
         )
 
-    # Create directory structure: DATA_PATH/cluster_name/data/
-    cluster_dir = Path(settings.data_path) / cluster_name / "data"
-    cluster_dir.mkdir(parents=True, exist_ok=True)
-
-    # Save file
-    file_path = cluster_dir / file.filename
+    contents = await file.read()
     try:
-        contents = await file.read()
+        pq.ParquetFile(io.BytesIO(contents))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File is not a readable parquet file: {e!s}",
+        ) from e
+
+    # DATA_PATH/cluster_name/data/filename, checked to stay inside DATA_PATH
+    data_path = Path(settings.data_path)
+    file_path = path_within(data_path, single_path_component(cluster_name, "cluster name"), "data", filename)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
         with open(file_path, "wb") as f:
             f.write(contents)
 
-        logger.info(f"Agent uploaded data: cluster={cluster_name}, file={file.filename}, size={len(contents)} bytes")
+        logger.info(f"Agent uploaded data: cluster={cluster_name}, file={filename}, size={len(contents)} bytes")
 
         # Trigger immediate data reload and cache invalidation
         try:
@@ -136,11 +147,11 @@ async def upload_data(
 
         return {
             "status": "success",
-            "message": f"File uploaded successfully: {file.filename}",
+            "message": f"File uploaded successfully: {filename}",
             "cluster": cluster_name,
-            "file": file.filename,
+            "file": filename,
             "size": len(contents),
-            "path": str(file_path.relative_to(settings.data_path)),
+            "path": str(file_path.relative_to(data_path.resolve())),
         }
 
     except Exception as e:

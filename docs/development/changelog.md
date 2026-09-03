@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Dashboard filter values (dates, partitions, accounts, users, QOS, states) and the hostname were interpolated into DuckDB SQL; an unauthenticated request could read or write server files through `read_text` and `COPY`. Values are now bound parameters and the hostname must be a known cluster
 - The admin JWT signing key defaulted to a fixed string in code, so anyone could mint a superadmin token for a deployment that did not set `ADMIN_SECRET_KEY` (the Docker quick start and `.env.example` did not). There is no default anymore: an unset or placeholder key is replaced by a random key at startup with a logged warning, and a token is accepted only when its subject is a configured admin
+- Agent uploads used the client-supplied filename as a path, so a cluster key could write `.parquet` files outside its own cluster directory. The filename must be a single path component and the content must be valid parquet
 
 ### Fixed
 - Memory efficiency is weighted by job runtime; unweighted per-job ratios were dominated by sub-6-minute jobs (72% of DAIC jobs) and sat far below the actual occupancy
