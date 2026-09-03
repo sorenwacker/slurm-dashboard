@@ -21,7 +21,7 @@ const Footer: React.FC = () => {
     <footer className="footer">
       <div className="footer-content">
         <p>
-          Copyright © {currentYear} TU Delft - Research & Education IT (REIT)
+          Copyright © {currentYear} TU Delft - Research Engineering and Infrastructure Team (REIT)
           {version && ` • v${version}`}
         </p>
         <p className="footer-links">
