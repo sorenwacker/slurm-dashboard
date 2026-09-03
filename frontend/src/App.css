@@ -68,6 +68,13 @@
   --transition-base: 200ms ease;
   --transition-slow: 300ms ease;
 
+  /* Metric colors, kept in sync with theme/colors.ts */
+  --metric-users: #28a745;
+  --metric-jobs: #6f42c1;
+  --metric-cpu: #04A5D5;
+  --metric-gpu: #EC7300;
+  --metric-memory: #2E8B57;
+
   /* Text on a primary-colored surface, a modal backdrop, and code block text */
   --on-primary: #ffffff;
   --on-primary-faint: rgba(255, 255, 255, 0.3);
@@ -119,10 +126,6 @@
 .dark .error {
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(248, 113, 113, 0.3);
-}
-
-.dark .stat-card::before {
-  background: linear-gradient(90deg, var(--primary), var(--primary-light));
 }
 
 .dark .filter-group input,
@@ -872,8 +875,8 @@ body {
 @media (min-width: 1200px) {
   .stats-grid {
     gap: var(--space-lg);
-    /* five summary cards fit one row on wide screens */
-    grid-template-columns: repeat(5, 1fr);
+    /* four or five summary cards share one row; no empty slot when memory data is absent */
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
 }
 
@@ -888,15 +891,12 @@ body {
   overflow: hidden;
 }
 
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--primary), var(--primary-light));
-}
+/* One accent per card: the metric's color on the left edge */
+.stat-card.stat-users { border-left: 4px solid var(--metric-users); }
+.stat-card.stat-jobs { border-left: 4px solid var(--metric-jobs); }
+.stat-card.stat-cpu { border-left: 4px solid var(--metric-cpu); }
+.stat-card.stat-gpu { border-left: 4px solid var(--metric-gpu); }
+.stat-card.stat-memory { border-left: 4px solid var(--metric-memory); }
 
 .stat-card h4 {
   font-family: var(--font-body);

@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exporter sent the literal string `None` as `Start`/`End` for jobs that never started, which made the dashboard reject the whole batch with 422
 
 ### Changed
+- Dashboard summary cards carry one accent color per metric instead of a left border and a gradient top bar, and the wide-screen grid no longer leaves an empty fifth slot when memory data is absent; the footer's API documentation link and the loading screen no longer point at localhost
 - Report preview and its sidebar controls use stylesheet classes instead of inline styles; the report page is one `.report-page` block that stays light in dark mode, fits narrow screens, and uses the shared metric colors for every chart. The unused `ReportGenerator` and `ReportOverview` components are removed
 - Admin pages share one layout (header, navigation, theme toggle, logout) and one token-based stylesheet, so they follow the dashboard's fonts and colors and support dark mode; the four page-specific stylesheets with hardcoded Bootstrap colors are removed. Reload and demo results are shown as page messages instead of browser alert dialogs
 - mypy is a configured gate (pre-commit hook and CI lint job) at mypy's default strictness; the 36 pre-existing errors are fixed. --strict reports 342 errors and remains tracked work

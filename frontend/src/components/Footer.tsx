@@ -34,7 +34,7 @@ const Footer: React.FC = () => {
           </a>
           {' • '}
           <a
-            href="http://localhost:8100/docs"
+            href={`${import.meta.env.VITE_API_URL || ''}/docs`}
             target="_blank"
             rel="noopener noreferrer"
           >

@@ -136,7 +136,6 @@ const Dashboard: React.FC = () => {
             <div className="loading-spinner"></div>
             <h2>Loading Dashboard...</h2>
             <p>Fetching cluster metadata from backend</p>
-            <p className="loading-detail">API: http://localhost:8100</p>
           </div>
         </div>
         <Footer />
