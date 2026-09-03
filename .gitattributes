@@ -1,0 +1,6 @@
+# Build output and vendored assets: keep them out of GitHub's language statistics
+public/** linguist-generated=true
+backend/app/static/** linguist-generated=true
+frontend/dist/** linguist-generated=true
+site/** linguist-generated=true
+docker/saml-idp/** linguist-vendored=true
