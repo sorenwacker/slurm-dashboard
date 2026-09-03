@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminClient, type Cluster } from '../api/adminClient';
-import './AdminClusters.css';
+import { AdminLayout } from '../components/AdminLayout';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8100';
 
 export function AdminClusters() {
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newAPIKey, setNewAPIKey] = useState<string | null>(null);
   const [reloading, setReloading] = useState(false);
@@ -34,17 +37,14 @@ export function AdminClusters() {
     }
   };
 
-  const handleLogout = () => {
-    adminClient.logout();
-    // Redirect to SAML logout endpoint which will clear the session
-    window.location.href = '/saml/logout?redirect_to=/admin/login';
-  };
-
   const handleReloadData = async () => {
     setReloading(true);
     try {
       const result = await adminClient.reloadData();
-      alert(`Data reloaded successfully!\n\n${result.message}\n\nLatest dates: ${JSON.stringify(result.date_ranges, null, 2)}`);
+      const ranges = Object.entries(result.date_ranges)
+        .map(([name, range]) => `${name}: ${range.min_date} to ${range.max_date}`)
+        .join('; ');
+      setNotice(`${result.message}${ranges ? ` (${ranges})` : ''}`);
       setError('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reload data');
@@ -62,18 +62,9 @@ export function AdminClusters() {
     setError('');
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8100';
-      const token = localStorage.getItem('admin_token');
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
       const response = await fetch(`${API_BASE_URL}/api/admin/generate-demo-cluster`, {
         method: 'POST',
-        headers,
+        headers: adminClient.authHeaders(),
         credentials: 'include',
       });
 
@@ -83,10 +74,12 @@ export function AdminClusters() {
       }
 
       const result = await response.json();
-      alert(`Demo cluster generated successfully!\n\nCluster: ${result.cluster_name}\nJobs: ${result.stats.total_jobs.toLocaleString()}\nUsers: ${result.stats.users}\nNodes: ${result.stats.nodes}\nDate range: ${result.stats.date_range}\n\nThe cluster will appear in the dashboard after reloading data.`);
-
-      // Reload data to show new cluster
+      setNotice(
+        `Demo cluster ${result.cluster_name} generated: ${result.stats.total_jobs.toLocaleString()} jobs, ` +
+          `${result.stats.users} users, ${result.stats.nodes} nodes, ${result.stats.date_range}.`
+      );
       await handleReloadData();
+      await loadClusters();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate demo cluster');
     } finally {
@@ -102,7 +95,6 @@ export function AdminClusters() {
     try {
       await adminClient.deleteCluster(id);
       await loadClusters();
-      // Automatically reload dashboard data so the cluster disappears from the main dashboard
       await handleReloadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete cluster');
@@ -113,16 +105,15 @@ export function AdminClusters() {
     try {
       await adminClient.updateCluster(cluster.id, { active: !cluster.active });
       await loadClusters();
-      // Automatically reload dashboard data so the cluster appears/disappears from dropdown
       await handleReloadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update cluster');
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+  const copyToClipboard = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    setNotice('API key copied to clipboard.');
   };
 
   const formatDate = (dateStr?: string) => {
@@ -130,163 +121,115 @@ export function AdminClusters() {
     return new Date(dateStr).toLocaleString();
   };
 
-  if (loading) {
-    return (
-      <div className="clusters-container">
-        <div className="clusters-loading">Loading...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="clusters-container">
-      {/* Header */}
-      <div className="clusters-header">
-        <div className="clusters-header-content">
-          <div className="clusters-header-title">
-            <h1>Cluster Management</h1>
-            <p className="clusters-header-subtitle">Manage SLURM clusters and API keys</p>
-          </div>
-          <div className="clusters-header-nav">
-            <a href="/">Dashboard</a>
-            <a href="/admin/users">Users</a>
-            <button onClick={handleReloadData} disabled={reloading}>
-              {reloading ? 'Reloading...' : 'Reload Data'}
-            </button>
-            <button onClick={handleLogout}>Logout</button>
-          </div>
+    <AdminLayout
+      title="Cluster Management"
+      subtitle="Manage SLURM clusters and API keys"
+      actions={
+        <button type="button" className="cp-btn cp-btn-small" onClick={handleReloadData} disabled={reloading}>
+          {reloading ? 'Reloading...' : 'Reload data'}
+        </button>
+      }
+    >
+      {error && (
+        <div className="cp-message cp-message-error">
+          <span>{error}</span>
+          <button type="button" onClick={() => setError('')}>Dismiss</button>
         </div>
-      </div>
+      )}
+      {notice && (
+        <div className="cp-message cp-message-ok">
+          <span>{notice}</span>
+          <button type="button" onClick={() => setNotice('')}>Dismiss</button>
+        </div>
+      )}
 
-      <div className="clusters-content">
-        {/* Error Message */}
-        {error && (
-          <div className="clusters-error">
-            <div className="clusters-error-text">{error}</div>
-            <button onClick={() => setError('')} className="clusters-error-close">
-              ×
-            </button>
-          </div>
-        )}
-
-        {/* New API Key Modal (shown after creating a new cluster) */}
-        {newAPIKey && (
-          <div className="clusters-modal-overlay">
-            <div className="clusters-modal">
-              <h3 className="clusters-modal-title">New API Key Generated</h3>
-              <p className="clusters-modal-text">
-                This is the only time the full key will be shown. Copy it now and save it securely.
-                You can also access it later by clicking "Manage Keys" for this cluster.
-              </p>
-              <div className="clusters-modal-code">
-                <code>{newAPIKey}</code>
-              </div>
-              <div className="clusters-modal-actions">
-                <button
-                  onClick={() => copyToClipboard(newAPIKey)}
-                  className="clusters-form-submit"
-                >
-                  Copy to Clipboard
-                </button>
-                <button
-                  onClick={() => setNewAPIKey(null)}
-                  className="clusters-form-cancel"
-                >
-                  Close
-                </button>
-              </div>
+      {newAPIKey && (
+        <div className="cp-modal-overlay">
+          <div className="cp-modal">
+            <h3>New API key generated</h3>
+            <p>This is the only time the full key is shown. Copy it now and store it securely.</p>
+            <code className="cp-code">{newAPIKey}</code>
+            <div className="cp-actions">
+              <button type="button" className="cp-btn cp-btn-primary" onClick={() => copyToClipboard(newAPIKey)}>
+                Copy to clipboard
+              </button>
+              <button type="button" className="cp-btn" onClick={() => setNewAPIKey(null)}>
+                Close
+              </button>
             </div>
           </div>
-        )}
-
-        {/* Actions */}
-        <div className="clusters-actions">
-          <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="clusters-btn-primary"
-          >
-            {showCreateForm ? 'Cancel' : '+ Add Cluster'}
-          </button>
-          <button
-            onClick={handleGenerateDemoCluster}
-            disabled={generatingDemo}
-            className="clusters-btn-primary"
-            style={{ background: '#17a2b8' }}
-          >
-            {generatingDemo ? 'Generating...' : 'Create Demo'}
-          </button>
         </div>
+      )}
 
-        {/* Create Form */}
-        {showCreateForm && (
-          <CreateClusterForm
-            onSuccess={() => {
-              setShowCreateForm(false);
-              loadClusters();
-            }}
-            onCancel={() => setShowCreateForm(false)}
-            onAPIKeyGenerated={(key) => setNewAPIKey(key)}
-          />
-        )}
+      <div className="cp-actions-bar">
+        <button type="button" className="cp-btn cp-btn-primary" onClick={() => setShowCreateForm(!showCreateForm)}>
+          {showCreateForm ? 'Cancel' : 'Add cluster'}
+        </button>
+        <button type="button" className="cp-btn" onClick={handleGenerateDemoCluster} disabled={generatingDemo}>
+          {generatingDemo ? 'Generating...' : 'Create demo cluster'}
+        </button>
+      </div>
 
-        {/* Clusters List */}
-        <div className="clusters-table-container">
-          <table className="clusters-table">
+      {showCreateForm && (
+        <CreateClusterForm
+          onSuccess={() => {
+            setShowCreateForm(false);
+            loadClusters();
+          }}
+          onCancel={() => setShowCreateForm(false)}
+          onAPIKeyGenerated={(key) => setNewAPIKey(key)}
+        />
+      )}
+
+      {loading ? (
+        <p className="cp-muted">Loading</p>
+      ) : (
+        <div className="cp-table-wrap">
+          <table className="cp-table">
             <thead>
               <tr>
                 <th>Cluster</th>
                 <th>Status</th>
-                <th>Statistics</th>
+                <th>Submissions</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {clusters.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="clusters-table-empty">
-                    No clusters yet. Click "Add Cluster" to get started.
+                  <td colSpan={4} className="cp-empty">
+                    No clusters yet. Click Add cluster to get started.
                   </td>
                 </tr>
               ) : (
                 clusters.map((cluster) => (
                   <tr key={cluster.id}>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{cluster.name}</div>
-                      {cluster.description && (
-                        <div style={{ fontSize: '0.8125rem', color: '#6c757d' }}>{cluster.description}</div>
-                      )}
-                      {cluster.contact_email && (
-                        <div style={{ fontSize: '0.75rem', color: '#adb5bd' }}>{cluster.contact_email}</div>
-                      )}
+                      <div className="cp-strong">
+                        <a href={`/admin/clusters/${encodeURIComponent(cluster.name)}`}>{cluster.name}</a>
+                      </div>
+                      {cluster.description && <div className="cp-muted">{cluster.description}</div>}
+                      {cluster.contact_email && <div className="cp-muted">{cluster.contact_email}</div>}
                     </td>
                     <td>
-                      <span className={`clusters-badge ${cluster.active ? 'clusters-badge-active' : 'clusters-badge-inactive'}`}>
+                      <span className={`cp-badge ${cluster.active ? 'cp-badge-ok' : 'cp-badge-danger'}`}>
                         {cluster.active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td>
-                      <div>API Submissions: {cluster.total_jobs_submitted.toLocaleString()}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>Last: {formatDate(cluster.last_submission)}</div>
+                      <div>{cluster.total_jobs_submitted.toLocaleString()} jobs via API</div>
+                      <div className="cp-muted">Last: {formatDate(cluster.last_submission)}</div>
                     </td>
-                    <td>
-                      <div className="clusters-actions-menu">
-                        <a
-                          href={`/admin/clusters/${encodeURIComponent(cluster.name)}`}
-                          className="clusters-action-btn action-primary"
-                          style={{ textDecoration: 'none', fontWeight: 600 }}
-                        >
+                    <td className="cp-actions-cell">
+                      <div className="cp-actions">
+                        <a href={`/admin/clusters/${encodeURIComponent(cluster.name)}`} className="cp-btn cp-btn-small">
                           Open
                         </a>
-                        <button
-                          onClick={() => handleToggleActive(cluster)}
-                          className="clusters-action-btn action-primary"
-                        >
+                        <button type="button" className="cp-btn cp-btn-small" onClick={() => handleToggleActive(cluster)}>
                           {cluster.active ? 'Deactivate' : 'Activate'}
                         </button>
-                        <button
-                          onClick={() => handleDelete(cluster.id, cluster.name)}
-                          className="clusters-action-btn action-danger"
-                        >
+                        <button type="button" className="cp-btn cp-btn-small cp-btn-danger" onClick={() => handleDelete(cluster.id, cluster.name)}>
                           Delete
                         </button>
                       </div>
@@ -297,8 +240,8 @@ export function AdminClusters() {
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+      )}
+    </AdminLayout>
   );
 }
 
@@ -339,89 +282,67 @@ function CreateClusterForm({ onSuccess, onCancel, onAPIKeyGenerated }: CreateClu
   };
 
   return (
-    <div className="clusters-form">
-      <h3 className="clusters-form-title">Add New Cluster</h3>
+    <section className="cp-card">
+      <h3>Add new cluster</h3>
 
-      {error && (
-        <div className="clusters-error" style={{ marginBottom: '1rem' }}>
-          <div className="clusters-error-text">{error}</div>
-        </div>
-      )}
+      {error && <div className="cp-inline-error">{error}</div>}
 
-      <form onSubmit={handleSubmit}>
-        <div className="clusters-form-group">
-          <label className="clusters-form-label">
-            Cluster Name *
-          </label>
+      <form className="cp-form" onSubmit={handleSubmit}>
+        <div className="cp-form-group">
+          <label htmlFor="cluster-name">Cluster name</label>
           <input
+            id="cluster-name"
             type="text"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="clusters-form-input"
             placeholder="hpc-cluster-01"
           />
-          <p className="clusters-form-hint">
-            Hostname or identifier for the cluster
-          </p>
+          <p className="cp-form-hint">Hostname or identifier for the cluster; the agent submits data under this name</p>
         </div>
 
-        <div className="clusters-form-group">
-          <label className="clusters-form-label">
-            Description
-          </label>
+        <div className="cp-form-group">
+          <label htmlFor="cluster-description">Description</label>
           <input
+            id="cluster-description"
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="clusters-form-input"
             placeholder="Main HPC cluster for physics department"
           />
         </div>
 
-        <div className="clusters-form-group">
-          <label className="clusters-form-label">
-            Contact Email
-          </label>
+        <div className="cp-form-group">
+          <label htmlFor="cluster-contact">Contact email</label>
           <input
+            id="cluster-contact"
             type="email"
             value={contactEmail}
             onChange={(e) => setContactEmail(e.target.value)}
-            className="clusters-form-input"
             placeholder="admin@example.com"
           />
         </div>
 
-        <div className="clusters-form-group">
-          <label className="clusters-form-label">
-            Location
-          </label>
+        <div className="cp-form-group">
+          <label htmlFor="cluster-location">Location</label>
           <input
+            id="cluster-location"
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="clusters-form-input"
             placeholder="Building A, Room 101"
           />
         </div>
 
-        <div className="clusters-form-actions">
-          <button
-            type="submit"
-            disabled={loading}
-            className="clusters-form-submit"
-          >
-            {loading ? 'Creating...' : 'Create Cluster'}
+        <div className="cp-actions">
+          <button type="submit" className="cp-btn cp-btn-primary" disabled={loading}>
+            {loading ? 'Creating...' : 'Create cluster'}
           </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="clusters-form-cancel"
-          >
+          <button type="button" className="cp-btn" onClick={onCancel}>
             Cancel
           </button>
         </div>
       </form>
-    </div>
+    </section>
   );
 }

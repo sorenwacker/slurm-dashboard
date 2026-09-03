@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminClient } from '../api/adminClient';
 import { authApi } from '../api/client';
-import './AdminLogin.css';
+import './admin.css';
 
 export function AdminLogin() {
   const [username, setUsername] = useState('');
@@ -71,13 +71,9 @@ export function AdminLogin() {
         <div className="login-wrapper">
           <div className="login-card">
             <div className="login-header">
-              <div className="login-icon">
-              </div>
               <h2 className="login-title">Checking authentication...</h2>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-              <div className="login-spinner"></div>
-            </div>
+            <div className="loading-spinner"></div>
           </div>
         </div>
       </div>
@@ -91,8 +87,6 @@ export function AdminLogin() {
         <div className="login-card">
           {/* Header */}
           <div className="login-header">
-            <div className="login-icon">
-            </div>
             <h2 className="login-title">Admin Login</h2>
             <p className="login-subtitle">
               SLURM Usage History - Cluster Management
@@ -101,17 +95,9 @@ export function AdminLogin() {
 
           {/* Error Message */}
           {error && (
-            <div className="login-error">
-              <div className="login-error-content">
-
-                <div className="login-error-text">{error}</div>
-                <button
-                  onClick={() => setError('')}
-                  className="login-error-close"
-                >
-                  ×
-                </button>
-              </div>
+            <div className="cp-message cp-message-error">
+              <span>{error}</span>
+              <button type="button" onClick={() => setError('')}>Dismiss</button>
             </div>
           )}
 

@@ -27,4 +27,14 @@ describe('CSS custom properties', () => {
     }
     expect([...new Set(missing)]).toEqual([]);
   });
+
+  it('keeps color literals in App.css so every other stylesheet goes through the tokens', () => {
+    const offenders: string[] = [];
+    for (const file of files.filter((f) => f.endsWith('.css') && !f.endsWith('App.css'))) {
+      for (const match of readFileSync(file, 'utf8').matchAll(/#[0-9a-fA-F]{3,8}\b|\brgba?\(/g)) {
+        offenders.push(`${relative(SRC, file)}: ${match[0]}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
 });

@@ -68,6 +68,12 @@
   --transition-base: 200ms ease;
   --transition-slow: 300ms ease;
 
+  /* Text on a primary-colored surface, a modal backdrop, and code block text */
+  --on-primary: #ffffff;
+  --on-primary-faint: rgba(255, 255, 255, 0.3);
+  --overlay: rgba(0, 0, 0, 0.5);
+  --code-text: #e5e7eb;
+
   /* Chart colors for dark mode compatibility */
   --chart-grid: rgba(128, 128, 128, 0.1);
   --chart-text: #333;
