@@ -1,7 +1,7 @@
 import React from 'react';
 import Plot from '../charts/Plot';
 import { COLORS } from '../../theme/colors';
-import { alignPreviousPeriodDates } from './reportHelpers';
+import { alignPreviousPeriodDates, REPORT_AXIS, REPORT_LAYOUT, REPORT_PREVIOUS_LINE } from './reportHelpers';
 
 interface TimelineData {
   date: string;
@@ -18,309 +18,128 @@ interface ReportTimelinesProps {
   reportType: 'monthly' | 'quarterly' | 'annual';
 }
 
-const ReportTimelines: React.FC<ReportTimelinesProps> = ({
+type Metric = keyof Omit<TimelineData, 'date'>;
+
+interface TimelineCardProps {
+  title: string;
+  description: string;
+  metric: Metric;
+  label: string;
+  color: string;
+  timeline: TimelineData[];
+  previousTimeline?: TimelineData[];
+  integer?: boolean;
+}
+
+/** One line chart of a metric over the period, with the previous period dashed behind it. */
+const TimelineCard: React.FC<TimelineCardProps> = ({
+  title,
+  description,
+  metric,
+  label,
+  color,
   timeline,
   previousTimeline,
-  totalGpuHours,
-  reportType
+  integer,
 }) => {
+  const format = integer ? '%{y}' : '%{y:,.0f}';
+  return (
+    <div className="report-card page-break-avoid">
+      <h3>{title}</h3>
+      <p className="report-description">{description}</p>
+      <Plot
+        data={[
+          ...(previousTimeline
+            ? [
+                {
+                  x: alignPreviousPeriodDates(timeline, previousTimeline).map((d) => d.date),
+                  y: previousTimeline.map((d) => d[metric]),
+                  type: 'scatter' as const,
+                  mode: 'lines' as const,
+                  name: 'Previous Period',
+                  line: REPORT_PREVIOUS_LINE,
+                  opacity: 0.5,
+                  hovertemplate: `<b>%{x}</b><br>Previous ${label}: ${format}<extra></extra>`,
+                },
+              ]
+            : []),
+          {
+            x: timeline.map((d) => d.date),
+            y: timeline.map((d) => d[metric]),
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Current Period',
+            line: { color, width: 3 },
+            hovertemplate: `<b>%{x}</b><br>${label}: ${format}<extra></extra>`,
+          },
+        ]}
+        layout={{
+          ...REPORT_LAYOUT,
+          height: 250,
+          margin: { l: 60, r: 20, t: 10, b: 50 },
+          xaxis: { ...REPORT_AXIS, title: { text: 'Date', font: { size: 11 } }, tickfont: { size: 9 }, tickangle: -45 },
+          yaxis: { ...REPORT_AXIS, title: { text: label, font: { size: 11 } } },
+          showlegend: Boolean(previousTimeline),
+          legend: { orientation: 'h', y: -0.25, x: 0.5, xanchor: 'center', font: { size: 10 } },
+        }}
+        config={{ displayModeBar: false, staticPlot: true }}
+        style={{ width: '100%' }}
+      />
+    </div>
+  );
+};
+
+const TIME_UNIT: Record<ReportTimelinesProps['reportType'], string> = {
+  monthly: 'Daily',
+  quarterly: 'Weekly',
+  annual: 'Monthly',
+};
+
+const ReportTimelines: React.FC<ReportTimelinesProps> = ({ timeline, previousTimeline, totalGpuHours, reportType }) => {
   if (!timeline || timeline.length === 0) {
     return null;
   }
 
-  // Determine the time unit label based on report type
-  const getTimeUnit = () => {
-    switch (reportType) {
-      case 'monthly':
-        return 'Daily';
-      case 'quarterly':
-        return 'Weekly';
-      case 'annual':
-        return 'Monthly';
-      default:
-        return 'Daily';
-    }
-  };
-
-  const timeUnit = getTimeUnit();
+  const timeUnit = TIME_UNIT[reportType];
+  const shared = { timeline, previousTimeline };
 
   return (
-    <div style={{ marginTop: '3rem' }}>
-      {/* Daily Active Users Timeline */}
-      <div className="page-break-avoid" style={{
-        background: 'var(--card-bg)',
-        padding: '1rem',
-        borderRadius: '8px',
-        border: '1px solid var(--border-color)',
-        marginBottom: '1.5rem',
-      }}>
-        <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
-          Active Users Over Time
-        </h3>
-        <p style={{ margin: '0 0 1rem 0', fontSize: '0.875rem', color: '#666', lineHeight: '1.5' }}>
-          This chart displays the number of unique active users each day, showing user engagement trends and comparing them to the previous period.
-        </p>
-        <Plot
-          data={[
-            // Previous period trace (draw first so it appears behind)
-            ...(previousTimeline ? [{
-              x: alignPreviousPeriodDates(timeline, previousTimeline).map(d => d.date),
-              y: previousTimeline.map(d => d.users),
-              type: 'scatter' as const,
-              mode: 'lines' as const,
-              name: 'Previous Period',
-              line: { color: '#999', width: 2, dash: 'dash' },
-              opacity: 0.5,
-              hovertemplate: '<b>%{x}</b><br>Previous Users: %{y}<extra></extra>',
-            }] : []),
-            // Current period trace (draw second so it appears on top)
-            {
-              x: timeline.map(d => d.date),
-              y: timeline.map(d => d.users),
-              type: 'scatter',
-              mode: 'lines',
-              name: 'Current Period',
-              line: { color: '#10b981', width: 3 },
-              hovertemplate: '<b>%{x}</b><br>Active Users: %{y}<extra></extra>',
-            },
-          ]}
-          layout={{
-            height: 250,
-            margin: { l: 60, r: 20, t: 10, b: 50 },
-            xaxis: {
-              title: { text: 'Date', font: { size: 11 } },
-              gridcolor: '#e0e0e0',
-              tickfont: { size: 9 },
-              tickangle: -45,
-            },
-            yaxis: {
-              title: { text: 'Active Users', font: { size: 11 } },
-              gridcolor: '#e0e0e0',
-              tickfont: { size: 10 },
-            },
-            plot_bgcolor: '#fafafa',
-            paper_bgcolor: 'white',
-            font: { color: '#000', family: 'Arial, sans-serif' },
-            showlegend: previousTimeline ? true : false,
-            legend: {
-              orientation: 'h',
-              y: -0.25,
-              x: 0.5,
-              xanchor: 'center',
-              font: { size: 10 },
-            },
-          }}
-          config={{ displayModeBar: false, staticPlot: true }}
-          style={{ width: '100%' }}
-        />
-      </div>
-
-      {/* Daily Jobs Timeline */}
-      <div className="page-break-avoid" style={{
-        background: 'var(--card-bg)',
-        padding: '1rem',
-        borderRadius: '8px',
-        border: '1px solid var(--border-color)',
-        marginBottom: '1.5rem',
-      }}>
-        <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
-          Submitted Jobs Over Time
-        </h3>
-        <p style={{ margin: '0 0 1rem 0', fontSize: '0.875rem', color: '#666', lineHeight: '1.5' }}>
-          This chart shows the number of jobs submitted daily, tracking job submission patterns and comparing them to the previous period.
-        </p>
-        <Plot
-          data={[
-            // Previous period trace (draw first so it appears behind)
-            ...(previousTimeline ? [{
-              x: alignPreviousPeriodDates(timeline, previousTimeline).map(d => d.date),
-              y: previousTimeline.map(d => d.jobs),
-              type: 'scatter' as const,
-              mode: 'lines' as const,
-              name: 'Previous Period',
-              line: { color: '#999', width: 2, dash: 'dash' },
-              opacity: 0.5,
-              hovertemplate: '<b>%{x}</b><br>Previous Jobs: %{y}<extra></extra>',
-            }] : []),
-            // Current period trace (draw second so it appears on top)
-            {
-              x: timeline.map(d => d.date),
-              y: timeline.map(d => d.jobs),
-              type: 'scatter',
-              mode: 'lines',
-              name: 'Current Period',
-              line: { color: '#8b5cf6', width: 3 },
-              hovertemplate: '<b>%{x}</b><br>Jobs: %{y}<extra></extra>',
-            },
-          ]}
-          layout={{
-            height: 250,
-            margin: { l: 60, r: 20, t: 10, b: 50 },
-            xaxis: {
-              title: { text: 'Date', font: { size: 11 } },
-              gridcolor: '#e0e0e0',
-              tickfont: { size: 9 },
-              tickangle: -45,
-            },
-            yaxis: {
-              title: { text: 'Number of Submitted Jobs', font: { size: 11 } },
-              gridcolor: '#e0e0e0',
-              tickfont: { size: 10 },
-            },
-            plot_bgcolor: '#fafafa',
-            paper_bgcolor: 'white',
-            font: { color: '#000', family: 'Arial, sans-serif' },
-            showlegend: previousTimeline ? true : false,
-            legend: {
-              orientation: 'h',
-              y: -0.25,
-              x: 0.5,
-              xanchor: 'center',
-              font: { size: 10 },
-            },
-          }}
-          config={{ displayModeBar: false, staticPlot: true }}
-          style={{ width: '100%' }}
-        />
-      </div>
-
-      {/* CPU Consumption Timeline */}
-      <div className="page-break-avoid" style={{
-        background: 'var(--card-bg)',
-        padding: '1rem',
-        borderRadius: '8px',
-        border: '1px solid var(--border-color)',
-        marginBottom: '1.5rem',
-      }}>
-        <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
-          {timeUnit} CPU Consumption
-        </h3>
-        <p style={{ margin: '0 0 1rem 0', fontSize: '0.875rem', color: '#666', lineHeight: '1.5' }}>
-          This chart displays CPU hours consumed per {timeUnit.toLowerCase()} period, showing CPU resource utilization trends and helping identify high-demand periods.
-        </p>
-        <Plot
-          data={[
-            // Previous period trace (draw first so it appears behind)
-            ...(previousTimeline ? [{
-              x: alignPreviousPeriodDates(timeline, previousTimeline).map(d => d.date),
-              y: previousTimeline.map(d => d.cpu_hours),
-              type: 'scatter' as const,
-              mode: 'lines' as const,
-              name: 'Previous Period',
-              line: { color: '#999', width: 2, dash: 'dash' },
-              opacity: 0.5,
-              hovertemplate: '<b>%{x}</b><br>Previous CPU Hours: %{y:,.0f}<extra></extra>',
-            }] : []),
-            // Current period trace (draw second so it appears on top)
-            {
-              x: timeline.map(d => d.date),
-              y: timeline.map(d => d.cpu_hours),
-              type: 'scatter',
-              mode: 'lines',
-              name: 'Current Period',
-              line: { color: COLORS.cpu_hours, width: 3 },
-              hovertemplate: '<b>%{x}</b><br>CPU Hours: %{y:,.0f}<extra></extra>',
-            },
-          ]}
-          layout={{
-            height: 250,
-            margin: { l: 60, r: 20, t: 10, b: 50 },
-            xaxis: {
-              title: { text: 'Date', font: { size: 11 } },
-              gridcolor: '#e0e0e0',
-              tickfont: { size: 9 },
-              tickangle: -45,
-            },
-            yaxis: {
-              title: { text: 'CPU Hours', font: { size: 11 } },
-              gridcolor: '#e0e0e0',
-              tickfont: { size: 10 },
-            },
-            plot_bgcolor: '#fafafa',
-            paper_bgcolor: 'white',
-            font: { color: '#000', family: 'Arial, sans-serif' },
-            showlegend: previousTimeline ? true : false,
-            legend: {
-              orientation: 'h',
-              y: -0.25,
-              x: 0.5,
-              xanchor: 'center',
-              font: { size: 10 },
-            },
-          }}
-          config={{ displayModeBar: false, staticPlot: true }}
-          style={{ width: '100%' }}
-        />
-      </div>
-
-      {/* GPU Consumption Timeline */}
+    <div className="report-cards">
+      <TimelineCard
+        {...shared}
+        title="Active Users Over Time"
+        description="Number of unique active users per period, compared with the previous period."
+        metric="users"
+        label="Active Users"
+        color={COLORS.users}
+        integer
+      />
+      <TimelineCard
+        {...shared}
+        title="Submitted Jobs Over Time"
+        description="Number of jobs submitted per period, compared with the previous period."
+        metric="jobs"
+        label="Jobs"
+        color={COLORS.total_jobs}
+        integer
+      />
+      <TimelineCard
+        {...shared}
+        title={`${timeUnit} CPU Consumption`}
+        description={`CPU hours consumed per ${timeUnit.toLowerCase()} period, showing high-demand periods.`}
+        metric="cpu_hours"
+        label="CPU Hours"
+        color={COLORS.cpu_hours}
+      />
       {totalGpuHours > 0 && (
-        <div className="page-break-avoid" style={{
-          background: 'var(--card-bg)',
-          padding: '1rem',
-          borderRadius: '8px',
-          border: '1px solid var(--border-color)',
-        }}>
-          <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#000', fontSize: '1.1rem' }}>
-            {timeUnit} GPU Consumption
-          </h3>
-          <p style={{ margin: '0 0 1rem 0', fontSize: '0.875rem', color: '#666', lineHeight: '1.5' }}>
-            This chart displays GPU hours consumed per {timeUnit.toLowerCase()} period, showing GPU resource utilization trends and helping identify high-demand periods.
-          </p>
-          <Plot
-            data={[
-              // Previous period trace (draw first so it appears behind)
-              ...(previousTimeline ? [{
-                x: alignPreviousPeriodDates(timeline, previousTimeline).map(d => d.date),
-                y: previousTimeline.map(d => d.gpu_hours),
-                type: 'scatter' as const,
-                mode: 'lines' as const,
-                name: 'Previous Period',
-                line: { color: '#999', width: 2, dash: 'dash' },
-                opacity: 0.5,
-                hovertemplate: '<b>%{x}</b><br>Previous GPU Hours: %{y:,.0f}<extra></extra>',
-              }] : []),
-              // Current period trace (draw second so it appears on top)
-              {
-                x: timeline.map(d => d.date),
-                y: timeline.map(d => d.gpu_hours),
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Current Period',
-                line: { color: COLORS.gpu_hours, width: 3 },
-                hovertemplate: '<b>%{x}</b><br>GPU Hours: %{y:,.0f}<extra></extra>',
-              },
-            ]}
-            layout={{
-              height: 250,
-              margin: { l: 60, r: 20, t: 10, b: 50 },
-              xaxis: {
-                title: { text: 'Date', font: { size: 11 } },
-                gridcolor: '#e0e0e0',
-                tickfont: { size: 9 },
-                tickangle: -45,
-              },
-              yaxis: {
-                title: { text: 'GPU Hours', font: { size: 11 } },
-                gridcolor: '#e0e0e0',
-                tickfont: { size: 10 },
-              },
-              plot_bgcolor: '#fafafa',
-              paper_bgcolor: 'white',
-              font: { color: '#000', family: 'Arial, sans-serif' },
-              showlegend: previousTimeline ? true : false,
-              legend: {
-                orientation: 'h',
-                y: -0.25,
-                x: 0.5,
-                xanchor: 'center',
-                font: { size: 10 },
-              },
-            }}
-            config={{ displayModeBar: false, staticPlot: true }}
-            style={{ width: '100%' }}
-          />
-        </div>
+        <TimelineCard
+          {...shared}
+          title={`${timeUnit} GPU Consumption`}
+          description={`GPU hours consumed per ${timeUnit.toLowerCase()} period, showing high-demand periods.`}
+          metric="gpu_hours"
+          label="GPU Hours"
+          color={COLORS.gpu_hours}
+        />
       )}
     </div>
   );

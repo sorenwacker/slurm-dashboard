@@ -63,3 +63,28 @@ export const getPeriodLabel = (reportType: 'monthly' | 'quarterly' | 'annual'): 
       return 'period';
   }
 };
+
+/** Plotly layout shared by every chart on the printable (always light) report page. */
+export const REPORT_LAYOUT = {
+  plot_bgcolor: '#fafafa',
+  paper_bgcolor: '#ffffff',
+  font: { color: '#000000', family: 'Arial, sans-serif' },
+} as const;
+
+/** Axis defaults for report charts. */
+export const REPORT_AXIS = {
+  gridcolor: '#e0e0e0',
+  tickfont: { size: 10 },
+} as const;
+
+/** Line style of the previous-period trace drawn behind the current one. */
+export const REPORT_PREVIOUS_LINE = { color: '#999999', width: 2, dash: 'dash' } as const;
+
+/** A hex color as rgba with the given opacity, for chart fills. */
+export const withAlpha = (hex: string, alpha: number): string => {
+  const value = hex.replace('#', '');
+  const r = parseInt(value.slice(0, 2), 16);
+  const g = parseInt(value.slice(2, 4), 16);
+  const b = parseInt(value.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};

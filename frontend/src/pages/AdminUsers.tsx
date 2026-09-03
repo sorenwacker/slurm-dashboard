@@ -1,41 +1,80 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminClient } from '../api/adminClient';
-import './AdminUsers.css';
+import { AdminLayout } from '../components/AdminLayout';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8100';
 
-const getAuthHeaders = (): HeadersInit => {
-  const token = localStorage.getItem('admin_token');
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+interface EmailListProps {
+  title: string;
+  description: string;
+  emails: string[];
+  onChange: (emails: string[]) => void;
+}
+
+function EmailList({ title, description, emails, onChange }: EmailListProps) {
+  const [draft, setDraft] = useState('');
+
+  const add = () => {
+    const email = draft.trim();
+    if (email && !emails.includes(email)) {
+      onChange([...emails, email]);
+      setDraft('');
+    }
   };
 
-  // Add Bearer token if admin_token exists (username/password login)
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  // If no token, rely on cookie-based SAML authentication
-
-  return headers;
-};
+  return (
+    <section className="cp-card">
+      <h3>{title}</h3>
+      <p className="cp-muted">{description}</p>
+      <div className="cp-inline-form">
+        <input
+          type="email"
+          placeholder="email@example.com"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              add();
+            }
+          }}
+        />
+        <button type="button" className="cp-btn" onClick={add}>
+          Add
+        </button>
+      </div>
+      {emails.length > 0 ? (
+        <div className="cp-chips">
+          {emails.map((email) => (
+            <span key={email} className="cp-chip">
+              {email}
+              <button type="button" title="Remove" onClick={() => onChange(emails.filter((e) => e !== email))}>
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="cp-muted">None configured</p>
+      )}
+    </section>
+  );
+}
 
 export function AdminUsers() {
   const [adminEmails, setAdminEmails] = useState<string[]>([]);
   const [superadminEmails, setSuperadminEmails] = useState<string[]>([]);
-  const [newAdminEmail, setNewAdminEmail] = useState('');
-  const [newSuperadminEmail, setNewSuperadminEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
-
   const loadEmails = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/admin-emails`, {
-        headers: getAuthHeaders(),
+        headers: adminClient.authHeaders(),
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to load admin emails');
@@ -59,7 +98,6 @@ export function AdminUsers() {
     loadEmails();
   }, [navigate, loadEmails]);
 
-
   const handleSave = async () => {
     setSaving(true);
     setError('');
@@ -68,7 +106,7 @@ export function AdminUsers() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/admin-emails`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: { ...adminClient.authHeaders(), 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           admin_emails: adminEmails,
@@ -81,7 +119,7 @@ export function AdminUsers() {
         throw new Error(errorData.detail || 'Failed to update admin emails');
       }
 
-      setSuccess('Admin emails updated successfully! Restart the backend for changes to take effect.');
+      setSuccess('Admin emails updated. Restart the backend for the change to take effect.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update admin emails');
     } finally {
@@ -89,273 +127,57 @@ export function AdminUsers() {
     }
   };
 
-  const handleAddAdminEmail = () => {
-    if (newAdminEmail && !adminEmails.includes(newAdminEmail)) {
-      setAdminEmails([...adminEmails, newAdminEmail]);
-      setNewAdminEmail('');
-    }
-  };
-
-  const handleAddSuperadminEmail = () => {
-    if (newSuperadminEmail && !superadminEmails.includes(newSuperadminEmail)) {
-      setSuperadminEmails([...superadminEmails, newSuperadminEmail]);
-      setNewSuperadminEmail('');
-    }
-  };
-
-  const handleRemoveAdminEmail = (email: string) => {
-    setAdminEmails(adminEmails.filter(e => e !== email));
-  };
-
-  const handleRemoveSuperadminEmail = (email: string) => {
-    setSuperadminEmails(superadminEmails.filter(e => e !== email));
-  };
-
-  const handleLogout = () => {
-    adminClient.logout();
-    navigate('/admin/login');
-  };
-
-  if (loading) {
-    return (
-      <div className="admin-config">
-        <div className="admin-loading">
-          <div className="admin-loading-spinner"></div>
-          <p>Loading admin users...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="admin-config">
-      {/* Header */}
-      <div className="admin-header">
-        <div className="admin-header-content">
-          <div className="admin-header-title">
-            <div>
-              <h1>
-                Admin Users
-              </h1>
-              <p className="admin-header-subtitle">Manage admin and superadmin access via SAML email addresses</p>
-            </div>
-          </div>
-          <div className="admin-header-nav">
-            <a href="/">Dashboard</a>
-            <a href="/admin/clusters">Clusters</a>
-            <a href="/admin/config">Configuration</a>
-            <button onClick={handleLogout}>Logout</button>
-          </div>
+    <AdminLayout title="Admin Users" subtitle="Manage admin and superadmin access by SAML email address">
+      {error && (
+        <div className="cp-message cp-message-error">
+          <span>{error}</span>
+          <button type="button" onClick={() => setError('')}>Dismiss</button>
         </div>
-      </div>
-
-      <div className="admin-container">
-        {/* Messages */}
-        {error && (
-          <div className="admin-message admin-message-error">
-            <span>{error}</span>
-            <button onClick={() => setError('')} className="admin-message-close">×</button>
-          </div>
-        )}
-
-        {success && (
-          <div className="admin-message admin-message-success">
-            <span>{success}</span>
-            <button onClick={() => setSuccess('')} className="admin-message-close">×</button>
-          </div>
-        )}
-
-        {/* Info Card */}
-        <div style={{ background: 'linear-gradient(to right, #e7f3ff, #e7d6ff)', padding: '1.5rem', borderRadius: '8px', border: '1px solid #bee5eb', marginBottom: '2rem' }}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>ℹ️</span> About Admin Access
-          </h3>
-          <ul style={{ fontSize: '0.875rem', marginLeft: '1.5rem', marginBottom: 0, color: '#004085' }}>
-            <li><strong>Admin</strong>: Can manage clusters, view all data, and generate reports</li>
-            <li><strong>Superadmin</strong>: Full access including cluster creation/deletion and API key rotation</li>
-            <li>Users authenticate via SAML (TU Delft SSO) and receive permissions based on their email</li>
-            <li>Changes require backend restart to take effect: <code style={{ background: '#d1ecf1', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>sudo systemctl restart slurm-usage-backend</code></li>
-          </ul>
+      )}
+      {success && (
+        <div className="cp-message cp-message-ok">
+          <span>{success}</span>
+          <button type="button" onClick={() => setSuccess('')}>Dismiss</button>
         </div>
+      )}
 
-        {/* Superadmin Emails */}
-        <div className="admin-table-container" style={{ marginBottom: '2rem' }}>
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid #dee2e6' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              Superadmin Emails
-            </h2>
-            <p style={{ fontSize: '0.875rem', color: '#6c757d', marginBottom: '1rem' }}>
-              Users with these email addresses have full administrative access
-            </p>
+      <section className="cp-card cp-card-info">
+        <h3>About admin access</h3>
+        <ul>
+          <li><strong>Admin</strong>: can manage clusters, view all data, and generate reports</li>
+          <li><strong>Superadmin</strong>: full access including cluster creation, deletion, and API key rotation</li>
+          <li>Users authenticate through SAML and receive permissions based on their email address</li>
+          <li>Changes take effect after a backend restart: <code>sudo systemctl restart slurm-usage-backend</code></li>
+        </ul>
+      </section>
 
-            {/* Add new email */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-              <input
-                type="email"
-                placeholder="email@example.com"
-                value={newSuperadminEmail}
-                onChange={(e) => setNewSuperadminEmail(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddSuperadminEmail()}
-                style={{
-                  flex: 1,
-                  padding: '0.5rem 0.75rem',
-                  border: '1px solid #dee2e6',
-                  borderRadius: '4px',
-                  fontSize: '0.875rem',
-                }}
-              />
-              <button
-                onClick={handleAddSuperadminEmail}
-                className="admin-btn admin-btn-success"
-                style={{ padding: '0.5rem 1rem' }}
-              >
-                + Add
-              </button>
-            </div>
-
-            {/* Email list */}
-            {superadminEmails.length > 0 ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {superadminEmails.map((email) => (
-                  <div
-                    key={email}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.5rem 0.75rem',
-                      background: '#f8f9fa',
-                      border: '1px solid #dee2e6',
-                      borderRadius: '4px',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    <span>{email}</span>
-                    <button
-                      onClick={() => handleRemoveSuperadminEmail(email)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#dc3545',
-                        cursor: 'pointer',
-                        padding: '0',
-                        fontSize: '1.25rem',
-                        lineHeight: 1,
-                      }}
-                      title="Remove"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p style={{ fontSize: '0.875rem', color: '#6c757d', fontStyle: 'italic' }}>
-                No superadmin emails configured
-              </p>
-            )}
+      {loading ? (
+        <p className="cp-muted">Loading</p>
+      ) : (
+        <>
+          <EmailList
+            title="Superadmin emails"
+            description="Users with these email addresses have full administrative access"
+            emails={superadminEmails}
+            onChange={setSuperadminEmails}
+          />
+          <EmailList
+            title="Admin emails"
+            description="Users with these email addresses have standard administrative access"
+            emails={adminEmails}
+            onChange={setAdminEmails}
+          />
+          <div className="cp-actions">
+            <button type="button" className="cp-btn cp-btn-primary" onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Save changes'}
+            </button>
+            <button type="button" className="cp-btn" onClick={loadEmails} disabled={saving}>
+              Reset
+            </button>
           </div>
-        </div>
-
-        {/* Admin Emails */}
-        <div className="admin-table-container" style={{ marginBottom: '2rem' }}>
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid #dee2e6' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              Admin Emails
-            </h2>
-            <p style={{ fontSize: '0.875rem', color: '#6c757d', marginBottom: '1rem' }}>
-              Users with these email addresses have standard administrative access
-            </p>
-
-            {/* Add new email */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-              <input
-                type="email"
-                placeholder="email@example.com"
-                value={newAdminEmail}
-                onChange={(e) => setNewAdminEmail(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddAdminEmail()}
-                style={{
-                  flex: 1,
-                  padding: '0.5rem 0.75rem',
-                  border: '1px solid #dee2e6',
-                  borderRadius: '4px',
-                  fontSize: '0.875rem',
-                }}
-              />
-              <button
-                onClick={handleAddAdminEmail}
-                className="admin-btn admin-btn-success"
-                style={{ padding: '0.5rem 1rem' }}
-              >
-                + Add
-              </button>
-            </div>
-
-            {/* Email list */}
-            {adminEmails.length > 0 ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {adminEmails.map((email) => (
-                  <div
-                    key={email}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.5rem 0.75rem',
-                      background: '#f8f9fa',
-                      border: '1px solid #dee2e6',
-                      borderRadius: '4px',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    <span>{email}</span>
-                    <button
-                      onClick={() => handleRemoveAdminEmail(email)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#dc3545',
-                        cursor: 'pointer',
-                        padding: '0',
-                        fontSize: '1.25rem',
-                        lineHeight: 1,
-                      }}
-                      title="Remove"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p style={{ fontSize: '0.875rem', color: '#6c757d', fontStyle: 'italic' }}>
-                No admin emails configured
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Save Button */}
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="admin-btn admin-btn-primary"
-            style={{ padding: '0.75rem 1.5rem' }}
-          >
-            {saving ? 'Saving...' : '⎗ Save Changes'}
-          </button>
-          <button
-            onClick={loadEmails}
-            disabled={saving}
-            className="admin-btn admin-btn-secondary"
-            style={{ padding: '0.75rem 1.5rem' }}
-          >
-            Reset
-          </button>
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+    </AdminLayout>
   );
 }

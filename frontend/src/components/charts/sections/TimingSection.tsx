@@ -141,7 +141,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
               {data.waiting_times_hist.type === 'pie'
                 ? `Total Waiting Time by ${colorBy}`
                 : 'Job Waiting Times Distribution'}
-              <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}> (all jobs)</span>
+              <span className="card-subtitle"> (all jobs)</span>
             </h3>
             {data.waiting_times_hist.type === 'pie' ? (
               <PieChart
@@ -181,7 +181,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
               {data.job_duration_hist.type === 'pie'
                 ? `Total Job Duration by ${colorBy}`
                 : 'Job Duration Distribution'}
-              <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}> (all jobs)</span>
+              <span className="card-subtitle"> (all jobs)</span>
             </h3>
             {data.job_duration_hist.type === 'pie' ? (
               <PieChart
@@ -219,7 +219,7 @@ const TimingSection: React.FC<TimingSectionProps> = ({
         <div className="card">
           <h3>
             Waiting Time vs Job Duration
-            <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>
+            <span className="card-subtitle">
               {' '}({data.wait_duration_scatter.sampled
                 ? `sample of 5,000 of ${data.wait_duration_scatter.total_jobs.toLocaleString()} jobs`
                 : `${data.wait_duration_scatter.total_jobs.toLocaleString()} jobs`})

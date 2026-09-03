@@ -42,41 +42,19 @@ const SearchableCheckboxList: React.FC<{
 
   return (
     <div className="filter-group">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-        <div
-          onClick={() => setIsExpanded(!isExpanded)}
-          style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', flex: 1 }}
-        >
-          <span style={{ marginRight: '0.35rem', fontSize: '0.8rem' }}>
-            {isExpanded ? '▼' : '▶'}
-          </span>
-          <label style={{ cursor: 'pointer', margin: 0, fontSize: '0.8rem' }}>{label}</label>
-          {selected.length > 0 && (
-            <span style={{
-              marginLeft: '0.35rem',
-              fontSize: '0.7rem',
-              color: '#6366f1',
-              fontWeight: 'bold'
-            }}>
-              ({selected.length})
-            </span>
-          )}
+      <div className="filter-list-header">
+        <div className="filter-list-toggle" onClick={() => setIsExpanded(!isExpanded)}>
+          <span>{isExpanded ? '▼' : '▶'}</span>
+          <label>{label}</label>
+          {selected.length > 0 && <span className="filter-list-count">({selected.length})</span>}
         </div>
         {selected.length > 0 && (
           <button
             type="button"
+            className="filter-clear"
             onClick={(e) => {
               e.stopPropagation();
               setSelected([]);
-            }}
-            style={{
-              fontSize: '0.65rem',
-              padding: '0.15rem 0.35rem',
-              background: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '3px',
-              cursor: 'pointer',
             }}
           >
             Clear
@@ -87,51 +65,25 @@ const SearchableCheckboxList: React.FC<{
         <>
           <input
             type="text"
+            className="filter-search"
             placeholder={`Search ${label.toLowerCase()}...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.35rem',
-              borderRadius: '4px',
-              border: '1px solid var(--border)',
-              fontSize: '0.8rem',
-              marginBottom: '0.35rem',
-              background: 'var(--bg-secondary)',
-              color: 'var(--text-primary)',
-            }}
           />
-          <div style={{
-            maxHeight: '180px',
-            overflowY: 'auto',
-            border: '1px solid var(--border)',
-            borderRadius: '4px',
-            padding: '0.35rem',
-            background: 'var(--bg-secondary)',
-          }}>
+          <div className="filter-list">
             {filteredItems.length > 1 && (
-              <label style={{ display: 'flex', alignItems: 'center', padding: '0.15rem 0', cursor: 'pointer', fontWeight: 'bold', borderBottom: '1px solid var(--border)', marginBottom: '0.15rem', fontSize: '0.75rem' }}>
-                <input
-                  type="checkbox"
-                  checked={allFiltered}
-                  onChange={toggleAll}
-                  style={{ marginRight: '0.35rem' }}
-                />
+              <label className="filter-item filter-item-all">
+                <input type="checkbox" checked={allFiltered} onChange={toggleAll} />
                 Select All ({filteredItems.length})
               </label>
             )}
-            {filteredItems.length === 0 && (
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', padding: '0.35rem', textAlign: 'center' }}>
-                No items found
-              </div>
-            )}
+            {filteredItems.length === 0 && <div className="filter-empty">No items found</div>}
             {filteredItems.map((item) => (
-              <label key={item} style={{ display: 'flex', alignItems: 'center', padding: '0.12rem 0', cursor: 'pointer', fontSize: '0.75rem' }}>
+              <label key={item} className="filter-item">
                 <input
                   type="checkbox"
                   checked={selected.includes(item)}
                   onChange={() => toggleItem(item, selected, setSelected)}
-                  style={{ marginRight: '0.35rem' }}
                 />
                 {item}
               </label>
@@ -228,6 +180,7 @@ const Filters: React.FC<FiltersProps> = ({
   const [globalSearch, setGlobalSearch] = useState('');
 
   const dateRange = metadata && selectedHostname ? metadata.date_ranges[selectedHostname] : null;
+  const dateInvalid = Boolean(startDate && endDate && startDate > endDate);
 
   const hasActiveFilters =
     selectedPartitions.length > 0 ||
@@ -287,7 +240,7 @@ const Filters: React.FC<FiltersProps> = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+    <div className="filters-stack">
       {/* Always visible: Cluster selection */}
       <div className="filter-group">
         <label htmlFor="hostname">Cluster</label>
@@ -315,9 +268,7 @@ const Filters: React.FC<FiltersProps> = ({
           onChange={(e) => setStartDate(e.target.value)}
           min={dateRange?.min_date}
           max={dateRange?.max_date}
-          style={{
-            borderColor: startDate && endDate && startDate > endDate ? '#dc3545' : undefined
-          }}
+          className={dateInvalid ? 'date-invalid' : undefined}
         />
       </div>
 
@@ -330,23 +281,13 @@ const Filters: React.FC<FiltersProps> = ({
           onChange={(e) => setEndDate(e.target.value)}
           min={dateRange?.min_date}
           max={dateRange?.max_date}
-          style={{
-            borderColor: startDate && endDate && startDate > endDate ? '#dc3545' : undefined
-          }}
+          className={dateInvalid ? 'date-invalid' : undefined}
         />
       </div>
 
       {/* Date validation warning */}
-      {startDate && endDate && startDate > endDate && (
-        <div style={{
-          padding: '0.75rem',
-          background: '#fee',
-          border: '1px solid #fcc',
-          borderRadius: '4px',
-          color: '#c00',
-          fontSize: '0.875rem',
-          marginTop: '0.5rem',
-        }}>
+      {dateInvalid && (
+        <div className="error">
           <strong>Invalid date range:</strong> Start date must be before end date.
         </div>
       )}
@@ -409,8 +350,8 @@ const Filters: React.FC<FiltersProps> = ({
       {colorBy === 'Account' && (
         <div className="filter-group">
           <label>Account Name Format</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+          <div className="radio-options">
+            <label>
               <input
                 type="radio"
                 name="account-segments"
@@ -420,7 +361,7 @@ const Filters: React.FC<FiltersProps> = ({
               />
               <span>Full names</span>
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <label>
               <input
                 type="radio"
                 name="account-segments"
@@ -430,7 +371,7 @@ const Filters: React.FC<FiltersProps> = ({
               />
               <span>First segment</span>
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <label>
               <input
                 type="radio"
                 name="account-segments"
@@ -440,7 +381,7 @@ const Filters: React.FC<FiltersProps> = ({
               />
               <span>First two segments</span>
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <label>
               <input
                 type="radio"
                 name="account-segments"
@@ -459,10 +400,8 @@ const Filters: React.FC<FiltersProps> = ({
         <label className="quick-select-label">
           Quick Select Across All Categories
         </label>
-        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
-          e.g. ewi, gpu, completed...
-        </div>
-        <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+        <div className="quick-select-hint">e.g. ewi, gpu, completed...</div>
+        <div className="quick-select-row">
           <input
             type="text"
             placeholder="Search..."
@@ -488,38 +427,19 @@ const Filters: React.FC<FiltersProps> = ({
             Select{countMatching() > 0 ? ` (${countMatching()})` : ''}
           </button>
         </div>
-        {globalSearch.trim() && countMatching() === 0 && (
-          <div style={{ fontSize: '0.7rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
-            No matches
-          </div>
-        )}
+        {globalSearch.trim() && countMatching() === 0 && <div className="quick-select-nomatch">No matches</div>}
       </div>
 
       {/* Separator and Clear All button */}
       {hasActiveFilters && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-          <button
-            type="button"
-            onClick={clearAllFilters}
-            style={{
-              fontSize: '0.75rem',
-              padding: '0.3rem 0.6rem',
-              background: '#6366f1',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontWeight: 500,
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.background = '#4f46e5')}
-            onMouseOut={(e) => (e.currentTarget.style.background = '#6366f1')}
-          >
+        <div className="filter-actions">
+          <button type="button" className="filter-clear-all" onClick={clearAllFilters}>
             Clear All Filters
           </button>
         </div>
       )}
 
-      <hr style={{ margin: '0.5rem 0', borderColor: '#dee2e6' }} />
+      <hr />
 
       {/* Collapsible filter categories */}
       {selectedHostname && metadata?.partitions[selectedHostname] && (

@@ -57,7 +57,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
                   {data.user_activity_frequency.type === 'pie'
                     ? (colorBy === 'User' ? 'Most Active Users' : `User Activity by ${colorBy}`)
                     : 'User Activity Frequency'}
-                  <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>
+                  <span className="card-subtitle">
                     {' '}({data.user_activity_frequency.total_users} users over {data.user_activity_frequency.total_periods} {data.user_activity_frequency.period_label})
                   </span>
                 </h3>
@@ -125,7 +125,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
                   {data.jobs_distribution.type === 'pie'
                     ? `Jobs by ${colorBy}`
                     : 'Jobs Distribution'}
-                  <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>
+                  <span className="card-subtitle">
                     {' '}({data.summary.total_jobs.toLocaleString()} jobs)
                   </span>
                 </h3>
@@ -162,7 +162,7 @@ const UsersJobsSection: React.FC<UsersJobsSectionProps> = ({
               <div className="card">
                 <h3>
                   Nodes per Job{' '}
-                  <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>(all jobs)</span>
+                  <span className="card-subtitle">(all jobs)</span>
                 </h3>
                 <HistogramChart
                   data={data.nodes_per_job}

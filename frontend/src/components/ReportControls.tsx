@@ -19,6 +19,13 @@ interface ReportControlsProps {
   availableYears: number[];
 }
 
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+const QUARTERS = ['Q1 (Jan - Mar)', 'Q2 (Apr - Jun)', 'Q3 (Jul - Sep)', 'Q4 (Oct - Dec)'];
+
 const ReportControls: React.FC<ReportControlsProps> = ({
   metadata,
   reportHostname,
@@ -35,211 +42,101 @@ const ReportControls: React.FC<ReportControlsProps> = ({
   setDownloadFormat,
   onDownload,
   availableYears,
-}) => {
-  const months = [
-    { value: 1, label: 'January' },
-    { value: 2, label: 'February' },
-    { value: 3, label: 'March' },
-    { value: 4, label: 'April' },
-    { value: 5, label: 'May' },
-    { value: 6, label: 'June' },
-    { value: 7, label: 'July' },
-    { value: 8, label: 'August' },
-    { value: 9, label: 'September' },
-    { value: 10, label: 'October' },
-    { value: 11, label: 'November' },
-    { value: 12, label: 'December' },
-  ];
+}) => (
+  <div className="filters-stack">
+    <h4>Report Generator</h4>
 
-  return (
-    <>
-      <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>Report Generator</h3>
+    <div className="filter-group">
+      <label htmlFor="report-cluster">Cluster</label>
+      <select id="report-cluster" value={reportHostname} onChange={(e) => setReportHostname(e.target.value)}>
+        <option value="">Select cluster...</option>
+        {metadata?.hostnames.map((hostname) => (
+          <option key={hostname} value={hostname}>
+            {hostname}
+          </option>
+        ))}
+      </select>
+    </div>
 
-      {/* Cluster Selector */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <label htmlFor="report-cluster" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-          Select Cluster
-        </label>
-        <select
-          id="report-cluster"
-          value={reportHostname}
-          onChange={(e) => setReportHostname(e.target.value)}
-          style={{
-            padding: '0.5rem',
-            borderRadius: '4px',
-            border: '1px solid var(--border-color)',
-            fontSize: '1rem',
-            width: '100%',
-            background: 'var(--bg-color)',
-            color: 'var(--text-color)',
-          }}
-        >
-          <option value="">Select cluster...</option>
-          {metadata?.hostnames.map((hostname) => (
-            <option key={hostname} value={hostname}>
-              {hostname}
-            </option>
-          ))}
-        </select>
-      </div>
+    {reportHostname ? (
+      <>
+        <hr />
 
-      {/* Report Configuration - only shown when cluster is selected */}
-      {reportHostname && (
-        <>
-          <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
+        <div className="filter-group">
+          <label htmlFor="report-type">Report Type</label>
+          <select
+            id="report-type"
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value as typeof reportType)}
+          >
+            <option value="monthly">Monthly Report</option>
+            <option value="quarterly">Quarterly Report</option>
+            <option value="annual">Annual Report</option>
+          </select>
+        </div>
 
-          {/* Report Type */}
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-color)' }}>
-              Report Type
-            </label>
-            <select
-              value={reportType}
-              onChange={(e) => setReportType(e.target.value as typeof reportType)}
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-color)',
-                color: 'var(--text-color)',
-              }}
-            >
-              <option value="monthly">Monthly Report</option>
-              <option value="quarterly">Quarterly Report</option>
-              <option value="annual">Annual Report</option>
-            </select>
-          </div>
+        <div className="filter-group">
+          <label htmlFor="report-year">Year</label>
+          <select id="report-year" value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))}>
+            {availableYears.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          {/* Year */}
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-color)' }}>
-              Year
-            </label>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-color)',
-                color: 'var(--text-color)',
-              }}
-            >
-              {availableYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
+        {reportType === 'monthly' && (
+          <div className="filter-group">
+            <label htmlFor="report-month">Month</label>
+            <select id="report-month" value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))}>
+              {MONTHS.map((label, index) => (
+                <option key={label} value={index + 1}>
+                  {label}
                 </option>
               ))}
             </select>
           </div>
+        )}
 
-          {/* Month (only for monthly reports) */}
-          {reportType === 'monthly' && (
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-color)' }}>
-                Month
-              </label>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  borderRadius: '4px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-color)',
-                  color: 'var(--text-color)',
-                }}
-              >
-                {months.map((month) => (
-                  <option key={month.value} value={month.value}>
-                    {month.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Quarter (only for quarterly reports) */}
-          {reportType === 'quarterly' && (
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-color)' }}>
-                Quarter
-              </label>
-              <select
-                value={selectedQuarter}
-                onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  borderRadius: '4px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-color)',
-                  color: 'var(--text-color)',
-                }}
-              >
-                <option value={1}>Q1 (Jan - Mar)</option>
-                <option value={2}>Q2 (Apr - Jun)</option>
-                <option value={3}>Q3 (Jul - Sep)</option>
-                <option value={4}>Q4 (Oct - Dec)</option>
-              </select>
-            </div>
-          )}
-
-          {/* Download Format */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--text-color)' }}>
-              Download Format
-            </label>
+        {reportType === 'quarterly' && (
+          <div className="filter-group">
+            <label htmlFor="report-quarter">Quarter</label>
             <select
-              value={downloadFormat}
-              onChange={(e) => setDownloadFormat(e.target.value as typeof downloadFormat)}
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                borderRadius: '4px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-color)',
-                color: 'var(--text-color)',
-              }}
+              id="report-quarter"
+              value={selectedQuarter}
+              onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
             >
-              <option value="json">JSON</option>
-              <option value="csv">CSV</option>
-              <option value="pdf">PDF</option>
+              {QUARTERS.map((label, index) => (
+                <option key={label} value={index + 1}>
+                  {label}
+                </option>
+              ))}
             </select>
           </div>
+        )}
 
-          {/* Download Button */}
-          <button
-            onClick={onDownload}
-            className="no-print"
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: '#04A5D5',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '1rem',
-              width: '100%',
-            }}
+        <div className="filter-group">
+          <label htmlFor="report-format">Download Format</label>
+          <select
+            id="report-format"
+            value={downloadFormat}
+            onChange={(e) => setDownloadFormat(e.target.value as typeof downloadFormat)}
           >
-            Download Report
-          </button>
-        </>
-      )}
+            <option value="json">JSON</option>
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF</option>
+          </select>
+        </div>
 
-      {!reportHostname && (
-        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem', margin: '1rem 0 0 0' }}>
-          Please select a cluster to generate reports
-        </p>
-      )}
-    </>
-  );
-};
+        <button type="button" className="button no-print" onClick={onDownload}>
+          Download Report
+        </button>
+      </>
+    ) : (
+      <p className="filter-empty">Select a cluster to generate reports</p>
+    )}
+  </div>
+);
 
 export default ReportControls;

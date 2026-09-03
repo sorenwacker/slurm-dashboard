@@ -37,249 +37,131 @@ interface ReportSummaryCardsProps {
   reportType: 'monthly' | 'quarterly' | 'annual';
 }
 
-const ReportSummaryCards: React.FC<ReportSummaryCardsProps> = ({ reportData, reportType }) => {
-  const renderComparisonIndicator = (changePercent: number, periodLabel: string) => {
-    if (changePercent === 0) {
-      return (
-        <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.25rem' }}>
-          0.0% → vs previous {periodLabel}
-        </div>
-      );
-    }
+interface StatProps {
+  label: string;
+  value: string;
+  color: string;
+  note?: string;
+  change?: number;
+  periodLabel?: string;
+}
 
-    const isPositive = changePercent > 0;
-    const color = isPositive ? '#22c55e' : '#ef4444';
-    const arrow = isPositive ? '↑' : '↓';
-    const sign = isPositive ? '+' : '';
-
-    return (
-      <div style={{ fontSize: '0.7rem', color: color, marginTop: '0.25rem', fontWeight: 600 }}>
-        {sign}{changePercent.toFixed(1)}% {arrow} vs previous {periodLabel}
+/** One summary figure: label, colored value, an optional note, and an optional change against the previous period. */
+const Stat: React.FC<StatProps> = ({ label, value, color, note, change, periodLabel }) => {
+  let delta: React.ReactNode = null;
+  if (change !== undefined && periodLabel) {
+    const direction = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
+    const arrow = change > 0 ? '↑' : change < 0 ? '↓' : '→';
+    const sign = change > 0 ? '+' : '';
+    delta = (
+      <div className={`report-stat-delta ${direction}`}>
+        {sign}{change.toFixed(1)}% {arrow} vs previous {periodLabel}
       </div>
     );
-  };
+  }
+  return (
+    <div className="report-stat">
+      <div className="report-stat-label">{label}</div>
+      <div className="report-stat-value" style={{ color }}>{value}</div>
+      {note && <div className="report-stat-note">{note}</div>}
+      {delta}
+    </div>
+  );
+};
+
+const ReportSummaryCards: React.FC<ReportSummaryCardsProps> = ({ reportData, reportType }) => {
+  const { summary, comparison, timeline } = reportData;
+  const periodLabel = getPeriodLabel(reportType);
+  const days = timeline?.length ?? 0;
+  const maxJobs = days > 0 ? Math.max(...timeline.map((d) => d.jobs)) : 0;
+  const peakDay = days > 0 ? timeline.find((d) => d.jobs === maxJobs)?.date : undefined;
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-      gap: '1rem',
-      marginBottom: '2rem',
-    }}>
-      {/* Total Active Users */}
-      <div style={{
-        background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-        padding: '1rem',
-        borderRadius: '6px',
-        border: '1px solid #e0e0e0',
-      }}>
-        <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-          Total Active Users
-        </div>
-        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: COLORS.users }}>
-          {formatCompact(reportData.summary.total_users)}
-        </div>
-        <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
-          Unique users in period
-        </div>
-        {reportData.comparison && renderComparisonIndicator(
-          reportData.comparison.users_change_percent,
-          getPeriodLabel(reportType)
-        )}
-      </div>
+    <div className="report-stats">
+      <Stat
+        label="Total Active Users"
+        value={formatCompact(summary.total_users)}
+        color={COLORS.users}
+        note="Unique users in period"
+        change={comparison?.users_change_percent}
+        periodLabel={periodLabel}
+      />
+      <Stat
+        label="Total Jobs"
+        value={formatCompact(summary.total_jobs)}
+        color={COLORS.total_jobs}
+        note={`${formatNumber(summary.total_jobs)} jobs submitted`}
+        change={comparison?.jobs_change_percent}
+        periodLabel={periodLabel}
+      />
+      <Stat
+        label="Total CPU Hours"
+        value={formatCompact(summary.total_cpu_hours)}
+        color={COLORS.cpu_hours}
+        note={`${formatNumber(summary.total_cpu_hours)} hours`}
+        change={comparison?.cpu_hours_change_percent}
+        periodLabel={periodLabel}
+      />
+      <Stat
+        label="Total GPU Hours"
+        value={formatCompact(summary.total_gpu_hours)}
+        color={COLORS.gpu_hours}
+        note={`${formatNumber(summary.total_gpu_hours)} hours`}
+        change={comparison?.gpu_hours_change_percent}
+        periodLabel={periodLabel}
+      />
 
-      {/* Total Jobs */}
-      <div style={{
-        background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-        padding: '1rem',
-        borderRadius: '6px',
-        border: '1px solid #e0e0e0',
-      }}>
-        <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-          Total Jobs
-        </div>
-        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: COLORS.total_jobs }}>
-          {formatCompact(reportData.summary.total_jobs)}
-        </div>
-        <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
-          {formatNumber(reportData.summary.total_jobs)} jobs submitted
-        </div>
-        {reportData.comparison && renderComparisonIndicator(
-          reportData.comparison.jobs_change_percent,
-          getPeriodLabel(reportType)
-        )}
-      </div>
-
-      {/* Total CPU Hours */}
-      <div style={{
-        background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-        padding: '1rem',
-        borderRadius: '6px',
-        border: '1px solid #e0e0e0',
-      }}>
-        <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-          Total CPU Hours
-        </div>
-        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: COLORS.cpu_hours }}>
-          {formatCompact(reportData.summary.total_cpu_hours)}
-        </div>
-        <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
-          {formatNumber(reportData.summary.total_cpu_hours)} hours
-        </div>
-        {reportData.comparison && renderComparisonIndicator(
-          reportData.comparison.cpu_hours_change_percent,
-          getPeriodLabel(reportType)
-        )}
-      </div>
-
-      {/* Total GPU Hours */}
-      <div style={{
-        background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-        padding: '1rem',
-        borderRadius: '6px',
-        border: '1px solid #e0e0e0',
-      }}>
-        <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-          Total GPU Hours
-        </div>
-        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: COLORS.gpu_hours }}>
-          {formatCompact(reportData.summary.total_gpu_hours)}
-        </div>
-        <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
-          {formatNumber(reportData.summary.total_gpu_hours)} hours
-        </div>
-        {reportData.comparison && renderComparisonIndicator(
-          reportData.comparison.gpu_hours_change_percent,
-          getPeriodLabel(reportType)
-        )}
-      </div>
-
-      {/* Job Success Rate */}
-      {reportData.summary.success_rate !== undefined && (
-        <div style={{
-          background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-          padding: '1rem',
-          borderRadius: '6px',
-          border: '1px solid #e0e0e0',
-        }}>
-          <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-            Job Success Rate
-          </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: COLORS.total_jobs }}>
-            {reportData.summary.success_rate.toFixed(1)}%
-          </div>
-          <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
-            {formatNumber(reportData.summary.completed_jobs || 0)} completed, {formatNumber(reportData.summary.failed_jobs || 0)} failed
-          </div>
-        </div>
+      {summary.success_rate !== undefined && (
+        <Stat
+          label="Job Success Rate"
+          value={`${summary.success_rate.toFixed(1)}%`}
+          color={COLORS.total_jobs}
+          note={`${formatNumber(summary.completed_jobs || 0)} completed, ${formatNumber(summary.failed_jobs || 0)} failed`}
+        />
       )}
 
-      {/* Avg Job Duration */}
-      {reportData.summary.avg_job_duration_hours !== undefined && reportData.summary.avg_job_duration_hours > 0 && (
-        <div style={{
-          background: 'var(--card-bg)',
-          padding: '1.5rem',
-          borderRadius: '8px',
-          border: '1px solid var(--border-color)',
-        }}>
-          <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#000' }}>
-            Avg Job Duration: <span style={{ color: COLORS.duration }}>{formatHours(reportData.summary.avg_job_duration_hours)}h</span> - Median: {formatHours(reportData.summary.median_job_duration_hours || 0)}h
-          </div>
-        </div>
+      {summary.avg_job_duration_hours !== undefined && summary.avg_job_duration_hours > 0 && (
+        <Stat
+          label="Avg Job Duration"
+          value={`${formatHours(summary.avg_job_duration_hours)} h`}
+          color={COLORS.duration}
+          note={`median ${formatHours(summary.median_job_duration_hours || 0)} h`}
+        />
       )}
 
-      {/* Avg Waiting Time */}
-      {reportData.summary.avg_waiting_time_hours !== undefined && reportData.summary.avg_waiting_time_hours > 0 && (
-        <div style={{
-          background: 'var(--card-bg)',
-          padding: '1.5rem',
-          borderRadius: '8px',
-          border: '1px solid var(--border-color)',
-        }}>
-          <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#000' }}>
-            Avg Waiting Time: <span style={{ color: COLORS.waiting }}>{formatHours(reportData.summary.avg_waiting_time_hours)}h</span> - Median: {formatHours(reportData.summary.median_waiting_time_hours || 0)}h
-          </div>
-        </div>
+      {summary.avg_waiting_time_hours !== undefined && summary.avg_waiting_time_hours > 0 && (
+        <Stat
+          label="Avg Waiting Time"
+          value={`${formatHours(summary.avg_waiting_time_hours)} h`}
+          color={COLORS.waiting}
+          note={`median ${formatHours(summary.median_waiting_time_hours || 0)} h`}
+        />
       )}
 
-      {/* Average Jobs per Day */}
-      {reportData.timeline && reportData.timeline.length > 0 && (
-        <div style={{
-          background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-          padding: '1rem',
-          borderRadius: '6px',
-          border: '1px solid #e0e0e0',
-        }}>
-          <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-            Avg Jobs/Day
-          </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: COLORS.total_jobs }}>
-            {formatCompact(reportData.summary.total_jobs / reportData.timeline.length)}
-          </div>
-          <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
-            Over {reportData.timeline.length} days
-          </div>
-        </div>
-      )}
-
-      {/* Peak Jobs in a Day */}
-      {reportData.timeline && reportData.timeline.length > 0 && (
-        <div style={{
-          background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-          padding: '1rem',
-          borderRadius: '6px',
-          border: '1px solid #e0e0e0',
-        }}>
-          <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-            Peak Jobs/Day
-          </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: COLORS.total_jobs }}>
-            {formatCompact(Math.max(...reportData.timeline.map(d => d.jobs)))}
-          </div>
-          <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
-            {reportData.timeline.find(d => d.jobs === Math.max(...reportData.timeline.map(d => d.jobs)))?.date}
-          </div>
-        </div>
-      )}
-
-      {/* Avg CPU Hours per Day */}
-      {reportData.timeline && reportData.timeline.length > 0 && (
-        <div style={{
-          background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-          padding: '1rem',
-          borderRadius: '6px',
-          border: '1px solid #e0e0e0',
-        }}>
-          <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-            Avg CPU-Hours/Day
-          </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: COLORS.cpu_hours }}>
-            {formatCompact(reportData.summary.total_cpu_hours / reportData.timeline.length)}
-          </div>
-          <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
-            max {formatCompact(Math.max(...reportData.timeline.map(d => d.cpu_hours)))} h/day
-          </div>
-        </div>
-      )}
-
-      {/* Avg GPU Hours per Day */}
-      {reportData.timeline && reportData.timeline.length > 0 && reportData.summary.total_gpu_hours > 0 && (
-        <div style={{
-          background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-          padding: '1rem',
-          borderRadius: '6px',
-          border: '1px solid #e0e0e0',
-        }}>
-          <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-            Avg GPU-Hours/Day
-          </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: COLORS.gpu_hours }}>
-            {formatCompact(reportData.summary.total_gpu_hours / reportData.timeline.length)}
-          </div>
-          <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
-            max {formatCompact(Math.max(...reportData.timeline.map(d => d.gpu_hours)))} h/day
-          </div>
-        </div>
+      {days > 0 && (
+        <>
+          <Stat
+            label="Avg Jobs/Day"
+            value={formatCompact(summary.total_jobs / days)}
+            color={COLORS.total_jobs}
+            note={`Over ${days} days`}
+          />
+          <Stat label="Peak Jobs/Day" value={formatCompact(maxJobs)} color={COLORS.total_jobs} note={peakDay} />
+          <Stat
+            label="Avg CPU-Hours/Day"
+            value={formatCompact(summary.total_cpu_hours / days)}
+            color={COLORS.cpu_hours}
+            note={`max ${formatCompact(Math.max(...timeline.map((d) => d.cpu_hours)))} h/day`}
+          />
+          {summary.total_gpu_hours > 0 && (
+            <Stat
+              label="Avg GPU-Hours/Day"
+              value={formatCompact(summary.total_gpu_hours / days)}
+              color={COLORS.gpu_hours}
+              note={`max ${formatCompact(Math.max(...timeline.map((d) => d.gpu_hours)))} h/day`}
+            />
+          )}
+        </>
       )}
     </div>
   );

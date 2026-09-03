@@ -350,6 +350,12 @@ uv run pre-commit install
 
 The hooks run ruff (lint + format), vulture, and mypy on every commit. CI runs the same checks in the `lint:python` job plus the full test suites; no test job is allowed to fail.
 
+## Frontend styling
+
+Colors, radii, shadows, fonts, and spacing come from the custom properties declared in `frontend/src/App.css` (`--bg-*`, `--text-*`, `--border`, `--radius-*`, `--shadow-*`, `--font-*`, `--space-*`). The printable report page is always light and uses its own `--report-*` properties, declared on `.report-page` in the same file. A `var(--name)` whose name is not declared in any stylesheet is invalid CSS and silently drops the declaration. Gate: `frontend/src/theme/cssTokens.test.ts` fails on any undeclared name. Color literals live only in `App.css`; the same test fails on a hex or `rgb()` literal in any other stylesheet.
+
+Admin pages (login, clusters, users, cluster detail) render inside `frontend/src/components/AdminLayout.tsx`, which provides the header, navigation, theme toggle, and logout, and they use the `cp-*` classes from `frontend/src/pages/admin.css`. A new admin page adds no stylesheet of its own.
+
 ## Untrusted input
 
 Request values never become SQL text or filesystem paths. Each rule has a test that fails when it is broken.
