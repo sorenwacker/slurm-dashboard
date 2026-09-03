@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exporter sent the literal string `None` as `Start`/`End` for jobs that never started, which made the dashboard reject the whole batch with 422
 
 ### Changed
+- Report preview and its sidebar controls use stylesheet classes instead of inline styles; the report page is one `.report-page` block that stays light in dark mode, fits narrow screens, and uses the shared metric colors for every chart. The unused `ReportGenerator` and `ReportOverview` components are removed
 - Admin pages share one layout (header, navigation, theme toggle, logout) and one token-based stylesheet, so they follow the dashboard's fonts and colors and support dark mode; the four page-specific stylesheets with hardcoded Bootstrap colors are removed. Reload and demo results are shown as page messages instead of browser alert dialogs
 - mypy is a configured gate (pre-commit hook and CI lint job) at mypy's default strictness; the 36 pre-existing errors are fixed. --strict reports 342 errors and remains tracked work
 - Waiting-time bins match the job-duration grid (11 bins from < 30s to > 7d) in both the histogram and the stacked timeline, so waits of jobs that start near-immediately are separated from real queueing
