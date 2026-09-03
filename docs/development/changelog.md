@@ -42,6 +42,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Agent install command shown with uv (`uv tool install`) as well as pip in the admin panel and docs
 - Memory usage charts: agent collects requested memory and peak RSS per job; dashboard shows memory-hours over time, memory efficiency, memory per job, and per-node memory utilization
 
+## [0.6.0] - 2025-11-24
+
+### Changed
+- CPU and GPU charts aggregate by job start time; job and user charts aggregate by submit time
+- Charts grouped by `color_by` show every group instead of the top 10; coloring active users by user shows every user
+- Job count labels say "submitted jobs"; daily period axis labels include the day of the week
+- Agent retries data submission more times with a longer timeout
+
+### Fixed
+- Date boundary filtering no longer leaks jobs across adjacent periods
+- Date range and report selections show validation messages instead of failing silently
+
+### Added
+- Dashboard screenshot in the README and documentation
+
+## [0.5.1] - 2025-11-21
+
+### Fixed
+- Compressed SLURM node notation (`gpu[01-04]`) in legacy data is expanded in the usage-by-node charts, keeping the original zero padding; malformed names such as `gpu[30` and `14-15]` no longer raise errors
+- Node lists were expanded twice and node names normalized during chart generation, which produced duplicate and misnamed nodes
+
 ## [0.5.0] - 2025-11-20
 
 Deploy Key System & Security Enhancements
@@ -282,8 +303,8 @@ The DuckDB datastore is fully backward compatible with existing parquet files. N
 
 ## Links
 
-- [GitLab Repository](https://gitlab.ewi.tudelft.nl/sdrwacker/slurm-usage-history)
-- [Issue Tracker](https://gitlab.ewi.tudelft.nl/sdrwacker/slurm-usage-history/-/issues)
+- [GitLab Repository](https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history)
+- [Issue Tracker](https://gitlab.ewi.tudelft.nl/reit/slurm-usage-history/-/issues)
 - [Documentation](../index.md)
 - [Installation Guide](../getting-started/installation.md)
 - [Quick Start](../getting-started/quickstart.md)
