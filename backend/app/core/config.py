@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # Admin (comma-separated: username:hashed_password)
     admin_users: str = ""
-    admin_secret_key: str = "change-this-to-a-random-secret-key-in-production"
+    admin_secret_key: str | None = None  # no default: see admin_auth.resolve_signing_key
 
     # SAML-based admin emails (comma-separated: email:role)
     # Example: admin@example.com:superadmin,user@example.com:admin

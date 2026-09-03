@@ -12,6 +12,8 @@ services:
       - AUTO_REFRESH_INTERVAL=${AUTO_REFRESH_INTERVAL:-600}
       - CORS_ORIGINS=http://localhost:3100
       - ADMIN_USERS=admin:$$2b$$12$$fG5h7RtwMVKuNJA6f4FICuFzl1AQsucIrgbsAtelSc/b/7GAR1P.K
+      # Unset: a random key is generated at startup and admin sessions end on restart
+      - ADMIN_SECRET_KEY=${ADMIN_SECRET_KEY:-}
     volumes:
       - ./data:/data
     restart: unless-stopped

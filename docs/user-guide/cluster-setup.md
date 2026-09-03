@@ -368,7 +368,7 @@ If you can't access GitLab from the cluster, ask your administrator to:
 
 1. **Read-only SLURM access**: Agent only reads from SLURM accounting database
 2. **Config file permissions**: config.json is created with mode 0600 (user-readable only)
-3. **API authentication**: All uploads use HTTPS with API key authentication
+3. **API authentication**: All uploads use HTTPS with API key authentication; the server stores submitted jobs under the cluster the key belongs to and rejects a `cluster_name` that names another cluster
 4. **No data leakage**: Agent only uploads job metadata (no job outputs or user data)
 
 ## Next Steps

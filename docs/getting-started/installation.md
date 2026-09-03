@@ -155,6 +155,7 @@ DATA_PATH=/data/slurm-usage
 API_PREFIX=/api
 AUTO_REFRESH_INTERVAL=600
 ENABLE_SAML=false
+ADMIN_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(64))")
 EOF
 
 # Create systemd service
@@ -291,6 +292,7 @@ Backend configuration via `.env` file:
 ```bash
 # Required
 DATA_PATH=/data/slurm-usage
+ADMIN_SECRET_KEY=<random string; without it admin sessions end on every restart>
 
 # Optional
 API_PREFIX=/api

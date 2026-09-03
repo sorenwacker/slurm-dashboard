@@ -196,10 +196,9 @@ async def get_admin_token_from_saml(request: Request):
             detail="User does not have admin privileges",
         )
 
-    # Create admin token
-    username = user_data.get("username") or email or "saml_user"
+    # The subject is the admin email so that verify_token can check it against the admin lists
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": username}, expires_delta=access_token_expires)
+    access_token = create_access_token(data={"sub": email}, expires_delta=access_token_expires)
 
     return AdminLoginResponse(
         access_token=access_token,

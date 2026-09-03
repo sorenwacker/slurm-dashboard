@@ -8,6 +8,9 @@ settings = get_settings()
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
+# Cluster name returned for keys from the legacy API_KEYS setting, which are not bound to a cluster
+LEGACY_KEY_CLUSTER = "unknown"
+
 
 async def verify_api_key(api_key: str = Security(api_key_header)) -> str:
     """Verify API key from request header.
@@ -39,7 +42,7 @@ async def verify_api_key(api_key: str = Security(api_key_header)) -> str:
     # Fallback to legacy API keys from .env for backward compatibility
     legacy_api_keys = settings.get_api_keys()
     if api_key in legacy_api_keys:
-        return "unknown"
+        return LEGACY_KEY_CLUSTER
 
     # No valid key found
     if not legacy_api_keys and not db.has_active_api_keys():
