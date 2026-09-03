@@ -6,8 +6,9 @@ import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..core.admin_auth import get_current_admin
-from ..core.auth import verify_api_key
+from ..core.auth import LEGACY_KEY_CLUSTER, verify_api_key
 from ..core.config import get_settings
+from ..core.safe_paths import path_within, single_path_component
 from ..datastore_singleton import get_datastore
 from ..db.clusters import get_cluster_db
 from ..models.data_models import DataIngestionRequest, DataIngestionResponse
@@ -20,23 +21,33 @@ logger = logging.getLogger(__name__)
 @router.post("/ingest", response_model=DataIngestionResponse)
 async def ingest_data(
     request: DataIngestionRequest,
-    _cluster_name: str = Depends(verify_api_key),
+    key_cluster: str = Depends(verify_api_key),
 ) -> DataIngestionResponse:
-    """Ingest job data for a specific cluster.
+    """Ingest job data for the cluster that owns the API key.
 
-    This endpoint accepts job records and stores them as parquet files.
-    Requires API key authentication via X-API-Key header.
+    Jobs are stored as parquet files under the key's cluster directory. A body
+    hostname that names another cluster is rejected; a legacy key from
+    ``API_KEYS`` is not bound to a cluster and may name any plain cluster.
 
     Args:
         request: Data ingestion request containing hostname and job records
-        api_key: Verified API key from header
+        key_cluster: Cluster name the verified API key belongs to
 
     Returns:
         DataIngestionResponse with ingestion status
     """
+    hostname = single_path_component(request.hostname, "hostname")
+    if key_cluster == LEGACY_KEY_CLUSTER:
+        cluster_name = hostname
+    elif hostname.lower() == key_cluster.lower():
+        cluster_name = key_cluster
+    else:
+        raise HTTPException(
+            status_code=403, detail=f"API key belongs to cluster '{key_cluster}', not '{request.hostname}'"
+        )
+    data_dir = path_within(Path(settings.data_path), cluster_name, "data")
+
     try:
-        # Create directory structure for hostname
-        data_dir = Path(settings.data_path) / request.hostname / "data"
         data_dir.mkdir(parents=True, exist_ok=True)
 
         # Convert jobs to DataFrame
@@ -109,14 +120,14 @@ async def ingest_data(
 
         # Update submission stats
         db = get_cluster_db()
-        db.update_submission_stats(request.hostname, len(request.jobs))
+        db.update_submission_stats(cluster_name, len(request.jobs))
 
         # Trigger datastore reload for this hostname
         try:
-            logger.info(f"Triggering datastore reload after ingesting data for {request.hostname}")
+            logger.info(f"Triggering datastore reload after ingesting data for {cluster_name}")
             datastore = get_datastore()
             datastore.load_data()
-            logger.info(f"Datastore reload completed. New date range: {datastore.get_min_max_dates(request.hostname)}")
+            logger.info(f"Datastore reload completed. New date range: {datastore.get_min_max_dates(cluster_name)}")
         except Exception as e:
             # Log but don't fail the ingestion
             logger.error(f"Failed to reload datastore after ingestion: {e}")
@@ -124,13 +135,13 @@ async def ingest_data(
 
         return DataIngestionResponse(
             success=True,
-            message=f"Successfully ingested {len(request.jobs)} jobs for {request.hostname}",
+            message=f"Successfully ingested {len(request.jobs)} jobs for {cluster_name}",
             jobs_processed=len(request.jobs),
-            hostname=request.hostname,
+            hostname=cluster_name,
         )
 
     except Exception as e:
-        logger.error(f"Error ingesting data for {request.hostname}: {e}")
+        logger.error(f"Error ingesting data for {cluster_name}: {e}")
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,

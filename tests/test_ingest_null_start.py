@@ -32,7 +32,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(data_api, "get_datastore", FakeDatastore)
     app = FastAPI()
     app.include_router(data_api.router, prefix="/api/data")
-    app.dependency_overrides[verify_api_key] = lambda: "TEST"
+    app.dependency_overrides[verify_api_key] = lambda: "DAIC (new)"
     return TestClient(app), tmp_path, db
 
 
