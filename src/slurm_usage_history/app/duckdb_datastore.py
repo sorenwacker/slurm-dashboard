@@ -29,6 +29,11 @@ from slurm_usage_history.memory import add_memory_columns
 logger = logging.getLogger(__name__)
 
 
+def _sql_path(path: Path) -> str:
+    """Path as the content of a single-quoted SQL string literal."""
+    return str(path).replace("'", "''")
+
+
 class Singleton(type):
     """Metaclass to implement the Singleton pattern."""
 
@@ -216,7 +221,7 @@ class DuckDBDataStore(metaclass=Singleton):
             self._file_timestamps[hostname][file_path] = file_path.stat().st_mtime
 
         # Build file list for DuckDB query
-        file_pattern = str(host_dir / "*.parquet")
+        file_pattern = _sql_path(host_dir / "*.parquet")
 
         # Get connection
         conn = self._get_connection()
@@ -384,6 +389,19 @@ class DuckDBDataStore(metaclass=Singleton):
         """Get available states for the specified hostname."""
         return self.hosts[hostname]["states"] or []
 
+    def _file_pattern(self, hostname: str) -> str | None:
+        """Parquet glob of a known host; unknown names never reach SQL text or the filesystem."""
+        if hostname not in self.hosts:
+            return None
+        return _sql_path(self.directory / hostname / "data" / "*.parquet")
+
+    @staticmethod
+    def _date_bounds(start_date: str | None, end_date: str | None) -> tuple[datetime | None, datetime | None]:
+        """Inclusive start and exclusive end as datetimes; a malformed date raises ValueError."""
+        start = pd.to_datetime(start_date).to_pydatetime() if start_date else None
+        end = (pd.to_datetime(end_date) + pd.Timedelta(days=1)).to_pydatetime() if end_date else None
+        return start, end
+
     def get_filter_values_for_period(
         self,
         hostname: str,
@@ -403,21 +421,6 @@ class DuckDBDataStore(metaclass=Singleton):
         Returns:
             Dictionary with lists of unique values for each filter dimension
         """
-        host_dir = self.directory / hostname / "data"
-        file_pattern = str(host_dir / "*.parquet")
-
-        # Build WHERE clause for date filtering
-        where_clauses = []
-        if start_date:
-            where_clauses.append(f"Submit >= '{start_date}'")
-        if end_date:
-            # Make end_date inclusive by adding 1 day and using < comparison
-            end_date_exclusive = (pd.to_datetime(end_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
-            where_clauses.append(f"Submit < '{end_date_exclusive}'")
-        where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
-
-        conn = self._get_connection()
-
         result: dict[str, list[Any]] = {
             "partitions": [],
             "accounts": [],
@@ -425,6 +428,22 @@ class DuckDBDataStore(metaclass=Singleton):
             "qos": [],
             "states": [],
         }
+        file_pattern = self._file_pattern(hostname)
+        if file_pattern is None:
+            return result
+
+        start, end_exclusive = self._date_bounds(start_date, end_date)
+        where_clauses = []
+        params: list[Any] = []
+        if start:
+            where_clauses.append("Submit >= ?")
+            params.append(start)
+        if end_exclusive:
+            where_clauses.append("Submit < ?")
+            params.append(end_exclusive)
+        where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
+
+        conn = self._get_connection()
 
         # Query unique values for each dimension within the date range
         for col, key in [
@@ -441,7 +460,8 @@ class DuckDBDataStore(metaclass=Singleton):
                     FROM read_parquet('{file_pattern}', union_by_name=true)
                     WHERE {where_sql} AND {col} IS NOT NULL
                     ORDER BY {col}
-                    """
+                    """,
+                    params,
                 ).fetchall()
 
                 # Special handling for Partition: split comma-separated values
@@ -503,46 +523,38 @@ class DuckDBDataStore(metaclass=Singleton):
         Returns:
             Filtered DataFrame
         """
-        host_dir = self.directory / hostname / "data"
-        file_pattern = str(host_dir / "*.parquet")
+        file_pattern = self._file_pattern(hostname)
+        if file_pattern is None:
+            return pd.DataFrame()
 
-        # Build WHERE clause
+        # Request values are bound as parameters; only column names and the
+        # validated file pattern are part of the SQL text.
+        start, end_exclusive = self._date_bounds(start_date, end_date)
         where_clauses = []
-
-        end_date_exclusive = None
-        if end_date:
-            # Make end_date inclusive by adding 1 day and using < comparison
-            end_date_exclusive = (pd.to_datetime(end_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+        params: list[Any] = []
         if time_base == "overlap":
-            if start_date:
-                where_clauses.append(f'("End" IS NULL OR "End" >= \'{start_date}\')')
-            if end_date_exclusive:
-                where_clauses.append(f"Start < '{end_date_exclusive}'")
+            if start:
+                where_clauses.append('("End" IS NULL OR "End" >= ?)')
+                params.append(start)
+            if end_exclusive:
+                where_clauses.append("Start < ?")
+                params.append(end_exclusive)
         else:
-            if start_date:
-                where_clauses.append(f"Submit >= '{start_date}'")
-            if end_date_exclusive:
-                where_clauses.append(f"Submit < '{end_date_exclusive}'")
+            if start:
+                where_clauses.append("Submit >= ?")
+                params.append(start)
+            if end_exclusive:
+                where_clauses.append("Submit < ?")
+                params.append(end_exclusive)
         if partitions:
-            # Handle comma-separated partitions: match if any selected partition appears in the list
-            partition_conditions = []
-            for partition in partitions:
-                # Match if partition appears as whole word in comma-separated list
-                # Using list_contains with string_split for accurate matching
-                partition_conditions.append(f"list_contains(string_split(Partition, ','), '{partition}')")
-            where_clauses.append(f"({' OR '.join(partition_conditions)})")
-        if accounts:
-            account_list = "', '".join(accounts)
-            where_clauses.append(f"Account IN ('{account_list}')")
-        if users:
-            user_list = "', '".join(users)
-            where_clauses.append(f"User IN ('{user_list}')")
-        if qos:
-            qos_values = "', '".join(qos)
-            where_clauses.append(f"QOS IN ('{qos_values}')")
-        if states:
-            state_list = "', '".join(states)
-            where_clauses.append(f"State IN ('{state_list}')")
+            # Partition holds a comma-separated list; match if any selected partition is a whole element
+            conditions = ["list_contains(string_split(Partition, ','), ?)"] * len(partitions)
+            where_clauses.append(f"({' OR '.join(conditions)})")
+            params.extend(partitions)
+        for column, values in (("Account", accounts), ("User", users), ("QOS", qos), ("State", states)):
+            if values:
+                where_clauses.append(f"{column} IN ({', '.join('?' * len(values))})")
+                params.extend(values)
 
         where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
 
@@ -571,7 +583,7 @@ class DuckDBDataStore(metaclass=Singleton):
         WHERE {where_sql}
         """
 
-        df = conn.execute(query).df()
+        df = conn.execute(query, params).df()
 
         query_elapsed = time.time() - query_start
         logger.debug(f"DuckDB query completed in {query_elapsed:.3f}s, returned {len(df)} rows")

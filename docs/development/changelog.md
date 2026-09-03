@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Dashboard filter values (dates, partitions, accounts, users, QOS, states) and the hostname were interpolated into DuckDB SQL; an unauthenticated request could read or write server files through `read_text` and `COPY`. Values are now bound parameters and the hostname must be a known cluster
+
 ### Fixed
 - Memory efficiency is weighted by job runtime; unweighted per-job ratios were dominated by sub-6-minute jobs (72% of DAIC jobs) and sat far below the actual occupancy
 - Node utilization: jobs overlapping the window are counted for the overlapping hours only, multi-node jobs are split across their nodes instead of counted once per node, gauges are capacity-weighted over all configured nodes, and nodes without synced capacity are no longer normalized against default values (see docs/user-guide/utilization.md)
