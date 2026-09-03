@@ -133,20 +133,14 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
 
       {/* Report Preview */}
       {isLoading && (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+        <div className="loading-screen">
           <div className="loading-spinner"></div>
           <p>Loading report preview...</p>
         </div>
       )}
 
       {error && (
-        <div style={{
-          background: '#fee',
-          border: '1px solid #fcc',
-          padding: '1rem',
-          borderRadius: '4px',
-          color: '#c00',
-        }}>
+        <div className="error">
           <strong>Unable to generate report</strong>
           <p style={{ marginTop: '0.5rem', marginBottom: 0 }}>
             {(() => {

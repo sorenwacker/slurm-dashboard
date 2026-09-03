@@ -8,163 +8,67 @@ interface HeaderProps {
   userInfo?: UserInfo;
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8100';
+
 const Header: React.FC<HeaderProps> = ({ activeTab = 'overview', onTabChange, userInfo }) => {
   const { isDark, mode, toggle } = useDarkMode();
 
-  const getThemeLabel = () => {
-    if (mode === 'system') return 'Auto';
-    if (mode === 'dark') return 'Dark';
-    return 'Light';
+  const themeLabel = mode === 'system' ? 'Auto' : mode === 'dark' ? 'Dark' : 'Light';
+
+  const handleLogin = () => {
+    window.location.href = `${API_URL}/saml/login?redirect_to=${encodeURIComponent(window.location.href)}`;
   };
+
   const handleLogout = () => {
-    // Redirect to logout endpoint, then back to frontend root
-    const frontendUrl = window.location.origin;
-    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:8100'}/saml/logout?redirect_to=${encodeURIComponent(frontendUrl)}`;
+    window.location.href = `${API_URL}/saml/logout?redirect_to=${encodeURIComponent(window.location.origin)}`;
   };
+
   return (
     <header className="header">
       <div className="header-content">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <img
-            src="/REIT_logo.png"
-            alt="REIT Logo"
-            style={{
-              height: '60px',
-              width: 'auto',
-              backgroundColor: 'white',
-              borderRadius: '0.5rem',
-              padding: '0.5rem',
-            }}
-          />
+        <div className="header-brand">
+          <img src="/REIT_logo.png" alt="REIT Logo" className="header-logo" />
           <h1 className="header-title">Slurm Usage History Dashboard</h1>
         </div>
         <nav className="header-nav">
           <button
+            type="button"
+            className={`nav-tab ${activeTab === 'overview' ? 'active' : ''}`}
             onClick={() => {
               onTabChange?.('overview');
-              if (activeTab === 'overview') {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }
-            }}
-            style={{
-              padding: '0.5rem 1rem',
-              color: 'white',
-              backgroundColor: 'transparent',
-              textDecoration: 'none',
-              borderRadius: '0.375rem',
-              border: '1px solid white',
-              fontSize: '0.875rem',
-              fontWeight: activeTab === 'overview' ? 700 : 500,
-              cursor: 'pointer',
+              if (activeTab === 'overview') window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           >
             Dashboard
           </button>
           <button
-            onClick={() => {
-              onTabChange?.('reports');
-            }}
-            style={{
-              padding: '0.5rem 1rem',
-              color: 'white',
-              backgroundColor: 'transparent',
-              textDecoration: 'none',
-              borderRadius: '0.375rem',
-              border: '1px solid white',
-              fontSize: '0.875rem',
-              fontWeight: activeTab === 'reports' ? 700 : 500,
-              cursor: 'pointer',
-            }}
+            type="button"
+            className={`nav-tab ${activeTab === 'reports' ? 'active' : ''}`}
+            onClick={() => onTabChange?.('reports')}
           >
             Reports
           </button>
-          <button
-            onClick={toggle}
-            className="theme-toggle"
-            title={`Theme: ${getThemeLabel()} (click to cycle)`}
-          >
+          <button type="button" onClick={toggle} className="theme-toggle" title={`Theme: ${themeLabel} (click to cycle)`}>
             <span className="theme-toggle-icon">{isDark ? '\u263E' : '\u2600'}</span>
-            <span>{getThemeLabel()}</span>
+            <span>{themeLabel}</span>
           </button>
           {!userInfo && (
-            <button
-              onClick={() => {
-                const currentUrl = window.location.href;
-                window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:8100'}/saml/login?redirect_to=${encodeURIComponent(currentUrl)}`;
-              }}
-              style={{
-                padding: '0.5rem 1rem',
-                color: 'white',
-                backgroundColor: 'rgba(59, 130, 246, 0.9)',
-                textDecoration: 'none',
-                borderRadius: '0.375rem',
-                border: '1px solid rgba(96, 165, 250, 1)',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
+            <button type="button" className="nav-login" onClick={handleLogin}>
               Login
             </button>
           )}
           {userInfo && (
             <>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0.5rem 1rem',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '0.375rem',
-                gap: '0.5rem',
-              }}>
-                <span style={{
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}>
-                  User
-                </span>
-                <span style={{
-                  color: 'white',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                }}>
-                  {userInfo.username || userInfo.email}
-                </span>
+              <div className="header-user">
+                <span className="header-user-label">User</span>
+                <span>{userInfo.username || userInfo.email}</span>
               </div>
               {userInfo.is_admin && (
-                <a
-                  href="/admin/login"
-                  style={{
-                    padding: '0.5rem 1rem',
-                    color: 'white',
-                    backgroundColor: 'rgba(245, 158, 11, 0.9)',
-                    textDecoration: 'none',
-                    borderRadius: '0.375rem',
-                    border: '1px solid rgba(251, 191, 36, 1)',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
+                <a href="/admin/login" className="nav-admin">
                   Admin
                 </a>
               )}
-              <button
-                onClick={handleLogout}
-                style={{
-                  padding: '0.5rem 1rem',
-                  color: 'white',
-                  backgroundColor: 'transparent',
-                  textDecoration: 'none',
-                  borderRadius: '0.375rem',
-                  border: '1px solid rgba(255, 255, 255, 0.5)',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                }}
-              >
+              <button type="button" onClick={handleLogout}>
                 Logout
               </button>
             </>

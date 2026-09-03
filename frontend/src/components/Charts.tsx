@@ -60,7 +60,7 @@ const Charts: React.FC<ChartsProps> = ({
   if (!data) {
     return (
       <div className="card">
-        <p style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>
+        <p className="card-empty">
           No data available. Select a cluster and date range to view charts.
         </p>
       </div>

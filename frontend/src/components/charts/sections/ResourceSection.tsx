@@ -94,7 +94,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
           <div className="card">
             <h3>
               {byDim.type === 'pie' ? `${config.title} Usage by ${colorBy}` : `${config.title} Usage Distribution`}
-              <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}> ({config.totalLabel(data)})</span>
+              <span className="card-subtitle"> ({config.totalLabel(data)})</span>
             </h3>
             {byDim.type === 'pie' ? (
               <PieChart
@@ -143,7 +143,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
             <h3>
               {config.nodeTitle}{' '}
               {nodeChart.normalized && (
-                <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>(% of capacity)</span>
+                <span className="card-subtitle">(% of capacity)</span>
               )}
             </h3>
             <StackedAreaChart
@@ -158,7 +158,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
             />
             <ChartCaption text={config.nodeCaption(dim)} />
             {nodeChart.unknownCapacity.length > 0 && (
-              <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
+              <p className="card-note">
                 {nodeChart.unknownCapacity.length} nodes without known capacity are not shown: {nodeChart.unknownCapacity.join(', ')}
               </p>
             )}
@@ -189,7 +189,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({
           <div className="card">
             <h3>
               {config.efficiencyTitle}
-              <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}> (used / allocated)</span>
+              <span className="card-subtitle"> (used / allocated)</span>
             </h3>
             {(efficiency.series?.length ?? 0) > 1 ? (
               <TimelineChart
